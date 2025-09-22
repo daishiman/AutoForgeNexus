@@ -1,0 +1,30 @@
+# AutoForgeNexus Code Owners
+# Global ownership
+* @daishiman
+
+# Core system files
+/.claude/ @daishiman
+/CLAUDE.md @daishiman
+
+# Architecture and design
+/backend/src/domain/ @daishiman
+/backend/src/application/ @daishiman
+
+# Frontend components
+/frontend/src/components/ @daishiman
+/frontend/src/hooks/ @daishiman
+
+# Infrastructure
+/docker/ @daishiman
+/terraform/ @daishiman
+/.github/ @daishiman
+
+# Documentation
+/docs/ @daishiman
+/document/ @daishiman
+README.md @daishiman
+
+# Configuration files
+package.json @daishiman
+requirements.txt @daishiman
+pyproject.toml @daishiman

@@ -17,19 +17,21 @@ AutoForgeNexusは、AIプロンプト最適化システム - 包括的なプロ�
 
 システムはドメイン駆動設計（DDD）原則に従い、クリーンアーキテクチャアプローチを採用：
 
-### 技術スタック（予定）
+### 技術スタック（最終版）
 - **バックエンド**: Python 3.13, FastAPI 0.116.1, SQLAlchemy 2.0.32
 - **フロントエンド**: Next.js 15.5, React 19, TypeScript 5.x, Tailwind CSS 4.0
-- **データベース**: PostgreSQL 16 (Supabase), Redis 7, pgvector（埋め込み用）
+- **データベース**: Turso (libSQL), Redis 7, libSQL Vector（埋め込み用）
+- **認証**: Clerk（認証・認可・組織管理）
 - **AI/ML**: LangChain 0.3.27, LangGraph 0.6.7, LiteLLM 1.76.1
+- **LLM観測**: LangFuse（トレーシング・評価）
 - **インフラ**: Cloudflare (Workers Python, Pages, R2), Docker
 
 ### レイヤーアーキテクチャ
 ```
-プレゼンテーション層 (Next.js/React)
+プレゼンテーション層 (Next.js/React + Clerk Auth)
 ├── アプリケーション層 (ユースケース, CQRS, イベントバス)
 ├── ドメイン層 (エンティティ, 値オブジェクト, 集約)
-└── インフラストラクチャ層 (PostgreSQL, Redis, LLMプロバイダー)
+└── インフラストラクチャ層 (Turso, Redis, LLMプロバイダー, LangFuse)
 ```
 
 ### 主要設計パターン
@@ -68,7 +70,16 @@ npm run type-check  # TypeScript検証
 
 ### データベース操作
 ```bash
-# データベースマイグレーション
+# Tursoデータベース管理
+turso db create autoforgenexus  # データベース作成
+turso db show autoforgenexus    # データベース情報表示
+turso db shell autoforgenexus   # データベースシェル接続
+
+# ブランチ管理
+turso db create autoforgenexus-dev --from-db autoforgenexus  # 開発ブランチ作成
+turso db replicate autoforgenexus tokyo  # 東京リージョンレプリカ
+
+# マイグレーション (SQLAlchemy併用)
 alembic upgrade head    # マイグレーション適用
 alembic revision --autogenerate -m "説明"  # マイグレーション作成
 ```
@@ -111,8 +122,9 @@ DDDの組織化に従った構造：
 
 ### 主要アーキテクチャ決定
 - **単一リポジトリ**: バックエンドとフロントエンドのモノレポ構造
-- **データベース**: PostgreSQLをプライマリとし、Redisキャッシュ、pgvector埋め込み
-- **認証**: OAuth 2.0サポート付きJWT
+- **データベース**: Turso (libSQL)をプライマリ、Redisキャッシュ、libSQL Vector埋め込み
+- **認証**: Clerk（OAuth 2.0, MFA, 組織管理機能付き）
+- **LLM観測**: LangFuse（トレーシング、評価、コスト監視）
 - **リアルタイム機能**: 協調編集とライブ更新用WebSocket
 
 ### 革新フォーカス領域
