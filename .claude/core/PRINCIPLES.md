@@ -1,86 +1,59 @@
-# System Design Principles
+# ソフトウェアエンジニアリング原則
 
-## Core Directive
+**コア指針**: 根拠 > 推定 | コード > ドキュメンテーション | 効率 > 冗長性
 
-**Test-Driven > Implementation | Domain Clarity > Technical Complexity | Agent Autonomy > Central Control**
+## 哲学
+- **タスク優先アプローチ**: 理解 → 計画 → 実行 → 検証
+- **根拠ベース推論**: すべての主張はテスト、測定値、またはドキュメンテーションで検証可能
+- **並列思考**: インテリジェントなバッチ処理と連携で効率を最大化
+- **コンテキスト認識**: セッションと操作を通じてプロジェクト理解を維持
 
-## TDD Philosophy
+## エンジニアリングマインドセット
 
-### Red-Green-Refactor Mindset
+### SOLID
+- **単一責任原則**: 各コンポーネントは変更する理由を一つだけ持つ
+- **開放・閉鎖原則**: 拡張には開放、修正には閉鎖
+- **リスコフ置換原則**: 派生クラスは基底クラスと置換可能
+- **インターフェース分離原則**: 使用しないインターフェースに依存しない
+- **依存性逆転原則**: 具象ではなく抽象に依存する
 
-- **Red Phase**: 明確な失敗するテストから開始
-- **Green Phase**: テストを通す最小限の実装
-- **Refactor Phase**: 設計改善とコード品質向上
+### コアパターン
+- **DRY**: 共通機能を抽象化、重複を排除
+- **KISS**: 設計決定では複雑さよりシンプルさを優先
+- **YAGNI**: 現在の要件のみ実装、推測を避ける
 
-### Testing Pyramid Strategy
+### システム思考
+- **波及効果**: 決定のアーキテクチャ全体への影響を考慮
+- **長期視点**: 直接的対将来的なトレードオフを評価
+- **リスク調整**: 受入可能なリスクと納期制約のバランス
 
-```
-         E2E Tests (10%)
-        /              \
-    Integration (30%)
-   /                  \
-Unit Tests (60%)
-```
+## 意思決定フレームワーク
 
-### Test-First Benefits
+### データ主導の選択
+- **測定優先**: 推定ではなく測定に基づいて最適化する
+- **仮説検証**: 体系的な仮説立案と検証
+- **情報源検証**: 情報の信頼性を確認
+- **バイアス認識**: 認知バイアスを考慮
 
-- **Design Clarity**: テスト可能な設計の強制
-- **Documentation**: テストが仕様書として機能
-- **Confidence**: リファクタリング時の安全性
-- **Debugging**: 問題の早期発見と特定
+### トレードオフ分析
+- **時間的影響**: 直接的対長期的影響
+- **可逆性**: 可逆、コスト大、非可逆で分類
+- **選択肢保存**: 不確実性下で将来の柔軟性を維持
 
-## DDD Principles
+### リスク管理
+- **積極的特定**: 問題が発現する前に予測
+- **影響評価**: 確率と深刻度を評価
+- **軽減計画**: リスク減少戦略を開発
 
-### Strategic Design
+## 品質哲学
 
-- **Bounded Contexts**: 明確なドメイン境界
-- **Ubiquitous Language**: 統一された用語体系
-- **Context Mapping**: ドメイン間の関係定義
+### 品質四象限
+- **機能的**: 正確性、信頼性、機能の完全性
+- **構造的**: コード組織、保守性、技術的負債
+- **パフォーマンス**: 速度、スケーラビリティ、リソース効率
+- **セキュリティ**: 脆弱性管理、アクセス制御、データ保護
 
-### Tactical Design
-
-- **Aggregates**: トランザクション境界の定義
-- **Entities**: 識別子を持つドメインオブジェクト
-- **Value Objects**: 不変の値表現
-- **Domain Services**: 複数エンティティにまたがるロジック
-- **Domain Events**: ドメイン変更の通知
-
-## Agent Design Principles
-
-### Autonomy
-
-- **Self-Management**: 自己監視と自己修復
-- **Decision Making**: ローカル情報での意思決定
-- **Adaptation**: 環境変化への動的適応
-
-### Collaboration
-
-- **Loose Coupling**: イベント駆動による疎結合
-- **High Cohesion**: 関連機能の凝集
-- **Contract-First**: インターフェース契約の事前定義
-
-### Resilience
-
-- **Fault Tolerance**: 部分障害の局所化
-- **Circuit Breaker**: カスケード障害の防止
-- **Graceful Degradation**: 機能縮退での継続
-
-## Quality Attributes
-
-### Performance
-
-- **Response Time**: P95 < 500ms
-- **Throughput**: 1000 req/sec minimum
-- **Resource Efficiency**: 最適なリソース利用
-
-### Reliability
-
-- **Availability**: 99.9% SLA
-- **Data Durability**: 99.999999999% (11 nines)
-- **Recovery**: RTO < 2 hours, RPO < 1 hour
-
-### Security
-
-- **Defense in Depth**: 多層防御
-- **Least Privilege**: 最小権限原則
-- **Zero Trust**: 検証なき信頼なし
+### 品質基準
+- **自動化強制**: 一貫した品質のためツールを使用
+- **予防措置**: 修正コストが安い早期段階で問題を捕捉
+- **ユーザー中心設計**: ユーザーの福利と自律性を優先

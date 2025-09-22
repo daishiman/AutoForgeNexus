@@ -1,0 +1,78 @@
+{
+  "name": "autoforge-nexus",
+  "version": "1.0.0",
+  "description": "AI プロンプト最適化システム - 包括的なプロンプトエンジニアリング支援プラットフォーム",
+  "private": true,
+  "packageManager": "pnpm@9.1.0",
+  "engines": {
+    "node": ">=20.18.0",
+    "pnpm": ">=9.1.0",
+    "python": ">=3.13.0"
+  },
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "install": "pnpm install",
+    "dev": "pnpm run dev:setup && concurrently -n frontend,backend \"pnpm --filter '@autoforge/frontend' dev\" \"pnpm --filter '@autoforge/backend' dev\"",
+    "dev:frontend": "pnpm --filter '@autoforge/frontend' dev",
+    "dev:backend": "pnpm --filter '@autoforge/backend' dev",
+    "dev:setup": "pnpm install --frozen-lockfile",
+    "build": "pnpm run build:packages",
+    "build:packages": "pnpm --filter '@autoforge/*' build",
+    "test": "pnpm run test:all",
+    "test:all": "pnpm --filter '@autoforge/*' test",
+    "test:unit": "pnpm --filter '@autoforge/*' test:unit",
+    "test:integration": "pnpm --filter '@autoforge/*' test:integration",
+    "lint": "pnpm run lint:all",
+    "lint:all": "pnpm --filter '@autoforge/*' lint",
+    "lint:fix": "pnpm --filter '@autoforge/*' lint:fix",
+    "type-check": "pnpm --filter '@autoforge/*' type-check",
+    "format": "pnpm --filter '@autoforge/*' format",
+    "format:check": "pnpm --filter '@autoforge/*' format:check",
+    "clean": "pnpm --filter '@autoforge/*' clean && rm -rf node_modules",
+    "reset": "pnpm clean && pnpm install",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up -d --build",
+    "docker:down": "docker-compose down --remove-orphans",
+    "turso:setup": "turso db create autoforgenexus",
+    "turso:dev": "turso db create autoforgenexus-dev --from-db autoforgenexus",
+    "turso:shell": "turso db shell autoforgenexus",
+    "postinstall": "husky install && pnpm setup:env",
+    "setup:env": "cp .env.example .env || true"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "concurrently": "^8.2.2",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.2.0",
+    "only-allow": "^1.2.1",
+    "prettier": "^3.2.0",
+    "typescript": "^5.3.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.py": [
+      "black",
+      "ruff --fix"
+    ]
+  },
+  "keywords": [
+    "ai",
+    "prompt-engineering",
+    "llm",
+    "optimization",
+    "nextjs",
+    "fastapi",
+    "turso",
+    "langchain",
+    "typescript",
+    "python"
+  ],
+  "author": "AutoForgeNexus Team",
+  "license": "MIT"
+}

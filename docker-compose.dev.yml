@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # Backend (Python 3.13 + FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+      args:
+        PYTHON_VERSION: 3.13
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+      - backend_venv:/app/venv
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
+      - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
+      - REDIS_URL=redis://redis:6379
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-http://langfuse:3000}
+    depends_on:
+      - redis
+      - langfuse
+    networks:
+      - autoforge-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (Next.js 15.5 + React 19 + TypeScript 5.x)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      args:
+        NODE_VERSION: 20
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - DATABASE_URL=${TURSO_DATABASE_URL}
+    depends_on:
+      - backend
+    networks:
+      - autoforge-network
+    restart: unless-stopped
+
+  # Redis (キャッシュ・セッション・タスクキュー)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - autoforge-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # LangFuse (LLM観測性)
+  langfuse:
+    image: langfuse/langfuse:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - DATABASE_URL=postgresql://langfuse:password@langfuse-db:5432/langfuse
+      - NEXTAUTH_SECRET=${LANGFUSE_NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${LANGFUSE_NEXTAUTH_URL:-http://localhost:3001}
+      - SALT=${LANGFUSE_SALT}
+    depends_on:
+      - langfuse-db
+    networks:
+      - autoforge-network
+    restart: unless-stopped
+
+  # LangFuse Database
+  langfuse-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=langfuse
+      - POSTGRES_USER=langfuse
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - langfuse_data:/var/lib/postgresql/data
+    networks:
+      - autoforge-network
+    restart: unless-stopped
+
+  # Development Tools
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=langfuse-db
+    networks:
+      - autoforge-network
+    profiles:
+      - tools
+
+volumes:
+  backend_venv:
+  redis_data:
+  langfuse_data:
+
+networks:
+  autoforge-network:
+    driver: bridge
