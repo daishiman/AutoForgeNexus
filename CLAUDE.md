@@ -46,26 +46,43 @@ AutoForgeNexusは、AIプロンプト最適化システム - 包括的なプロ�
 
 ### バックエンド (Python/FastAPI)
 ```bash
-# セットアップと開発
-make setup          # 初期プロジェクトセットアップ
-make dev            # 開発サーバー起動
-make test           # 全テスト実行
-make lint           # コード品質チェック (ruff, mypy)
-make format         # コードフォーマット (Black)
+# Python 3.13 必須、仮想環境管理
+python3.13 -m venv venv           # 仮想環境作成
+source venv/bin/activate          # 仮想環境有効化 (Linux/Mac)
+pip install -r requirements.txt   # 依存関係インストール
 
-# Docker環境
-docker-compose up   # 全サービス起動
-docker-compose down # 全サービス停止
+# 開発コマンド
+make setup          # 初期プロジェクトセットアップ (Python 3.13)
+make dev            # 開発サーバー起動 (FastAPI 0.116.1)
+make test           # 全テスト実行 (pytest, 80%+カバレッジ)
+make lint           # コード品質チェック (ruff, mypy厳密モード)
+make format         # コードフォーマット (Black, isort)
+make type-check     # mypy型チェック (strict設定)
+
+# Docker開発環境 (必須)
+docker-compose -f docker-compose.dev.yml up backend    # バックエンド開発環境
+docker-compose -f docker-compose.dev.yml up database   # Turso + Redis
+docker-compose -f docker-compose.dev.yml up langfuse   # LangFuse観測
+docker-compose logs -f backend  # バックエンドログ監視
+
+# 本番環境
+docker-compose -f docker-compose.prod.yml up -d  # 本番環境起動
 ```
 
 ### フロントエンド (Next.js/React)
 ```bash
-# 開発
-npm run dev         # 開発サーバー起動
-npm run build       # 本番ビルド
-npm run test        # テスト実行
-npm run lint        # ESLintチェック
-npm run type-check  # TypeScript検証
+# パッケージマネージャー: pnpm (PAPN) 必須使用
+pnpm install        # 依存関係インストール
+pnpm dev            # 開発サーバー起動 (Next.js 15.5)
+pnpm build          # 本番ビルド (React 19)
+pnpm test           # テスト実行 (Jest/React Testing Library)
+pnpm lint           # ESLintチェック (TypeScript 5.x)
+pnpm type-check     # TypeScript厳密検証
+pnpm format         # Prettier自動フォーマット
+
+# Docker開発環境 (必須)
+docker-compose -f docker-compose.dev.yml up frontend  # フロントエンド開発環境
+docker-compose -f docker-compose.dev.yml logs -f frontend  # ログ監視
 ```
 
 ### データベース操作
@@ -103,8 +120,27 @@ DDDの組織化に従った構造：
 /docs/              # 追加ドキュメント
 ```
 
-## Claude Agentの設定
+## Claude Code設定
 
+### モデル固定設定
+- **絶対使用モデル**: Claude 3.5 Sonnet (Opus 4.1)
+- **フォールバック**: なし - 必ずOpus 4.1を使用
+- **理由**: プロジェクトの複雑性とコード品質要求のため
+
+### 必須MCP (Model Context Protocol) サーバー
+```bash
+# 必要なMCPサーバーの再インストール
+claude mcp add context7        # ライブラリドキュメンテーション検索
+claude mcp add sequential      # 複雑な分析・デバッグ
+claude mcp add serena          # セマンティックコード理解
+claude mcp add playwright      # ブラウザ自動化・テスト
+
+# MCP設定確認
+claude mcp list               # インストール済みMCP確認
+claude mcp status             # MCP状態確認
+```
+
+### Claude Agentの設定
 このプロジェクトには高度な`.claude/`ディレクトリが含まれています：
 - **エージェント定義**: 異なる開発タスク用の27+専門エージェント
 - **コアルール**: 開発原則、品質ゲート、アーキテクチャパターン
