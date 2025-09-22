@@ -69,12 +69,12 @@ Key behaviors:
 
 ## Examples
 
-### PostgreSQL アップグレード
+### Turso libSQL アップグレード
 
 ```
-/ai:data:migrate postgres-14 postgres-16 --zero-downtime
-# 論理レプリケーション設定
-# 増分同期実行
+/ai:data:migrate turso-v1 turso-v2 --zero-downtime
+# ブランチベース移行戦略
+# libSQLスキーマ同期
 # アトミック切替
 ```
 

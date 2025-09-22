@@ -1,6 +1,6 @@
 ---
 name: vector
-description: "pgvectorによるベクトルデータベース管理"
+description: "libSQL Vectorによるベクトルデータベース管理"
 category: data
 complexity: high
 agents:
@@ -30,7 +30,7 @@ agents:
 
 ## Behavioral Flow
 
-1. **スキーマ設計**: pgvector 拡張設定
+1. **スキーマ設計**: libSQL Vector 拡張設定
 2. **埋め込み生成**: テキストのベクトル化
 3. **データ投入**: バッチ処理と並列化
 4. **インデックス構築**: HNSW/IVFFlat 選択
@@ -48,14 +48,14 @@ Key behaviors:
 
 ## Agent Coordination
 
-- **vector-database-specialist** → pgvector 管理主導
+- **vector-database-specialist** → libSQL Vector 管理主導
 - **database-administrator** → DB 統合とパフォーマンス
 - **data-analyst** → ベクトル分析と可視化
 - **prompt-engineering-specialist** → 埋め込み戦略
 
 ## Tool Coordination
 
-- **bash_tool**: pgvector セットアップ
+- **bash_tool**: libSQL Vector セットアップ
 - **create_file**: スキーマ定義とクエリ
 - **view**: ベクトルデータ確認
 - **str_replace**: インデックス設定更新
