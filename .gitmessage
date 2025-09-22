@@ -1,0 +1,43 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+
+# === AutoForgeNexus Commit Template ===
+#
+# Types:
+# - feat:     新機能追加
+# - fix:      バグ修正
+# - docs:     ドキュメント変更
+# - style:    フォーマット変更（コード動作に影響なし）
+# - refactor: リファクタリング
+# - test:     テスト追加・修正
+# - chore:    ビルド、設定ファイル変更
+# - perf:     パフォーマンス改善
+# - ci:       CI/CD設定変更
+# - revert:   コミット取り消し
+#
+# Scope例:
+# - prompt:   プロンプト関連
+# - eval:     評価システム
+# - llm:      LLM統合
+# - ui:       フロントエンド
+# - api:      バックエンドAPI
+# - db:       データベース
+# - auth:     認証・認可
+# - realtime: リアルタイム機能
+# - vector:   ベクトルDB
+# - workflow: ワークフロー
+#
+# 例:
+# feat(prompt): プロンプト作成エンジンの実装
+# fix(eval): 評価メトリクス計算のバグ修正
+# docs(api): RESTful API仕様書の更新
+#
+# フッター:
+# - Closes #123
+# - Fixes #456
+# - Breaking change: ...
+#
+# 🤖 Generated with AutoForgeNexus System
