@@ -6,7 +6,7 @@
   },
   "components": {
     "agents": {
-      "agents_count": 31,
+      "agents_count": 30,
       "agents_list": [
         "00.agent_list.md",
         "01.system_architect_agent.md",
