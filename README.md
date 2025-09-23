@@ -33,7 +33,7 @@ AutoForgeNexusは、ユーザーの言語化能力に依存せず、高品質な
 
 ### 前提条件
 - Python 3.13+
-- Node.js 18+
+- Node.js 18+ & pnpm
 - Turso CLI
 - Docker (オプション)
 
@@ -59,8 +59,8 @@ make dev
 
 # フロントエンドセットアップ
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 ## 📚 ドキュメント
@@ -81,10 +81,10 @@ make test           # テスト実行
 make lint           # コード品質チェック
 
 # フロントエンド
-npm run dev         # 開発サーバー起動
-npm run build       # 本番ビルド
-npm run test        # テスト実行
-npm run type-check  # TypeScript検証
+pnpm run dev         # 開発サーバー起動
+pnpm run build       # 本番ビルド
+pnpm run test        # テスト実行
+pnpm run type-check  # TypeScript検証
 
 # Turso操作
 turso db show autoforgenexus       # データベース情報
