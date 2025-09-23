@@ -337,3 +337,13 @@ prompt_cache/
 evaluation_results/
 vector_db/
 llm_responses/
+
+# ===========================
+# Claude Code & MCP
+# ===========================
+.claude/settings.local.json
+.claude/secrets/
+.claude/*.key
+.claude/api_keys.*
+.claude/tokens.*
+.claude/credentials.*

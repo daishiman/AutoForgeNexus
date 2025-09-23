@@ -1,0 +1,192 @@
+{
+  "commands": {
+    "auto_update": false,
+    "enabled": true,
+    "version": "4.0.8"
+  },
+  "components": {
+    "agents": {
+      "agents_count": 30,
+      "agents_list": [
+        "00.agent_list.md",
+        "01.system_architect_agent.md",
+        "02.domain_modeller_agent.md",
+        "03.api_designer_agent.md",
+        "04.prompt_engineering_specialist_agent.md",
+        "05.llm_integration_agent.md",
+        "06.evaluation_engine_agent.md",
+        "07.workflow_orchestrator_agent.md",
+        "08.uiux_designer_agent.md",
+        "09.frontend_architect_agent.md",
+        "10.real-time_features_specialist_agent.md",
+        "11.backend_developer_agent.md",
+        "12.database_administrator_agent.md",
+        "13.vector_database_specialist_agent.md",
+        "14.event-bus_manager_agent.md",
+        "15.edge_computing_specialist_agent.md",
+        "16.security_architect_agent.md",
+        "17.performance_optimizer_agent.md",
+        "18.observability_engineer_agent.md",
+        "19.test_automation_engineer_agent.md",
+        "20.product_manager_agent.md",
+        "21.technical_documentation_agent.md",
+        "22.devOps_coordinator_agent.md",
+        "23.data_migration_specialist_agent.md",
+        "24.compliance_officer_agent.md",
+        "25.cost_optimization_agent.md",
+        "26.user_research_agent.md",
+        "27.data_analyst_agent.md",
+        "28.site_reliability_engineering_agent.md",
+        "29.qa_coordinator_agent.md",
+        "30.version-control-specialist.md"
+      ],
+      "category": "agents",
+      "installed_at": "2025-09-22T13:00:00.000000",
+      "version": "4.0.8"
+    },
+    "commands": {
+      "category": "commands",
+      "files_count": 25,
+      "commands_list": [
+        "ai/README.md",
+        "ai/architecture/design.md",
+        "ai/architecture/event.md",
+        "ai/core/init.md",
+        "ai/core/sync.md",
+        "ai/core/team.md",
+        "ai/data/analyze.md",
+        "ai/data/migrate.md",
+        "ai/data/vector.md",
+        "ai/development/git.md",
+        "ai/development/implement.md",
+        "ai/development/realtime.md",
+        "ai/development/workflow.md",
+        "ai/operations/deploy.md",
+        "ai/operations/incident.md",
+        "ai/operations/monitor.md",
+        "ai/prompt/create.md",
+        "ai/prompt/evaluate.md",
+        "ai/prompt/intent-diff.md",
+        "ai/prompt/style-genome.md",
+        "ai/quality/analyze.md",
+        "ai/quality/security.md",
+        "ai/quality/tdd.md",
+        "ai/requirements/define.md",
+        "ai/requirements/domain.md"
+      ],
+      "installed_at": "2025-09-22T13:00:00.000000",
+      "version": "4.0.8"
+    },
+    "core": {
+      "category": "core",
+      "files_count": 6,
+      "core_list": [
+        "PRINCIPLES.md",
+        "EVENT_CONTRACTS.md",
+        "DOMAIN_CONTEXT.md",
+        "QUALITY_GATES.md",
+        "RULES.md",
+        "FLAGS.md"
+      ],
+      "installed_at": "2025-09-22T13:00:00.000000",
+      "version": "4.0.8"
+    },
+    "mcp": {
+      "category": "integration",
+      "installed_at": "2025-09-22T13:00:00.000000",
+      "servers_count": 5,
+      "version": "4.1.1"
+    },
+    "mcp_docs": {
+      "files_count": 5,
+      "installed": true,
+      "servers_documented": [
+        "context7",
+        "sequential-thinking",
+        "playwright",
+        "serena",
+        "brave-search"
+      ],
+      "version": "4.0.8"
+    },
+    "modes": {
+      "files_count": 5,
+      "installed": true,
+      "mode_list": [
+        "Brainstorming.md",
+        "Introspection.md",
+        "Orchestration.md",
+        "Task_Management.md",
+        "Token_Efficiency.md"
+      ],
+      "version": "4.0.8"
+    },
+    "mcp_local": {
+      "category": "integration",
+      "files_count": 5,
+      "mcp_list": [
+        "Context7.md",
+        "Playwright.md",
+        "Sequential.md",
+        "Serena.md",
+        "Brave_Search.md"
+      ],
+      "installed_at": "2025-09-22T13:00:00.000000",
+      "version": "4.0.8"
+    }
+  },
+  "framework": {
+    "components": [
+      "core",
+      "agents",
+      "commands",
+      "mcp",
+      "modes",
+      "mcp_local"
+    ],
+    "description": "AutoForgeNexus専用AI開発フレームワーク - プロンプト最適化システム対応",
+    "installation_type": "project",
+    "name": "SuperClaude-AutoForgeNexus",
+    "project_name": "AutoForgeNexus",
+    "project_type": "prompt_optimization_platform",
+    "tech_stack": [
+      "Python 3.13",
+      "FastAPI 0.116.1",
+      "Next.js 15.5",
+      "React 19",
+      "TypeScript 5.x",
+      "Turso libSQL",
+      "LangChain 0.3.27",
+      "LangGraph 0.6.7",
+      "Cloudflare Workers"
+    ],
+    "version": "4.0.8"
+  },
+  "mcp": {
+    "auto_update": false,
+    "enabled": true,
+    "project_scoped": true,
+    "servers": [
+      "context7",
+      "sequential-thinking",
+      "playwright",
+      "serena",
+      "brave-search"
+    ]
+  },
+  "project": {
+    "name": "AutoForgeNexus",
+    "description": "AI プロンプト最適化システム - 包括的なプロンプトエンジニアリング支援プラットフォーム",
+    "repository": "https://github.com/daishiman/AutoForgeNexus",
+    "package_manager": "pnpm",
+    "architecture": "DDD + Event-Driven + Clean Architecture",
+    "deployment": "Cloudflare Workers + Pages"
+  },
+  "superclaude": {
+    "auto_update": false,
+    "enabled": true,
+    "profile": "autoforge-nexus",
+    "model_preference": "claude-3-5-sonnet-20241022",
+    "version": "4.0.8"
+  }
+}
