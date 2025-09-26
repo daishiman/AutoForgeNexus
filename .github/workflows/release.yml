@@ -1,0 +1,133 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      upload_url: ${{ steps.release.outputs.upload_url }}
+    steps:
+      - name: Release Please
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          # 複数のコンポーネントを管理
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # リリースが作成された場合にビルドとアップロード
+  build-and-upload:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies (Frontend)
+        run: |
+          cd frontend
+          pnpm install --frozen-lockfile
+
+      - name: Install dependencies (Backend)
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          pnpm build
+          pnpm export
+
+      - name: Package Application
+        run: |
+          # アプリケーションをパッケージ化
+          mkdir -p dist
+          tar -czf dist/autoforgenexus-${{ needs.release-please.outputs.version }}.tar.gz \
+            --exclude=node_modules \
+            --exclude=.git \
+            --exclude=.env \
+            --exclude=logs \
+            --exclude=.venv \
+            --exclude=__pycache__ \
+            .
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: dist/*.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}
+          asset_path: dist/autoforgenexus-${{ needs.release-please.outputs.version }}-${{ matrix.target }}.tar.gz
+          asset_name: autoforgenexus-${{ needs.release-please.outputs.version }}-${{ matrix.target }}.tar.gz
+          asset_content_type: application/gzip
+
+  # リリース通知
+  notify:
+    needs: [release-please, build-and-upload]
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Release
+        run: |
+          echo "🎉 New release created: ${{ needs.release-please.outputs.tag_name }}"
+          echo "Version: ${{ needs.release-please.outputs.version }}"
+          echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ needs.release-please.outputs.tag_name }}"
+
+  # バージョン更新後の自動化タスク
+  post-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update documentation
+        run: |
+          # ドキュメントのバージョン情報を更新
+          echo "Updating documentation for version ${{ needs.release-please.outputs.version }}"
+          # 必要に応じて追加のタスクを実行
+
+      - name: Update VERSION file
+        run: |
+          echo "${{ needs.release-please.outputs.version }}" > VERSION
+
+      - name: Commit version update
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add VERSION
+          git commit -m "chore: update VERSION file to ${{ needs.release-please.outputs.version }}" || exit 0
+          git push origin main
