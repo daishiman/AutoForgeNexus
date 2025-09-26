@@ -2,6 +2,20 @@
 
 このファイルは、このリポジトリでコードを作業する際のClaude Code (claude.ai/code) へのガイダンスを提供します。
 
+## 🎯 重要な初期設定
+
+### 必須確認事項
+1. **設定ファイル**: `.claude/settings.json` を必ず読み込む
+2. **エージェント一覧**: `.claude/agents/00.agent_list.md` で利用可能なエージェントを確認
+3. **コマンドガイド**: `.claude/commands/ai/README.md` で最適なコマンドを選択
+
+### 推奨MCPサーバー
+- **serena**: セマンティックコード理解とメモリ管理（必須）
+- **context7**: ライブラリドキュメンテーション検索（必須）
+- **sequential-thinking**: 複雑な分析と問題解決（必須）
+- **github**: GitHub統合とPR管理（必須）
+- **playwright**: E2Eテスト自動化（オプション）
+
 ## プロジェクト概要
 
 AutoForgeNexusは、AIプロンプト最適化システム - 包括的なプロンプトエンジニアリング支援プラットフォームです。ユーザーの言語化能力に依存せず、高品質なAIプロンプトの作成・最適化・管理ができる統合環境を提供します。
@@ -15,8 +29,11 @@ AutoForgeNexusは、AIプロンプト最適化システム - 包括的なプロ�
 
 ## アーキテクチャ
 
-- システムはドメイン駆動設計（DDD）原則に従い、クリーンアーキテクチャアプローチを採用
-- Claude Codeを実行する時は、絶対に .claude/commands/ai/README.md 読み込んで最適なコマンドを設定する
+### 設計原則
+- **ドメイン駆動設計（DDD）**: 明確な境界づけられたコンテキストとユビキタス言語
+- **クリーンアーキテクチャ**: 依存性逆転の原則、レイヤー分離
+- **イベント駆動**: CQRS、イベントソーシング、非同期メッセージング
+- **マイクロサービス対応**: 将来のサービス分離を想定した疎結合設計
 
 ### 技術スタック（2025年9月最新版）
 - **バックエンド**: Python 3.13, FastAPI 0.116.1, SQLAlchemy 2.0.32, Pydantic v2
@@ -39,12 +56,6 @@ AutoForgeNexusは、AIプロンプト最適化システム - 包括的なプロ�
 ├── ドメイン層 (エンティティ, 値オブジェクト, 集約)
 └── インフラストラクチャ層 (Turso, Redis, LLMプロバイダー, LangFuse)
 ```
-
-### 主要設計パターン
-- **ドメイン駆動設計**: 明確なドメイン境界とユビキタス言語
-- **イベントソーシング**: 状態変更の完全記録
-- **CQRS**: 最適パフォーマンスのための読み書き分離
-- **マイクロサービス対応**: 将来のサービス分離を想定した設計
 
 ## 開発コマンド
 
@@ -260,31 +271,94 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8000
 
 ## Claude Code設定
 
-### モデル固定設定
-- **絶対使用モデル**: Claude 3.5 Sonnet (Opus 4.1)
-- **フォールバック**: なし - 必ずOpus 4.1を使用
-- **理由**: プロジェクトの複雑性とコード品質要求のため
+### 🤖 モデル設定
+- **使用モデル**: Claude Opus 4.1 (`claude-opus-4-1-20250805`)
+- **最大トークン**: 32,000
+- **温度**: 0.2（一貫性重視）
+- **タイムアウト**: 120秒
 
-### 必須MCP (Model Context Protocol) サーバー
+### 📦 必須MCPサーバー
 ```bash
-# 必要なMCPサーバーの再インストール
-claude mcp add context7        # ライブラリドキュメンテーション検索
-claude mcp add sequential      # 複雑な分析・デバッグ
-claude mcp add serena          # セマンティックコード理解
-claude mcp add playwright      # ブラウザ自動化・テスト
+# MCPサーバーはnpxで自動インストールされます（手動インストール不要）
+# 設定は .claude/settings.json を参照
 
-# MCP設定確認
-claude mcp list               # インストール済みMCP確認
-claude mcp status             # MCP状態確認
+# 必須サーバー
+- serena          # セマンティックコード理解・メモリ管理
+- context7        # ライブラリドキュメンテーション検索
+- sequential      # 複雑な分析・体系的問題解決
+- github          # GitHub統合・PR管理
+
+# オプションサーバー
+- playwright      # ブラウザ自動化・E2Eテスト
+- brave-search    # Web検索（要API KEY）
+- desktop-commander # デスクトップ操作
 ```
 
-### Claude Agentの設定
-このプロジェクトには高度な`.claude/`ディレクトリが含まれています：
-- **エージェント定義**: 異なる開発タスク用の27+専門エージェント
-- **コアルール**: 開発原則、品質ゲート、アーキテクチャパターン
-- **イベント契約**: イベント駆動アーキテクチャ用システムイベント定義
+### 🎭 専門エージェント（30種類）
 
-このプロジェクトで作業する際は、システムアーキテクチャ、プロンプトエンジニアリング、LLM統合、評価エンジン開発などのドメイン固有タスクに特化エージェントを活用してください。
+#### アーキテクチャ設計
+- `system-architect`: システム全体設計、技術選定
+- `domain-modeller`: DDD境界コンテキスト、集約設計
+- `api-designer`: OpenAPI/GraphQL/gRPC設計
+
+#### フロントエンド開発
+- `frontend-architect`: React 19/Next.js 15.5アーキテクチャ
+- `uiux-designer`: shadcn/ui、OKLCH色空間
+- `real-time-specialist`: WebSocket/WebRTC実装
+
+#### バックエンド開発
+- `backend-developer`: Python 3.13/FastAPI実装
+- `database-administrator`: Turso/Redis管理
+- `vector-specialist`: libSQL Vector検索最適化
+- `event-bus-manager`: Redis Streams/CQRS実装
+
+#### 品質・運用
+- `test-automation-engineer`: Playwright/pytest自動化
+- `performance-optimizer`: Core Web Vitals最適化
+- `observability-engineer`: LangFuse/監視設定
+- `version-control-specialist`: Git戦略・PR管理
+
+### 🔧 開発ワークフロー
+
+#### 1. セッション開始
+```bash
+# プロジェクトをアクティベート
+serena activate /path/to/AutoForgeNexus
+
+# 前回のセッションを読み込み
+/sc:load
+
+# 現在の状態確認
+git status && git branch
+```
+
+#### 2. 実装作業
+```bash
+# 適切なエージェントを選択
+/ai:core:team --task "認証機能実装"
+
+# または個別エージェント実行
+/ai:backend:implement auth-system
+/ai:frontend:implement login-ui
+```
+
+#### 3. 品質チェック
+```bash
+# 自動品質チェック
+/ai:quality:analyze --full
+/ai:quality:security scan
+/ai:quality:tdd coverage --target 80
+```
+
+#### 4. セッション終了
+```bash
+# 作業内容を保存
+/sc:save
+
+# コミット・PR作成
+/ai:development:git commit --granular
+/ai:development:git pr --auto-merge
+```
 
 ## 重要なコンテキスト
 
@@ -452,4 +526,47 @@ pnpm add -D @types/react@latest @types/react-dom@latest
 # Turbopack有効化
 pnpm dev --turbo
 pnpm build --turbo
+```
+
+## 📋 重要な作業指針
+
+### ✅ 必須ルール
+1. **要求された作業のみ実行** - 追加機能の勝手な実装禁止
+2. **既存ファイル優先** - 新規作成より既存ファイル編集を優先
+3. **ドキュメント作成制限** - 明示的要求がない限りREADME等を作成しない
+4. **テストカバレッジ遵守** - Backend 80%、Frontend 75%必須
+5. **型安全性厳守** - mypy --strict、tsc --strict必須
+
+### 🚀 推奨プラクティス
+- **並列処理優先**: 独立したタスクは並列実行
+- **TodoWrite活用**: 3段階以上のタスクは必ずTodo管理
+- **エージェント活用**: タスクに適した専門エージェントを選択
+- **メモリ永続化**: Serenaメモリでセッション間の継続性確保
+- **品質ゲート**: コミット前にlint/typecheck/test実行
+
+### ⚠️ 注意事項
+- **秘密情報管理**: .env、API KEY等を絶対にコミットしない
+- **ブランチ戦略**: main直接編集禁止、必ずフィーチャーブランチ使用
+- **コミット規約**: Conventional Commits形式で日本語メッセージ
+- **PR要件**: 最低1名のレビュー必須、CI全パス必須
+
+### 🎯 クイックスタート
+```bash
+# 1. プロジェクト初期化
+git clone https://github.com/daishiman/AutoForgeNexus.git
+cd AutoForgeNexus
+cp .claude/.env.example .env
+
+# 2. Claude Codeでセッション開始
+serena activate .
+/sc:load
+
+# 3. 開発開始
+/ai:core:init              # プロジェクト初期化
+/ai:core:team --planning    # タスク計画
+/ai:development:implement   # 実装開始
+
+# 4. 品質チェック・デプロイ
+/ai:quality:analyze
+/ai:operations:deploy
 ```

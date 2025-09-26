@@ -1,0 +1,274 @@
+{
+  "projectName": "AutoForgeNexus",
+  "description": "AIプロンプト最適化システム - 包括的なプロンプトエンジニアリング支援プラットフォーム",
+  "version": "1.0.0",
+  "model": "claude-opus-4-1-20250805",
+  "maxOutputTokens": 32000,
+  "temperature": 0.2,
+  "responseTimeout": 120000,
+  "permissions": {
+    "recommendedAllow": [
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__serena__write_memory",
+      "mcp__serena__think_about_task_adherence",
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__think_about_whether_you_are_done",
+      "mcp__serena__list_memories",
+      "mcp__serena__activate_project",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_navigate",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Bash(npm run:*)",
+      "Bash(pnpm run:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(ruff:*)",
+      "Bash(mypy:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "requiredMcpServers": {
+    "serena": {
+      "description": "セマンティックコード理解とプロジェクトメモリ管理",
+      "required": true
+    },
+    "context7": {
+      "description": "ライブラリドキュメンテーション検索",
+      "required": true
+    },
+    "sequential-thinking": {
+      "description": "複雑な分析と体系的問題解決",
+      "required": true
+    },
+    "playwright": {
+      "description": "ブラウザ自動化とE2Eテスト",
+      "required": false
+    },
+    "github": {
+      "description": "GitHub統合とPR管理",
+      "required": true
+    }
+  },
+  "projectStructure": {
+    "architecture": "domain-driven-design",
+    "layers": [
+      "presentation",
+      "application",
+      "domain",
+      "infrastructure"
+    ],
+    "primaryLanguages": {
+      "backend": "Python",
+      "frontend": "TypeScript"
+    }
+  },
+  "techStack": {
+    "backend": {
+      "runtime": "Python 3.13",
+      "framework": "FastAPI 0.116.1",
+      "orm": "SQLAlchemy 2.0.32",
+      "validation": "Pydantic v2"
+    },
+    "frontend": {
+      "runtime": "Node.js 22 LTS",
+      "framework": "Next.js 15.5",
+      "ui": "React 19.1.0",
+      "language": "TypeScript 5.9.2",
+      "styling": "Tailwind CSS 4.0",
+      "components": "shadcn/ui"
+    },
+    "database": {
+      "primary": "Turso (libSQL)",
+      "cache": "Redis 7.4.1",
+      "vector": "libSQL Vector Extension"
+    },
+    "infrastructure": {
+      "edge": "Cloudflare Workers",
+      "storage": "Cloudflare R2",
+      "cdn": "Cloudflare Pages",
+      "container": "Docker 24.0+"
+    },
+    "ai": {
+      "orchestration": "LangChain 0.3.27 + LangGraph 0.6.7",
+      "llmProxy": "LiteLLM 1.76.1",
+      "observability": "LangFuse"
+    },
+    "auth": "Clerk"
+  },
+  "qualityStandards": {
+    "testCoverage": {
+      "backend": 80,
+      "frontend": 75
+    },
+    "linting": {
+      "python": "ruff 0.7.4",
+      "typescript": "eslint"
+    },
+    "typeChecking": {
+      "python": "mypy --strict",
+      "typescript": "tsc --strict"
+    },
+    "testing": {
+      "unit": ["pytest", "jest"],
+      "e2e": "playwright",
+      "load": ["k6", "locust"]
+    },
+    "performance": {
+      "api": {
+        "p95": "< 200ms",
+        "p99": "< 500ms"
+      },
+      "webVitals": {
+        "LCP": "< 2.5s",
+        "INP": "< 200ms",
+        "CLS": "< 0.1",
+        "FCP": "< 1.8s",
+        "TTFB": "< 800ms"
+      }
+    },
+    "security": {
+      "scanning": ["trivy", "snyk"],
+      "compliance": ["OWASP", "GDPR", "CCPA"]
+    }
+  },
+  "developmentWorkflow": {
+    "vcs": {
+      "platform": "GitHub",
+      "strategy": "trunk-based-development",
+      "commitConvention": "conventional-commits",
+      "branchProtection": true
+    },
+    "ci": {
+      "platform": "GitHub Actions",
+      "checks": [
+        "lint",
+        "typecheck",
+        "test",
+        "security-scan",
+        "build"
+      ],
+      "deploymentEnvironments": [
+        "development",
+        "staging",
+        "production"
+      ]
+    },
+    "codeReview": {
+      "required": true,
+      "minApprovals": 1,
+      "autoMerge": false
+    }
+  },
+  "agents": {
+    "total": 30,
+    "categories": {
+      "architecture": [
+        "system-architect",
+        "domain-modeller",
+        "api-designer"
+      ],
+      "frontend": [
+        "frontend-architect",
+        "uiux-designer",
+        "real-time-specialist"
+      ],
+      "backend": [
+        "backend-developer",
+        "database-administrator",
+        "vector-specialist",
+        "event-bus-manager"
+      ],
+      "infrastructure": [
+        "edge-computing-specialist",
+        "security-architect",
+        "sre-agent"
+      ],
+      "quality": [
+        "test-automation-engineer",
+        "performance-optimizer",
+        "observability-engineer"
+      ],
+      "process": [
+        "version-control-specialist",
+        "technical-writer",
+        "product-manager"
+      ]
+    },
+    "autoActivation": {
+      "planning": ["system-architect", "domain-modeller"],
+      "implementation": ["backend-developer", "frontend-architect"],
+      "testing": ["test-automation-engineer"],
+      "optimization": ["performance-optimizer"],
+      "deployment": ["sre-agent", "edge-computing-specialist"]
+    }
+  },
+  "features": {
+    "core": [
+      "テンプレートとAI支援による段階的プロンプト作成",
+      "多層評価メトリクスによる自動評価・最適化",
+      "Git-likeバージョニング（ブランチ、マージ、ロールバック）",
+      "100+プロバイダー統合とコスト最適化"
+    ],
+    "innovative": [
+      "意図差分ビューワー",
+      "スタイル・ゲノム",
+      "プロンプトSLO",
+      "評価ヒートマップ",
+      "依存関係グラフ",
+      "A/Bテスト",
+      "コスト最適化エンジン",
+      "協調編集",
+      "カスタムプラグイン",
+      "エンタープライズSSO"
+    ]
+  },
+  "commands": {
+    "dev": {
+      "backend": "cd backend && uvicorn src.main:app --reload --host 0.0.0.0 --port 8000",
+      "frontend": "cd frontend && pnpm dev --turbo",
+      "docker": "docker-compose -f docker-compose.dev.yml up"
+    },
+    "test": {
+      "backend": "cd backend && pytest tests/ --cov=src --cov-fail-under=80",
+      "frontend": "cd frontend && pnpm test",
+      "e2e": "cd frontend && pnpm test:e2e"
+    },
+    "quality": {
+      "lint": "make lint-all",
+      "typecheck": "make typecheck-all",
+      "security": "make security-scan"
+    },
+    "build": {
+      "backend": "cd backend && python -m build",
+      "frontend": "cd frontend && pnpm build",
+      "docker": "docker-compose build"
+    }
+  },
+  "documentation": {
+    "readme": "/README.md",
+    "claude": "/CLAUDE.md",
+    "agents": "/.claude/agents/",
+    "api": "/docs/api/",
+    "architecture": "/docs/architecture/",
+    "setup": "/docs/setup/"
+  },
+  "metadata": {
+    "created": "2024-09-23",
+    "lastUpdated": "2025-09-26",
+    "maintainers": ["daishiman"],
+    "license": "MIT",
+    "repository": "https://github.com/daishiman/AutoForgeNexus"
+  }
+}
