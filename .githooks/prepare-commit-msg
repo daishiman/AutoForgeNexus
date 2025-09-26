@@ -1,0 +1,85 @@
+#!/bin/bash
+# Prepare-commit-msg hook: コミットメッセージテンプレートの準備
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+# マージコミットやリベースの場合はスキップ
+if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "squash" ]; then
+    exit 0
+fi
+
+# 既存のメッセージがある場合はスキップ
+if [ -s "$COMMIT_MSG_FILE" ]; then
+    exit 0
+fi
+
+# ブランチ名から自動的にタイプとスコープを推測
+BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+TYPE=""
+SCOPE=""
+
+case "$BRANCH_NAME" in
+    feature/*)
+        TYPE="feat"
+        SCOPE=$(echo "$BRANCH_NAME" | sed 's/feature\///' | cut -d'-' -f1)
+        ;;
+    bugfix/*)
+        TYPE="fix"
+        SCOPE=$(echo "$BRANCH_NAME" | sed 's/bugfix\///' | cut -d'-' -f1)
+        ;;
+    hotfix/*)
+        TYPE="fix"
+        SCOPE="hotfix"
+        ;;
+    release/*)
+        TYPE="chore"
+        SCOPE="release"
+        ;;
+    docs/*)
+        TYPE="docs"
+        ;;
+    refactor/*)
+        TYPE="refactor"
+        SCOPE=$(echo "$BRANCH_NAME" | sed 's/refactor\///' | cut -d'-' -f1)
+        ;;
+esac
+
+# コミットメッセージテンプレート
+if [ -n "$TYPE" ]; then
+    if [ -n "$SCOPE" ]; then
+        echo "$TYPE($SCOPE): " > "$COMMIT_MSG_FILE"
+    else
+        echo "$TYPE: " > "$COMMIT_MSG_FILE"
+    fi
+    echo "" >> "$COMMIT_MSG_FILE"
+else
+    echo "# Please enter the commit message for your changes." > "$COMMIT_MSG_FILE"
+fi
+
+# ヘルパーコメント追加
+cat >> "$COMMIT_MSG_FILE" << 'EOF'
+#
+# Conventional Commits format:
+# <type>(<scope>): <subject>
+#
+# Types:
+#   feat     : 新機能
+#   fix      : バグ修正
+#   docs     : ドキュメント変更
+#   style    : コードフォーマット変更
+#   refactor : リファクタリング
+#   perf     : パフォーマンス改善
+#   test     : テスト追加・修正
+#   build    : ビルドシステム変更
+#   ci       : CI/CD設定変更
+#   chore    : その他の変更
+#
+# Remember:
+# - Use present tense ("add" not "added")
+# - Keep first line under 100 characters
+# - Reference issues with #issue-number
+# - Add BREAKING CHANGE: for breaking changes
+EOF

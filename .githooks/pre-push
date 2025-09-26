@@ -1,0 +1,82 @@
+#!/bin/bash
+# Pre-push hook: プッシュ前の最終チェック
+
+set -e
+
+echo "🚀 Pre-push checks starting..."
+
+PROTECTED_BRANCH="main"
+CURRENT_BRANCH=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+# 1. mainブランチへの直接プッシュ防止
+if [ "$CURRENT_BRANCH" = "$PROTECTED_BRANCH" ]; then
+    echo "❌ Direct push to $PROTECTED_BRANCH branch is not allowed!"
+    echo "💡 Please create a pull request instead"
+    exit 1
+fi
+
+# 2. developブランチへの直接プッシュ警告
+if [ "$CURRENT_BRANCH" = "develop" ]; then
+    echo "⚠️ Warning: Pushing directly to develop branch"
+    read -p "Are you sure? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# 3. テストの実行（環境が整っている場合）
+echo "🧪 Running tests..."
+
+# Pythonテスト
+if [ -d "backend" ] && [ -f "backend/pytest.ini" ]; then
+    echo "  Running Python tests..."
+    (cd backend && python -m pytest tests/ -x --tb=short) || {
+        echo "❌ Python tests failed"
+        echo "💡 Fix tests before pushing"
+        exit 1
+    }
+fi
+
+# TypeScriptテスト
+if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+    if grep -q '"test"' frontend/package.json; then
+        echo "  Running TypeScript tests..."
+        (cd frontend && pnpm test:ci 2>/dev/null || npm test) || {
+            echo "❌ TypeScript tests failed"
+            echo "💡 Fix tests before pushing"
+            exit 1
+        }
+    fi
+fi
+
+# 4. ビルドチェック
+echo "🏗️ Checking build..."
+
+# TypeScriptビルド
+if [ -d "frontend" ] && [ -f "frontend/tsconfig.json" ]; then
+    echo "  Checking TypeScript compilation..."
+    (cd frontend && npx tsc --noEmit) || {
+        echo "❌ TypeScript compilation failed"
+        echo "💡 Fix type errors before pushing"
+        exit 1
+    }
+fi
+
+# 5. ブランチ名の検証
+VALID_BRANCH_PATTERN="^(feature|release|hotfix|bugfix|support)/[a-z0-9-]+$"
+if ! echo "$CURRENT_BRANCH" | grep -qE "$VALID_BRANCH_PATTERN|^develop$"; then
+    echo "⚠️ Warning: Branch name '$CURRENT_BRANCH' doesn't follow naming convention"
+    echo "💡 Expected pattern: feature/*, release/*, hotfix/*, bugfix/*, support/*"
+fi
+
+# 6. コミット履歴の確認
+COMMITS=$(git log origin/$CURRENT_BRANCH..HEAD --oneline 2>/dev/null | wc -l || echo "0")
+if [ "$COMMITS" -eq "0" ]; then
+    echo "ℹ️ No new commits to push"
+elif [ "$COMMITS" -gt "20" ]; then
+    echo "⚠️ Warning: Pushing $COMMITS commits. Consider squashing if they're related"
+fi
+
+echo "✅ Pre-push checks passed!"
+echo "📤 Pushing to remote..."
