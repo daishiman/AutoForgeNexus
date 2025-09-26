@@ -1,4 +1,6 @@
 {
+  "_description": "このファイルはプロジェクト共有設定です。Claude Codeが参照する推奨設定とドキュメントを提供します。",
+  "_note": "実際の動作設定は settings.local.json で行われます。このファイルはチーム共有とドキュメント目的です。",
   "projectName": "AutoForgeNexus",
   "description": "AIプロンプト最適化システム - 包括的なプロンプトエンジニアリング支援プラットフォーム",
   "version": "1.0.0",
@@ -173,15 +175,53 @@
   },
   "agents": {
     "total": 30,
+    "fullList": [
+      "01.system_architect_agent",
+      "02.domain_modeller_agent",
+      "03.api_designer_agent",
+      "04.prompt_engineering_specialist_agent",
+      "05.llm_integration_agent",
+      "06.evaluation_engine_agent",
+      "07.workflow_orchestrator_agent",
+      "08.uiux_designer_agent",
+      "09.frontend_architect_agent",
+      "10.real-time_features_specialist_agent",
+      "11.backend_developer_agent",
+      "12.database_administrator_agent",
+      "13.vector_database_specialist_agent",
+      "14.event-bus_manager_agent",
+      "15.edge_computing_specialist_agent",
+      "16.security_architect_agent",
+      "17.performance_optimizer_agent",
+      "18.observability_engineer_agent",
+      "19.test_automation_engineer_agent",
+      "20.product_manager_agent",
+      "21.technical_documentation_agent",
+      "22.devops_coordinator_agent",
+      "23.data_migration_specialist_agent",
+      "24.compliance_officer_agent",
+      "25.cost_optimization_agent",
+      "26.user_research_agent",
+      "27.data_analyst_agent",
+      "28.sre_agent",
+      "29.qa_coordinator_agent",
+      "30.version-control-specialist"
+    ],
     "categories": {
       "architecture": [
         "system-architect",
         "domain-modeller",
         "api-designer"
       ],
+      "promptEngineering": [
+        "prompt-engineering-specialist",
+        "llm-integration",
+        "evaluation-engine",
+        "workflow-orchestrator"
+      ],
       "frontend": [
-        "frontend-architect",
         "uiux-designer",
+        "frontend-architect",
         "real-time-specialist"
       ],
       "backend": [
@@ -193,17 +233,26 @@
       "infrastructure": [
         "edge-computing-specialist",
         "security-architect",
-        "sre-agent"
+        "sre-agent",
+        "devops-coordinator"
       ],
       "quality": [
         "test-automation-engineer",
         "performance-optimizer",
-        "observability-engineer"
+        "observability-engineer",
+        "qa-coordinator"
+      ],
+      "dataManagement": [
+        "data-migration-specialist",
+        "data-analyst",
+        "compliance-officer"
       ],
       "process": [
         "version-control-specialist",
-        "technical-writer",
-        "product-manager"
+        "technical-documentation",
+        "product-manager",
+        "cost-optimization",
+        "user-research"
       ]
     },
     "autoActivation": {
@@ -235,34 +284,170 @@
     ]
   },
   "commands": {
+    "ai": {
+      "data:vector": "/ai:data:vector",
+      "data:analyze": "/ai:data:analyze",
+      "data:migrate": "/ai:data:migrate",
+      "prompt:style-genome": "/ai:prompt:style-genome",
+      "prompt:intent-diff": "/ai:prompt:intent-diff",
+      "prompt:create": "/ai:prompt:create",
+      "prompt:evaluate": "/ai:prompt:evaluate",
+      "development:git": "/ai:development:git",
+      "development:workflow": "/ai:development:workflow",
+      "development:implement": "/ai:development:implement",
+      "quality:security": "/ai:quality:security",
+      "quality:tdd": "/ai:quality:tdd",
+      "quality:analyze": "/ai:quality:analyze",
+      "core:team": "/ai:core:team",
+      "core:sync": "/ai:core:sync",
+      "core:init": "/ai:core:init",
+      "operations:monitor": "/ai:operations:monitor",
+      "operations:deploy": "/ai:operations:deploy",
+      "operations:incident": "/ai:operations:incident",
+      "requirements:define": "/ai:requirements:define",
+      "requirements:domain": "/ai:requirements:domain",
+      "architecture:design": "/ai:architecture:design",
+      "architecture:event": "/ai:architecture:event"
+    },
+    "sc": {
+      "brainstorm": "/sc:brainstorm",
+      "test": "/sc:test",
+      "cleanup": "/sc:cleanup",
+      "design": "/sc:design",
+      "task": "/sc:task",
+      "git": "/sc:git",
+      "save": "/sc:save",
+      "build": "/sc:build",
+      "index": "/sc:index",
+      "load": "/sc:load",
+      "select-tool": "/sc:select-tool",
+      "workflow": "/sc:workflow",
+      "analyze": "/sc:analyze",
+      "reflect": "/sc:reflect",
+      "explain": "/sc:explain",
+      "improve": "/sc:improve",
+      "troubleshoot": "/sc:troubleshoot",
+      "implement": "/sc:implement",
+      "estimate": "/sc:estimate",
+      "spawn": "/sc:spawn",
+      "document": "/sc:document"
+    },
     "dev": {
       "backend": "cd backend && uvicorn src.main:app --reload --host 0.0.0.0 --port 8000",
       "frontend": "cd frontend && pnpm dev --turbo",
-      "docker": "docker-compose -f docker-compose.dev.yml up"
+      "docker": "docker-compose -f docker-compose.dev.yml up",
+      "db:migrate": "cd backend && alembic upgrade head",
+      "db:rollback": "cd backend && alembic downgrade -1",
+      "redis": "redis-server --daemonize yes",
+      "turso": "turso dev --port 8080"
     },
     "test": {
       "backend": "cd backend && pytest tests/ --cov=src --cov-fail-under=80",
+      "backend:unit": "cd backend && pytest tests/unit -v",
+      "backend:integration": "cd backend && pytest tests/integration -v",
       "frontend": "cd frontend && pnpm test",
-      "e2e": "cd frontend && pnpm test:e2e"
+      "frontend:unit": "cd frontend && pnpm test:unit",
+      "frontend:integration": "cd frontend && pnpm test:integration",
+      "e2e": "cd frontend && pnpm test:e2e",
+      "performance": "k6 run tests/performance/k6-scenario.js",
+      "load": "locust -f tests/performance/locustfile.py --host=http://localhost:8000"
     },
     "quality": {
       "lint": "make lint-all",
+      "lint:python": "cd backend && ruff check src/ tests/ --fix",
+      "lint:typescript": "cd frontend && pnpm lint --fix",
+      "format": "make format-all",
+      "format:python": "cd backend && ruff format src/ tests/",
+      "format:typescript": "cd frontend && pnpm prettier --write .",
       "typecheck": "make typecheck-all",
-      "security": "make security-scan"
+      "typecheck:python": "cd backend && mypy src/ --strict",
+      "typecheck:typescript": "cd frontend && pnpm tsc --noEmit",
+      "security": "make security-scan",
+      "security:python": "cd backend && bandit -r src/",
+      "security:dependencies": "trivy fs --security-checks vuln .",
+      "sonar": "sonar-scanner"
     },
     "build": {
       "backend": "cd backend && python -m build",
       "frontend": "cd frontend && pnpm build",
-      "docker": "docker-compose build"
+      "docker": "docker-compose build",
+      "docker:prod": "docker-compose -f docker-compose.prod.yml build",
+      "clean": "rm -rf backend/dist frontend/.next frontend/out"
+    },
+    "deploy": {
+      "cloudflare:workers": "wrangler deploy",
+      "cloudflare:pages": "wrangler pages deploy frontend/out",
+      "turso:production": "turso db create autoforgenexus --from-db autoforgenexus-dev",
+      "migration:production": "cd backend && alembic upgrade head --env production"
+    },
+    "monitoring": {
+      "start": "docker-compose -f docker-compose.monitoring.yml up -d",
+      "stop": "docker-compose -f docker-compose.monitoring.yml down",
+      "logs": "docker-compose -f docker-compose.monitoring.yml logs -f",
+      "grafana": "open http://localhost:3001",
+      "prometheus": "open http://localhost:9090",
+      "langfuse": "open http://localhost:3002"
+    },
+    "git": {
+      "flow:init": "git flow init -d",
+      "feature:start": "git flow feature start",
+      "feature:finish": "git flow feature finish",
+      "release:start": "git flow release start",
+      "release:finish": "git flow release finish",
+      "hotfix:start": "git flow hotfix start",
+      "hotfix:finish": "git flow hotfix finish"
     }
   },
   "documentation": {
-    "readme": "/README.md",
-    "claude": "/CLAUDE.md",
-    "agents": "/.claude/agents/",
-    "api": "/docs/api/",
-    "architecture": "/docs/architecture/",
-    "setup": "/docs/setup/"
+    "main": {
+      "readme": "/README.md",
+      "claude": "/CLAUDE.md",
+      "license": "/LICENSE"
+    },
+    "claude": {
+      "agents": "/.claude/agents/",
+      "agentList": "/.claude/agents/00.agent_list.md",
+      "commands": "/.claude/commands/",
+      "core": "/.claude/core/",
+      "modes": "/.claude/modes/",
+      "mcp": "/.claude/mcp/",
+      "developmentGuide": "/.claude/development_guide.md",
+      "settings": "/.claude/settings.json"
+    },
+    "architecture": {
+      "system": "/docs/architecture/system_architecture.md",
+      "domain": "/docs/architecture/domain/",
+      "domainModel": "/docs/architecture/domain/domain_model.md",
+      "api": "/docs/api/"
+    },
+    "development": {
+      "pythonVsJs": "/docs/development/python_vs_js_ai_ecosystem_analysis.md",
+      "frontendStrategy": "/docs/development/frontend_environment_strategy.md"
+    },
+    "setup": {
+      "completeGuide": "/docs/setup/ENVIRONMENT_SETUP_COMPLETE_GUIDE.md",
+      "phase1": "/docs/setup/PHASE1_ENVIRONMENT_SETUP_TASKBREAKDOWN.md",
+      "phase2": "/docs/setup/PHASE2_INFRASTRUCTURE_DEVOPS_TASKBREAKDOWN.md",
+      "phase3": "/docs/setup/PHASE3_BACKEND_ENVIRONMENT_SETUP.md",
+      "phase4": "/docs/setup/PHASE4_DATABASE_VECTOR_SETUP.md",
+      "phase5": "/docs/setup/PHASE5_FRONTEND_ENVIRONMENT_SETUP.md",
+      "phase6": "/docs/setup/PHASE6_INTEGRATION_QUALITY_ASSURANCE.md",
+      "troubleshooting": "/docs/setup/troubleshooting-guide.md",
+      "faq": "/docs/setup/faq.md",
+      "cicd": "/docs/setup/optimized_cicd_workflows.md"
+    },
+    "requirements": {
+      "product": "/docs/requirements/product_requirements.md",
+      "userStories": "/docs/requirements/user_stories.md",
+      "features": "/docs/requirements/innovative_features.md"
+    },
+    "legacy": {
+      "concept": "/docs/legacy/プロンプト作成支援システム 構想整理書.md",
+      "techStack": "/docs/legacy/技術スタック.md"
+    },
+    "security": {
+      "policy": "/docs/security/security_policy.md"
+    }
   },
   "metadata": {
     "created": "2024-09-23",
