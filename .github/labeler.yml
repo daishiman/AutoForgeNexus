@@ -1,0 +1,87 @@
+# GitHub Labeler configuration for auto-labeling PRs
+
+backend:
+  - backend/**/*
+  - '*.py'
+  - requirements*.txt
+  - Pipfile*
+  - pyproject.toml
+  - alembic.ini
+
+frontend:
+  - frontend/**/*
+  - '*.ts'
+  - '*.tsx'
+  - '*.js'
+  - '*.jsx'
+  - package*.json
+  - tsconfig*.json
+  - next.config.js
+
+documentation:
+  - docs/**/*
+  - '*.md'
+  - README*
+  - CONTRIBUTING*
+  - CHANGELOG*
+
+docker:
+  - docker/**/*
+  - Dockerfile*
+  - docker-compose*.yml
+  - .dockerignore
+
+ci/cd:
+  - .github/workflows/*
+  - .github/actions/*
+  - scripts/deploy*
+  - scripts/ci*
+
+testing:
+  - tests/**/*
+  - test/**/*
+  - '*test*.py'
+  - '*test*.ts'
+  - '*test*.js'
+  - jest.config*
+  - pytest.ini
+  - .coveragerc
+
+database:
+  - migrations/**/*
+  - alembic/**/*
+  - '*.sql'
+  - schema/**/*
+
+security:
+  - security/**/*
+  - .github/dependabot.yml
+  - SECURITY.md
+  - '*auth*'
+  - '*security*'
+
+dependencies:
+  - requirements*.txt
+  - package*.json
+  - Pipfile*
+  - pyproject.toml
+  - pnpm-lock.yaml
+  - poetry.lock
+
+configuration:
+  - .editorconfig
+  - .prettierrc*
+  - .eslintrc*
+  - .gitignore
+  - .gitattributes
+  - '*.config.js'
+  - '*.config.ts'
+  - .env.example
+
+ai/ml:
+  - ml/**/*
+  - prompts/**/*
+  - evaluations/**/*
+  - '*llm*'
+  - '*ai*'
+  - '*vector*'

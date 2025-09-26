@@ -1,0 +1,221 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+  TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+jobs:
+  # Deployment decision
+  deployment-decision:
+    name: Deployment Decision
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.decide.outputs.environment }}
+      should_deploy: ${{ steps.decide.outputs.should_deploy }}
+
+    steps:
+      - name: 🎯 Decide deployment target
+        id: decide
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+  # Backend deployment
+  deploy-backend:
+    name: Deploy Backend
+    needs: deployment-decision
+    if: needs.deployment-decision.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.deployment-decision.outputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Cloudflare Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 📦 Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🚀 Deploy to Cloudflare Workers
+        id: deploy
+        working-directory: ./backend
+        run: |
+          if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
+            wrangler deploy --env production
+            echo "url=https://api.autoforgenexus.com" >> $GITHUB_OUTPUT
+          else
+            wrangler deploy --env staging
+            echo "url=https://api-staging.autoforgenexus.com" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🗄️ Run database migrations
+        working-directory: ./backend
+        run: |
+          export DATABASE_URL="${{ env.TURSO_DATABASE_URL }}"
+          export DATABASE_AUTH_TOKEN="${{ env.TURSO_AUTH_TOKEN }}"
+          alembic upgrade head
+
+      - name: 🧪 Smoke tests
+        run: |
+          curl -f ${{ steps.deploy.outputs.url }}/health || exit 1
+
+  # Frontend deployment
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [deployment-decision, deploy-backend]
+    if: needs.deployment-decision.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.deployment-decision.outputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: 📦 Install dependencies
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔧 Set environment variables
+        working-directory: ./frontend
+        run: |
+          if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
+            echo "NEXT_PUBLIC_API_URL=https://api.autoforgenexus.com" >> .env.production
+            echo "NEXT_PUBLIC_ENVIRONMENT=production" >> .env.production
+          else
+            echo "NEXT_PUBLIC_API_URL=https://api-staging.autoforgenexus.com" >> .env.staging
+            echo "NEXT_PUBLIC_ENVIRONMENT=staging" >> .env.staging
+          fi
+
+      - name: 🏗️ Build application
+        working-directory: ./frontend
+        run: |
+          if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
+            pnpm build:production
+          else
+            pnpm build:staging
+          fi
+
+      - name: 🚀 Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: autoforgenexus-frontend
+          directory: ./frontend/out
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ needs.deployment-decision.outputs.environment }}
+
+      - name: 🧪 Smoke tests
+        run: |
+          if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
+            curl -f https://autoforgenexus.com || exit 1
+            echo "url=https://autoforgenexus.com" >> $GITHUB_OUTPUT
+          else
+            curl -f https://staging.autoforgenexus.com || exit 1
+            echo "url=https://staging.autoforgenexus.com" >> $GITHUB_OUTPUT
+          fi
+
+  # Post-deployment tasks
+  post-deployment:
+    name: Post Deployment
+    needs: [deploy-backend, deploy-frontend]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔔 Send deployment notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Deployment Complete! 🎉
+            Environment: ${{ needs.deployment-decision.outputs.environment }}
+            Backend: ${{ needs.deploy-backend.outputs.url }}
+            Frontend: ${{ needs.deploy-frontend.outputs.url }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+      - name: 📊 Update deployment metrics
+        run: |
+          echo "Deployment completed at $(date)" >> deployment.log
+          # Add custom metrics tracking here
+
+  # Rollback mechanism
+  rollback:
+    name: Rollback Deployment
+    needs: [deploy-backend, deploy-frontend]
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔄 Initiate rollback
+        run: |
+          echo "⚠️ Deployment failed, initiating rollback..."
+          # Add rollback logic here
+
+      - name: 🔔 Send rollback notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            Deployment Failed! ❌
+            Rollback initiated for ${{ needs.deployment-decision.outputs.environment }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
