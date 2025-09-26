@@ -1,0 +1,80 @@
+# CODEOWNERS file for AutoForgeNexus
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# 注: このプロジェクトは個人開発のため、Claude Codeによる自動レビューを活用します。
+# GitHub上ではコードオーナーは設定者本人ですが、実際のレビューはClaude Codeが実施します。
+
+# Default owners for everything in the repo
+# レビュー担当: Claude Code (AI Code Review)
+* @daishiman
+
+# Backend (Python/FastAPI)
+/backend/ @daishiman
+*.py @daishiman
+requirements*.txt @daishiman
+Pipfile* @daishiman
+pyproject.toml @daishiman
+setup.py @daishiman
+
+# Frontend (Next.js/React)
+/frontend/ @daishiman
+*.ts @daishiman
+*.tsx @daishiman
+*.js @daishiman
+*.jsx @daishiman
+package*.json @daishiman
+tsconfig*.json @daishiman
+
+# Infrastructure & DevOps
+/docker/ @daishiman
+docker-compose*.yml @daishiman
+Dockerfile* @daishiman
+/.github/ @daishiman
+/scripts/ @daishiman
+*.sh @daishiman
+
+# Documentation
+/docs/ @daishiman
+*.md @daishiman
+README* @daishiman
+
+# Configuration
+.editorconfig @daishiman
+.prettierrc @daishiman
+.eslintrc* @daishiman
+.gitignore @daishiman
+.gitattributes @daishiman
+.env.example @daishiman
+
+# CI/CD
+/.github/workflows/ @daishiman
+/.github/actions/ @daishiman
+
+# Security & Compliance
+/security/ @daishiman
+SECURITY.md @daishiman
+
+# Database
+/migrations/ @daishiman
+*.sql @daishiman
+alembic.ini @daishiman
+
+# Testing
+/tests/ @daishiman
+*test*.py @daishiman
+*test*.ts @daishiman
+*test*.js @daishiman
+jest.config* @daishiman
+pytest.ini @daishiman
+.coveragerc @daishiman
+
+# AI/ML Components
+/ml/ @daishiman
+/prompts/ @daishiman
+/evaluations/ @daishiman
+
+# Special files requiring multiple reviewers (when team grows)
+# Uncomment and add team members as the project scales
+# /backend/src/core/ @daishiman @backend-lead
+# /frontend/src/components/ui/ @daishiman @frontend-lead
+# /.github/workflows/deploy.yml @daishiman @devops-lead
