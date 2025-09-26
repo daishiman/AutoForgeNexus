@@ -1,0 +1,164 @@
+{
+  "description": "AutoForgeNexus用Claudeフック設定",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "name": "Python Formatter",
+        "matcher": "Edit|Write|MultiEdit",
+        "condition": "*.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd backend && ruff format $CLAUDE_FILE_PATHS",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "cd backend && ruff check --fix $CLAUDE_FILE_PATHS",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "name": "TypeScript/JavaScript Formatter",
+        "matcher": "Edit|Write|MultiEdit",
+        "condition": "*.(js|ts|jsx|tsx)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd frontend && pnpm prettier --write $CLAUDE_FILE_PATHS",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "cd frontend && pnpm eslint --fix $CLAUDE_FILE_PATHS",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "name": "Python Type Check",
+        "matcher": "Edit|Write|MultiEdit",
+        "condition": "*.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd backend && mypy $CLAUDE_FILE_PATHS --strict",
+            "timeout": 30,
+            "continueOnError": true
+          }
+        ]
+      },
+      {
+        "name": "TypeScript Type Check",
+        "matcher": "Edit|Write|MultiEdit",
+        "condition": "*.(ts|tsx)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd frontend && pnpm tsc --noEmit $CLAUDE_FILE_PATHS",
+            "timeout": 30,
+            "continueOnError": true
+          }
+        ]
+      },
+      {
+        "name": "Test Runner",
+        "matcher": "Edit|Write|MultiEdit",
+        "condition": "test_*.py|*_test.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd backend && pytest $CLAUDE_FILE_PATHS -v",
+            "timeout": 60,
+            "continueOnError": true
+          }
+        ]
+      },
+      {
+        "name": "Jest Test Runner",
+        "matcher": "Edit|Write|MultiEdit",
+        "condition": "*.test.(js|ts|jsx|tsx)|*.spec.(js|ts|jsx|tsx)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd frontend && pnpm jest $CLAUDE_FILE_PATHS",
+            "timeout": 60,
+            "continueOnError": true
+          }
+        ]
+      },
+      {
+        "name": "Git Commit Status",
+        "matcher": "Bash(git commit:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git status --short && git log --oneline -3",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "name": "Build Verification",
+        "matcher": "Bash(git push:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd backend && python -m py_compile src/**/*.py",
+            "timeout": 30,
+            "continueOnError": true
+          },
+          {
+            "type": "command",
+            "command": "cd frontend && pnpm build --dry-run",
+            "timeout": 60,
+            "continueOnError": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "name": "Session Summary",
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== セッション終了 ===' && date",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "git status --short",
+            "timeout": 5,
+            "continueOnError": true
+          }
+        ]
+      }
+    ],
+    "Error": [
+      {
+        "name": "Error Logger",
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'エラーが発生しました: $CLAUDE_ERROR' >> .claude/error.log",
+            "timeout": 5,
+            "continueOnError": true
+          }
+        ]
+      }
+    ]
+  },
+  "globalSettings": {
+    "enableNotifications": true,
+    "notificationSound": true,
+    "autoSave": true,
+    "autoFormat": true,
+    "strictMode": true
+  }
+}
