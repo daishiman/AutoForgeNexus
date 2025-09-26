@@ -322,7 +322,7 @@ git config commit.template .gitmessage
 **何をやるのか**:
 - main/developブランチの直接push禁止設定
 - プルリクエスト必須設定
-- レビュー必須設定（1名以上）
+- レビュー必須設定（1名以上※claude code含む）
 - ステータスチェック必須設定
 - その他本プロジェクトに必要な設定を行う
 
