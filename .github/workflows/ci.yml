@@ -59,7 +59,7 @@ jobs:
             --cov-fail-under=80
 
       - name: 📊 Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./backend/coverage.xml
           flags: backend
@@ -113,7 +113,7 @@ jobs:
             --coverageThreshold='{"global":{"branches":75,"functions":75,"lines":75,"statements":75}}'
 
       - name: 📊 Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./frontend/coverage/coverage-final.json
           flags: frontend
