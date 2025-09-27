@@ -31,7 +31,7 @@ jobs:
       frontend-exists: ${{ steps.check.outputs.frontend }}
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔍 Check directories
         id: check
@@ -84,7 +84,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔧 Setup Cloudflare Wrangler
         uses: cloudflare/wrangler-action@v3
@@ -137,7 +137,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📦 Install pnpm
         uses: pnpm/action-setup@v3
@@ -204,7 +204,7 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔔 Send deployment notification
         env:
