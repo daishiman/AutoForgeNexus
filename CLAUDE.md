@@ -20,6 +20,20 @@
 - **github**: GitHub 統合と PR 管理（必須）
 - **playwright**: E2E テスト自動化（オプション）
 
+## 📁 ドキュメント管理
+
+すべてのレポート、レビュー、Issueは `docs/` 配下で一元管理されます：
+
+```
+docs/
+├── reports/     # 実装レポート・成果報告
+├── reviews/     # コードレビュー・セキュリティレビュー
+├── issues/      # Issue追跡・課題管理（ISSUE_TRACKING.md参照）
+└── setup/       # セットアップガイド
+```
+
+**重要**: レポートやレビュー結果を作成する際は、必ず上記ディレクトリに配置してください。
+
 ## プロジェクト概要
 
 AutoForgeNexus は、AI プロンプト最適化システム - 包括的なプロンプトエンジニアリ
@@ -572,25 +586,24 @@ pnpm build --turbo
 
 ## 📊 開発進捗状況
 
-### Phase 1: Git・基盤環境 ✅ 完了
+### Phase 1: Git・基盤環境 ✅ 完了 (100%)
 
 - **1.1 Git 環境**: GitFlow、ブランチ保護、コミットテンプレート ✅
-- **1.2 GitHub 設定**:
-  - CI/CD パイプライン（ci.yml, cd.yml） ✅
-  - Issue/PR テンプレート（日本語対応） ✅
-  - セキュリティ設定（CodeQL, Dependabot, TruffleHog） ✅
-  - リリース管理（Release Please） ✅
-  - DevOps 監視（DORA メトリクス、Discord 通知、GitHub Issues） ✅
-- **1.3 CI/CD 環境対応** ✅
-  - 段階的環境構築に対応する環境チェック機能追加
-  - GitHub Actions 権限修正（Issue 作成権限）
-  - Phase 2-6 の進行に応じた自動ジョブ有効化
+- **1.2 GitHub 設定**: CI/CD、Issue/PR テンプレート、セキュリティ設定 ✅
+- **1.3 CI/CD 環境対応**: 段階的環境構築、権限修正 ✅
 
-### Phase 2: インフラ・Docker 環境 🔄 次フェーズ
+### Phase 2: インフラ・監視基盤 🚧 進行中 (85%)
 
-- Docker 開発環境構築
-- docker-compose 設定
-- 監視スタック（Prometheus, Grafana, LangFuse）
+#### 完了項目 ✅
+- **2.1 Docker環境**: 開発環境構築、docker-compose設定 ✅
+- **2.2 Cloudflare設定**: Workers Python、Pages、セキュリティ ✅
+- **2.3 デプロイメント**: CI/CD、自動デプロイ、ロールバック ✅
+- **2.4 監視基盤**: Prometheus、Grafana、LangFuse、構造化ログ ✅
+
+#### 未解決Issue ⚠️
+- Issue #31: SRE運用準備（ランブック、エラーバジェット）
+- Issue #32: セキュリティ強化（PII保護、アクセス制御）
+- Issue #33: 監視コスト最適化（将来拡張）
 
 ### Phase 3-6: 未着手
 
