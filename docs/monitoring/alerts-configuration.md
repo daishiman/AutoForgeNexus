@@ -2,7 +2,7 @@
 
 ## 概要
 
-AutoForgeNexusのアラートシステムは、重要なイベントを自動検知して通知する仕組みです。
+AutoForgeNexusのアラートシステムは、重要なイベントを自動検知してDiscordとGitHub Issuesで通知する仕組みです。
 
 ## アラートの種類
 
@@ -44,24 +44,7 @@ AutoForgeNexusのアラートシステムは、重要なイベントを自動検
 
 ## 通知チャンネル設定
 
-### Slack設定
-
-#### 1. Incoming Webhook作成
-1. [Slack App Directory](https://slack.com/apps)にアクセス
-2. "Incoming Webhooks"を検索して追加
-3. 通知先チャンネルを選択
-4. Webhook URLをコピー
-
-#### 2. GitHub Secrets設定
-```bash
-# GitHub CLIを使用
-gh secret set SLACK_WEBHOOK_URL --body "https://hooks.slack.com/services/..."
-
-# Web UIから設定
-# Settings → Secrets and variables → Actions → New repository secret
-# Name: SLACK_WEBHOOK_URL
-# Value: [Webhook URL]
-```
+AutoForgeNexusでは、DiscordとGitHub Issuesの2つの通知チャンネルをサポートしています。
 
 ### Discord設定
 
@@ -91,6 +74,26 @@ gh secret set DISCORD_WEBHOOK_URL --body "https://discord.com/api/webhooks/..."
 gh secret set METRICS_WEBHOOK_URL --body "https://your-api.com/metrics"
 ```
 
+### GitHub Issues自動作成
+
+以下の条件で自動的にGitHub Issueが作成されます：
+
+1. **セキュリティ関連のワークフロー失敗時**
+   - Securityワークフローの失敗
+   - 自動的に`bug`、`critical`、`workflow-failure`ラベル付与
+
+2. **デプロイメント失敗時**
+   - Deployワークフローの失敗
+   - 詳細なエラー情報と対応手順を含む
+
+3. **パフォーマンス問題発生時**
+   - ワークフロー実行時間が20分を超過
+   - `performance`、`workflow-optimization`ラベル付与
+
+4. **セキュリティIssue作成時**
+   - 重要度分析と自動優先度設定
+   - SLA管理と自動エスカレーション
+
 ## アラートのカスタマイズ
 
 ### 通知条件の変更
@@ -114,28 +117,6 @@ on:
 ```
 
 ## 通知フォーマット
-
-### Slackメッセージ形式
-```json
-{
-  "text": "アラートタイトル",
-  "blocks": [
-    {
-      "type": "header",
-      "text": {
-        "type": "plain_text",
-        "text": "アラート詳細"
-      }
-    },
-    {
-      "type": "section",
-      "fields": [
-        { "type": "mrkdwn", "text": "*項目:*\n値" }
-      ]
-    }
-  ]
-}
-```
 
 ### Discordメッセージ形式
 ```json
@@ -166,10 +147,11 @@ gh workflow run alerts.yml -f alert_type=security
 ```
 
 ### 通知確認ポイント
-1. Webhook URLが正しく設定されているか
-2. 通知チャンネルに権限があるか
+1. Discord Webhook URLが正しく設定されているか
+2. Discord チャンネルに権限があるか
 3. メッセージフォーマットが正しいか
 4. ネットワーク接続が可能か
+5. GitHub Actions権限が適切に設定されているか
 
 ## トラブルシューティング
 
@@ -181,8 +163,8 @@ gh workflow run alerts.yml -f alert_type=security
 gh secret list
 
 # 期待される出力
-SLACK_WEBHOOK_URL     Updated 2024-01-01
 DISCORD_WEBHOOK_URL   Updated 2024-01-01
+METRICS_WEBHOOK_URL   Updated 2024-01-01  # オプション
 ```
 
 #### 2. ワークフローログを確認
@@ -192,11 +174,6 @@ DISCORD_WEBHOOK_URL   Updated 2024-01-01
 
 #### 3. Webhook URLをテスト
 ```bash
-# Slack Webhookテスト
-curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
-  -H 'Content-type: application/json' \
-  --data '{"text":"Test message"}'
-
 # Discord Webhookテスト
 curl -X POST https://discord.com/api/webhooks/YOUR/WEBHOOK/URL \
   -H 'Content-type: application/json' \
@@ -215,10 +192,10 @@ curl -X POST https://discord.com/api/webhooks/YOUR/WEBHOOK/URL \
 ## ベストプラクティス
 
 ### 1. 通知の優先度設定
-- **Critical**: 即座に対応が必要
-- **High**: 当日中に対応
-- **Medium**: 週内に対応
-- **Low**: 情報共有のみ
+- **Critical (P0)**: 1時間以内に対応が必要 → Discord + GitHub Issue
+- **High (P1)**: 4時間以内に対応 → Discord + GitHub Issue
+- **Medium (P2)**: 24時間以内に対応 → GitHub Issue
+- **Low**: 情報共有のみ → ログのみ
 
 ### 2. 通知疲れの防止
 - 重要なアラートのみ通知
@@ -227,10 +204,10 @@ curl -X POST https://discord.com/api/webhooks/YOUR/WEBHOOK/URL \
 - ノイズの削減
 
 ### 3. エスカレーションルール
-1. 初回通知: 開発チャンネル
-2. 未対応30分: メンション付き通知
-3. 未対応1時間: 管理者通知
-4. 未対応2時間: 電話/SMS（オプション）
+1. 初回通知: Discord通知 + GitHub Issue作成
+2. Critical/High: 自動で担当者アサイン
+3. SLA超過: 優先度自動昇格
+4. 長期未対応: 定期リマインド（GitHub Actions）
 
 ### 4. 通知内容の充実
 - エラーの詳細情報を含める
@@ -259,6 +236,16 @@ curl -X POST https://discord.com/api/webhooks/YOUR/WEBHOOK/URL \
 - 問題の早期発見
 - 迅速な対応
 - サービス品質の向上
-- チームの生産性向上
+- 個人開発でも本格的な運用
 
-適切に設定されたアラートシステムは、個人開発でも本格的な運用を可能にします。
+## 主な通知先
+
+| 通知タイプ | Discord | GitHub Issue |
+|-----------|---------|-------------|
+| ワークフロー失敗 | ✅ | ✅（重要なもののみ） |
+| パフォーマンス警告 | ✅ | ✅（20分超過時） |
+| セキュリティアラート | ✅（P0/P1のみ） | ✅（全て） |
+| 高優先度アラート | ✅ | ✅ |
+| テストアラート | ✅ | ❌ |
+
+DiscordとGitHub Issuesを組み合わせることで、リアルタイム通知と追跡管理の両方を実現します。

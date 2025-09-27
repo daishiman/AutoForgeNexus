@@ -16,9 +16,9 @@ on:
         default: '30 days'
         type: choice
         options:
-        - '7 days'
-        - '30 days'
-        - '90 days'
+          - '7 days'
+          - '30 days'
+          - '90 days'
 
 permissions:
   contents: read
