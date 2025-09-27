@@ -1,0 +1,40 @@
+[bandit]
+# Bandit設定ファイル - Python セキュリティスキャン
+
+# 除外するテスト（個人開発プロジェクトに適用）
+# B101: assert_used（テスト用途では許可）
+skips = B101
+
+# テスト対象ディレクトリ
+tests = backend/src
+
+# 除外するディレクトリ
+exclude_dirs = /backend/tests,/backend/venv,/backend/.venv
+
+# 信頼レベル（LOW, MEDIUM, HIGH）
+confidence = MEDIUM
+
+# 深刻度レベル（LOW, MEDIUM, HIGH）
+severity = MEDIUM
+
+# 出力形式
+format = json
+
+# 詳細ログ
+verbose = true
+
+# アサートステートメントをスキップ（テスト用途）
+assert_used = {
+    'skips': ['*test*.py', '*tests*.py'],
+    'word_list': ['assert']
+}
+
+# ハードコードされたパスワードチェック（例外設定）
+hardcoded_password_string = {
+    'word_list': ['password', 'pass', 'passwd', 'pwd', 'secret', 'token', 'key']
+}
+
+# SQL関連チェック（例外設定）
+sql = {
+    'skips': ['backend/src/infrastructure/database/migrations/*.py']
+}

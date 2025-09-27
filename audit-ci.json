@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/IBM/audit-ci/main/schema.json",
+  "allowlist": [],
+  "moderate": true,
+  "high": true,
+  "critical": true,
+  "low": false,
+  "package-manager": "npm",
+  "levels": {
+    "low": false,
+    "moderate": true,
+    "high": true,
+    "critical": true
+  },
+  "report-type": "summary",
+  "retry": {
+    "count": 3,
+    "delay": 5000
+  },
+  "advisories": {
+    "exclude": []
+  },
+  "path-whitelist": [
+    "node_modules"
+  ],
+  "registry": "https://registry.npmjs.org/",
+  "timeout": 30000,
+  "output-format": [
+    "text",
+    "json"
+  ],
+  "pass-enoaudit": true,
+  "show-found": true,
+  "show-not-found": false,
+  "skip-dev": false,
+  "extra": {
+    "include-dev-dependencies": true,
+    "fail-on": ["moderate", "high", "critical"]
+  }
+}
