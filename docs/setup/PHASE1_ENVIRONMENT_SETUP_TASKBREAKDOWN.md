@@ -1407,14 +1407,14 @@ echo "Docker status: $(docker info >/dev/null 2>&1 && echo 'OK' || echo 'Failed'
 ```
 .github/
 ├── workflows/
-│   ├── ci.yml              ✅ CI/CDパイプライン
-│   ├── cd.yml              ✅ デプロイメント自動化
+│   ├── ci.yml              ✅ CI/CDパイプライン（環境チェック機能付き）
+│   ├── cd.yml              ✅ デプロイメント自動化（段階的実行対応）
 │   ├── security.yml        ✅ セキュリティスキャン
 │   ├── dependabot.yml      ✅ 依存関係自動更新
 │   ├── release.yml         ✅ 自動リリース管理
 │   ├── changelog.yml       ✅ 変更履歴自動生成
 │   ├── metrics.yml         ✅ DORAメトリクス収集
-│   └── alerts.yml          ✅ アラート・自動Issue作成
+│   └── alerts.yml          ✅ アラート・自動Issue作成（権限修正済み）
 ├── ISSUE_TEMPLATE/
 │   ├── bug_report.yml      ✅ バグレポート
 │   ├── feature_request.yml ✅ 機能要望
@@ -1437,6 +1437,31 @@ docs/
 ├── release-please-config.json ✅ リリース設定
 └── release-please-manifest.json ✅ バージョン管理
 ```
+
+---
+
+## 🔧 **Phase 1 実装後の調整**
+
+### **CI/CD環境チェック機能追加（2025年9月27日実施）**
+
+**問題**: Phase 1完了時点でbackend/frontendディレクトリが未作成のため、CI/CDワークフローが失敗
+
+**解決策実装**:
+1. **環境存在チェックジョブ追加**
+   - ci.yml/cd.yml: `check-structure`ジョブで事前確認
+   - 各ジョブに条件付き実行（`if`文）を設定
+
+2. **GitHub Actions権限修正**
+   - alerts.yml: `issues: write`権限追加でIssue作成エラー解決
+
+3. **段階的実行の実現**
+   - Phase 2-6の進行に応じて自動的に該当ジョブが有効化
+   - 環境構築の進捗に柔軟に対応
+
+**効果**:
+- ✅ Phase単位での段階的な開発が可能
+- ✅ 環境未構築でもCI/CDが正常動作
+- ✅ 技術的負債を作らない柔軟な設計
 
 ---
 

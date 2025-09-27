@@ -79,7 +79,7 @@ pnpm run dev
 
 ### GitHub Actions ワークフロー
 
-- **CI Pipeline** - プルリクエスト時の自動テスト・品質チェック
+- **CI Pipeline** - プルリクエスト時の自動テスト・品質チェック（環境チェック機能付き）
 - **CD Pipeline** - main/tag プッシュ時の自動デプロイ (Cloudflare)
 - **セキュリティスキャン** - CodeQL, Dependabot, TruffleHog
 - **DORA メトリクス** - デプロイ頻度、リードタイム、障害率、MTTR
@@ -90,6 +90,11 @@ pnpm run dev
 - **Discord 通知** - ワークフロー失敗、セキュリティアラート、パフォーマンス警告
 - **GitHub Issues** - 自動 Issue 作成、SLA 管理、優先度設定
 - **メトリクス収集** - 日次 DORA 指標、パフォーマンス分析
+
+### 段階的環境構築対応
+
+- **環境チェック機能** - Phase 進行に応じた自動ジョブ有効化
+- **条件付き実行** - 未構築環境のジョブは自動スキップ
 
 詳細設定: [📊 監視設定ガイド](docs/monitoring/setup-notifications.md)
 

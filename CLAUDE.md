@@ -581,6 +581,10 @@ pnpm build --turbo
   - セキュリティ設定（CodeQL, Dependabot, TruffleHog） ✅
   - リリース管理（Release Please） ✅
   - DevOps 監視（DORA メトリクス、Discord 通知、GitHub Issues） ✅
+- **1.3 CI/CD 環境対応** ✅
+  - 段階的環境構築に対応する環境チェック機能追加
+  - GitHub Actions 権限修正（Issue 作成権限）
+  - Phase 2-6 の進行に応じた自動ジョブ有効化
 
 ### Phase 2: インフラ・Docker 環境 🔄 次フェーズ
 
@@ -604,6 +608,7 @@ pnpm build --turbo
 3. **ドキュメント作成制限** - 明示的要求がない限り README 等を作成しない
 4. **テストカバレッジ遵守** - Backend 80%、Frontend 75%必須
 5. **型安全性厳守** - mypy --strict、tsc --strict 必須
+6. **段階的環境構築対応** - Phase未実装部分はCI/CDでスキップ
 
 ### 🚀 推奨プラクティス
 
