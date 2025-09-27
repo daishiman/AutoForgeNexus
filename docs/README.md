@@ -22,6 +22,28 @@ AutoForgeNexus AIプロンプト最適化システムの包括的なドキュメ
 | [システムアーキテクチャ設計書](architecture/system_architecture.md) | DDD+イベント駆動+クリーンアーキテクチャ設計 | アーキテクト、開発者 |
 | [ドメインモデル設計書](architecture/domain/domain_model.md) | DDD戦術・戦略パターンの完全実装 | ドメインエキスパート、開発者 |
 
+### 📊 レポート (`reports/`)
+
+| カテゴリ | 内容 | 保存先 |
+|----------|------|--------|
+| セキュリティレポート | セキュリティチェック結果、脆弱性分析 | `reports/security/` |
+| 実装レポート | タスク完了報告、成果報告 | `reports/implementation/` |
+| アーキテクチャレポート | 設計レポート、構造分析 | `reports/architecture/` |
+
+### 📝 レビュー (`reviews/`)
+
+| カテゴリ | 内容 | 保存先 |
+|----------|------|--------|
+| セキュリティレビュー | セキュリティ監査、OWASP/GDPR評価 | `reviews/security/` |
+| コードレビュー | コード品質、ベストプラクティス評価 | `reviews/code/` |
+
+### 📌 Issue管理 (`issues/`)
+
+| ドキュメント | 概要 | 優先度 |
+|-------------|------|--------|
+| [Issue追跡管理](issues/ISSUE_TRACKING.md) | GitHub Issue一覧と管理ポリシー | 必須 |
+| [セキュリティ・DevOps Issues](issues/SECURITY_DEVOPS_ISSUES.md) | インフラ・セキュリティ課題 | 高 |
+
 ### 📚 参考資料 (`legacy/`)
 
 | ドキュメント | 概要 | 用途 |

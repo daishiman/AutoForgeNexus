@@ -346,4 +346,17 @@ llm_responses/
 .claude/*.key
 .claude/api_keys.*
 .claude/tokens.*
-.claude/credentials.*
+.claude/credentials.**
+
+# Security file patterns
+*.pyc
+*.log
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.secret
+*.private
+private/
+config/local/
