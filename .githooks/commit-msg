@@ -1,0 +1,67 @@
+#!/bin/bash
+# Commit-msg hook: コミットメッセージの検証
+
+set -e
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+echo "📝 Validating commit message..."
+
+# Conventional Commits パターン
+# https://www.conventionalcommits.org/
+PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .{1,100}"
+
+# スペシャルケース: マージコミット、リバートコミット
+if echo "$COMMIT_MSG" | grep -qE "^(Merge|Revert) "; then
+    echo "✅ Merge/Revert commit detected"
+    exit 0
+fi
+
+# GitFlowのfinishコミット
+if echo "$COMMIT_MSG" | grep -qE "^(Finish|Start) (feature|release|hotfix)"; then
+    echo "✅ GitFlow commit detected"
+    exit 0
+fi
+
+# Conventional Commitsフォーマットチェック
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+    echo "❌ Commit message does not follow Conventional Commits format!"
+    echo ""
+    echo "📖 Valid format: <type>(<scope>): <subject>"
+    echo ""
+    echo "Types:"
+    echo "  feat     : 新機能"
+    echo "  fix      : バグ修正"
+    echo "  docs     : ドキュメント変更"
+    echo "  style    : コードフォーマット変更"
+    echo "  refactor : リファクタリング"
+    echo "  perf     : パフォーマンス改善"
+    echo "  test     : テスト追加・修正"
+    echo "  build    : ビルドシステム変更"
+    echo "  ci       : CI/CD設定変更"
+    echo "  chore    : その他の変更"
+    echo "  revert   : コミットの取り消し"
+    echo ""
+    echo "Examples:"
+    echo "  feat: ユーザー認証機能を追加"
+    echo "  fix(auth): ログイン時のトークン検証エラーを修正"
+    echo "  docs: READMEにインストール手順を追加"
+    echo ""
+    echo "Your message: $COMMIT_MSG"
+    exit 1
+fi
+
+# コミットメッセージの長さチェック
+FIRST_LINE=$(echo "$COMMIT_MSG" | head -n1)
+if [ ${#FIRST_LINE} -gt 100 ]; then
+    echo "⚠️ Warning: First line is ${#FIRST_LINE} characters (recommended: ≤100)"
+fi
+
+# 破壊的変更のチェック
+if echo "$COMMIT_MSG" | grep -q "BREAKING CHANGE:\|!:"; then
+    echo "⚠️ BREAKING CHANGE detected!"
+    echo "Make sure to update the version accordingly"
+fi
+
+echo "✅ Commit message validation passed!"

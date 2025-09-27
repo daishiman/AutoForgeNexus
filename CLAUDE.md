@@ -1,55 +1,66 @@
 # CLAUDE.md
 
-このファイルは、このリポジトリでコードを作業する際のClaude Code (claude.ai/code) へのガイダンスを提供します。
+このファイルは、このリポジトリでコードを作業する際の Claude Code
+(claude.ai/code) へのガイダンスを提供します。
 
 ## 🎯 重要な初期設定
 
 ### 必須確認事項
+
 1. **設定ファイル**: `.claude/settings.json` を必ず読み込む
-2. **エージェント一覧**: `.claude/agents/00.agent_list.md` で利用可能なエージェントを確認
+2. **エージェント一覧**: `.claude/agents/00.agent_list.md` で利用可能なエージェ
+   ントを確認
 3. **コマンドガイド**: `.claude/commands/ai/README.md` で最適なコマンドを選択
 
-### 推奨MCPサーバー
+### 推奨 MCP サーバー
+
 - **serena**: セマンティックコード理解とメモリ管理（必須）
 - **context7**: ライブラリドキュメンテーション検索（必須）
 - **sequential-thinking**: 複雑な分析と問題解決（必須）
-- **github**: GitHub統合とPR管理（必須）
-- **playwright**: E2Eテスト自動化（オプション）
+- **github**: GitHub 統合と PR 管理（必須）
+- **playwright**: E2E テスト自動化（オプション）
 
 ## プロジェクト概要
 
-AutoForgeNexusは、AIプロンプト最適化システム - 包括的なプロンプトエンジニアリング支援プラットフォームです。ユーザーの言語化能力に依存せず、高品質なAIプロンプトの作成・最適化・管理ができる統合環境を提供します。
+AutoForgeNexus は、AI プロンプト最適化システム - 包括的なプロンプトエンジニアリ
+ング支援プラットフォームです。ユーザーの言語化能力に依存せず、高品質な AI プロン
+プトの作成・最適化・管理ができる統合環境を提供します。
 
 ### 主要機能
-- テンプレートとAI支援による段階的プロンプト作成支援
+
+- テンプレートと AI 支援による段階的プロンプト作成支援
 - 多層評価メトリクスによる自動評価・最適化
-- Git-likeなバージョニング、ブランチ、マージ機能
-- 100+プロバイダー統合とコスト最適化によるマルチLLM対応
-- 意図差分ビューワー、スタイル・ゲノム、プロンプトSLOなど17の革新的機能
+- Git-like なバージョニング、ブランチ、マージ機能
+- 100+プロバイダー統合とコスト最適化によるマルチ LLM 対応
+- 意図差分ビューワー、スタイル・ゲノム、プロンプト SLO など 17 の革新的機能
 
 ## アーキテクチャ
 
 ### 設計原則
+
 - **ドメイン駆動設計（DDD）**: 明確な境界づけられたコンテキストとユビキタス言語
 - **クリーンアーキテクチャ**: 依存性逆転の原則、レイヤー分離
 - **イベント駆動**: CQRS、イベントソーシング、非同期メッセージング
 - **マイクロサービス対応**: 将来のサービス分離を想定した疎結合設計
 
-### 技術スタック（2025年9月最新版）
+### 技術スタック（2025 年 9 月最新版）
+
 - **バックエンド**: Python 3.13, FastAPI 0.116.1, SQLAlchemy 2.0.32, Pydantic v2
-- **フロントエンド**: Next.js 15.5 (Turbopack), React 19.1.0, TypeScript 5.9.2, Tailwind CSS 4.0
+- **フロントエンド**: Next.js 15.5 (Turbopack), React 19.1.0, TypeScript 5.9.2,
+  Tailwind CSS 4.0
 - **データベース**: Turso (libSQL) 分散型, Redis 7.4.1, libSQL Vector Extension
 - **認証**: Clerk（OAuth 2.0, MFA, 組織管理）
 - **AI/ML**: LangChain 0.3.27, LangGraph 0.6.7, LiteLLM 1.76.1
-- **LLM観測**: LangFuse（分散トレーシング・評価・コスト監視）
+- **LLM 観測**: LangFuse（分散トレーシング・評価・コスト監視）
 - **インフラ**: Cloudflare (Workers Python, Pages, R2), Docker 24.0+
-- **Node.js**: 22 LTS "Jod" (ネイティブTypeScript対応, WebSocket内蔵)
-- **パッケージ管理**: pnpm 9.x (Node.js 22最適化)
+- **Node.js**: 22 LTS "Jod" (ネイティブ TypeScript 対応, WebSocket 内蔵)
+- **パッケージ管理**: pnpm 9.x (Node.js 22 最適化)
 - **状態管理**: Zustand 5.0.8
-- **UIライブラリ**: shadcn/ui (React 19・Tailwind v4対応)
+- **UI ライブラリ**: shadcn/ui (React 19・Tailwind v4 対応)
 - **品質**: Ruff 0.7.4, mypy 1.13.0 (strict), pytest 8.3.3, Playwright
 
 ### レイヤーアーキテクチャ
+
 ```
 プレゼンテーション層 (Next.js/React + Clerk Auth)
 ├── アプリケーション層 (ユースケース, CQRS, イベントバス)
@@ -59,9 +70,10 @@ AutoForgeNexusは、AIプロンプト最適化システム - 包括的なプロ�
 
 ## 開発コマンド
 
-6つのフェーズに基づく実際の環境構築コマンド：
+6 つのフェーズに基づく実際の環境構築コマンド：
 
 ### Phase 1: Git・基盤環境確認
+
 ```bash
 # 環境確認 (最優先実行)
 git --version                    # Git 2.40+必須
@@ -76,7 +88,8 @@ git config commit.template .gitmessage  # コミットテンプレート設定
 gh workflow list                 # GitHub Actions確認
 ```
 
-### Phase 2: インフラ・Docker環境
+### Phase 2: インフラ・Docker 環境
+
 ```bash
 # Docker開発環境構築
 docker-compose -f docker-compose.dev.yml build --no-cache
@@ -89,6 +102,7 @@ docker-compose -f docker-compose.dev.yml exec backend /bin/bash
 ```
 
 ### Phase 3: バックエンド (Python 3.13/FastAPI)
+
 ```bash
 # Python環境セットアップ (M1 Mac最適化)
 cd backend
@@ -113,6 +127,7 @@ pytest tests/ --cov=src --cov-report=html --cov-fail-under=80
 ```
 
 ### Phase 4: データベース・ベクトル環境
+
 ```bash
 # Turso CLI セットアップ
 brew install tursodatabase/tap/turso
@@ -138,6 +153,7 @@ alembic upgrade head
 ```
 
 ### Phase 5: フロントエンド (Next.js 15.5/React 19)
+
 ```bash
 # Node.js環境セットアップ (M1/M2/M3最適化)
 volta install node@22           # Node.js 22 LTS - ARM64ネイティブ
@@ -163,6 +179,7 @@ pnpm type-check                 # TypeScript検証
 ```
 
 ### Phase 6: 統合・品質保証
+
 ```bash
 # 統合テスト実行
 make test-all                   # 全テスト実行
@@ -187,6 +204,7 @@ open http://localhost:3002      # LangFuse
 ```
 
 ### 本番デプロイ・CI/CD
+
 ```bash
 # GitHub Actions ワークフロー
 gh workflow run ci.yml          # CI実行
@@ -203,6 +221,7 @@ gh release create v1.0.0 --generate-notes
 ```
 
 ### トラブルシューティング
+
 ```bash
 # 環境リセット
 docker-compose down -v          # 全コンテナ・ボリューム削除
@@ -220,7 +239,8 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8000
 
 ## プロジェクト構造
 
-6フェーズ構築に基づくクリーンアーキテクチャ：
+6 フェーズ構築に基づくクリーンアーキテクチャ：
+
 ```
 /                   # プロジェクトルート（Phase 1: Git管理）
 ├── .github/        # GitHub Actions, Issue/PR テンプレート
@@ -269,15 +289,17 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8000
   /setup/           # 6フェーズ環境構築手順
 ```
 
-## Claude Code設定
+## Claude Code 設定
 
 ### 🤖 モデル設定
+
 - **使用モデル**: Claude Opus 4.1 (`claude-opus-4-1-20250805`)
 - **最大トークン**: 32,000
 - **温度**: 0.2（一貫性重視）
-- **タイムアウト**: 120秒
+- **タイムアウト**: 120 秒
 
-### 📦 必須MCPサーバー
+### 📦 必須 MCP サーバー
+
 ```bash
 # MCPサーバーはnpxで自動インストールされます（手動インストール不要）
 # 設定は .claude/settings.json を参照
@@ -294,33 +316,38 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8000
 - desktop-commander # デスクトップ操作
 ```
 
-### 🎭 専門エージェント（30種類）
+### 🎭 専門エージェント（30 種類）
 
 #### アーキテクチャ設計
+
 - `system-architect`: システム全体設計、技術選定
-- `domain-modeller`: DDD境界コンテキスト、集約設計
-- `api-designer`: OpenAPI/GraphQL/gRPC設計
+- `domain-modeller`: DDD 境界コンテキスト、集約設計
+- `api-designer`: OpenAPI/GraphQL/gRPC 設計
 
 #### フロントエンド開発
-- `frontend-architect`: React 19/Next.js 15.5アーキテクチャ
-- `uiux-designer`: shadcn/ui、OKLCH色空間
-- `real-time-specialist`: WebSocket/WebRTC実装
+
+- `frontend-architect`: React 19/Next.js 15.5 アーキテクチャ
+- `uiux-designer`: shadcn/ui、OKLCH 色空間
+- `real-time-specialist`: WebSocket/WebRTC 実装
 
 #### バックエンド開発
-- `backend-developer`: Python 3.13/FastAPI実装
-- `database-administrator`: Turso/Redis管理
-- `vector-specialist`: libSQL Vector検索最適化
-- `event-bus-manager`: Redis Streams/CQRS実装
+
+- `backend-developer`: Python 3.13/FastAPI 実装
+- `database-administrator`: Turso/Redis 管理
+- `vector-specialist`: libSQL Vector 検索最適化
+- `event-bus-manager`: Redis Streams/CQRS 実装
 
 #### 品質・運用
-- `test-automation-engineer`: Playwright/pytest自動化
-- `performance-optimizer`: Core Web Vitals最適化
+
+- `test-automation-engineer`: Playwright/pytest 自動化
+- `performance-optimizer`: Core Web Vitals 最適化
 - `observability-engineer`: LangFuse/監視設定
-- `version-control-specialist`: Git戦略・PR管理
+- `version-control-specialist`: Git 戦略・PR 管理
 
 ### 🔧 開発ワークフロー
 
 #### 1. セッション開始
+
 ```bash
 # プロジェクトをアクティベート
 serena activate /path/to/AutoForgeNexus
@@ -333,6 +360,7 @@ git status && git branch
 ```
 
 #### 2. 実装作業
+
 ```bash
 # 適切なエージェントを選択
 /ai:core:team --task "認証機能実装"
@@ -343,6 +371,7 @@ git status && git branch
 ```
 
 #### 3. 品質チェック
+
 ```bash
 # 自動品質チェック
 /ai:quality:analyze --full
@@ -351,6 +380,7 @@ git status && git branch
 ```
 
 #### 4. セッション終了
+
 ```bash
 # 作業内容を保存
 /sc:save
@@ -363,35 +393,41 @@ git status && git branch
 ## 重要なコンテキスト
 
 ### 環境構築フロー
-**Phase 1-6の順次実行が必須**
+
+**Phase 1-6 の順次実行が必須**
+
 1. **Phase 1**: Git・基盤環境確認 → GitFlow・GitHub Actions・ブランチ保護
-2. **Phase 2**: インフラ・Docker環境 → docker-compose.dev.yml構築
-3. **Phase 3**: バックエンド → Python 3.13・FastAPI・DDD構造
+2. **Phase 2**: インフラ・Docker 環境 → docker-compose.dev.yml 構築
+3. **Phase 3**: バックエンド → Python 3.13・FastAPI・DDD 構造
 4. **Phase 4**: データベース → Turso・Redis・libSQL Vector
-5. **Phase 5**: フロントエンド → Next.js 15.5・React 19・Tailwind CSS 4.0・shadcn/ui
+5. **Phase 5**: フロントエンド → Next.js 15.5・React 19・Tailwind CSS
+   4.0・shadcn/ui
 6. **Phase 6**: 統合・品質保証 → テスト・監視・セキュリティ
 
 ### 開発品質基準
+
 - **テストカバレッジ**: バックエンド 80%+、フロントエンド 75%+必須
-- **型安全性**: mypy strict モード、TypeScript 5.9.2 strict設定
-- **セキュリティ**: OWASP Top 10対策、GDPR準拠、自動脆弱性スキャン
+- **型安全性**: mypy strict モード、TypeScript 5.9.2 strict 設定
+- **セキュリティ**: OWASP Top 10 対策、GDPR 準拠、自動脆弱性スキャン
 - **パフォーマンス**:
   - API P95 < 200ms
-  - WebSocket 10,000同時接続 (Node.js 22ネイティブ)
+  - WebSocket 10,000 同時接続 (Node.js 22 ネイティブ)
   - Turbopack: 50%高速冷起動
   - React 19: 30%高速ホットリロード
   - Core Web Vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1
-- **CI/CD**: 並列実行で5分以内、Cloudflare自動デプロイ
+- **CI/CD**: 並列実行で 5 分以内、Cloudflare 自動デプロイ
 
 ### 主要アーキテクチャ決定
-- **クリーンアーキテクチャ**: DDD準拠、依存関係逆転、レイヤー分離
-- **イベント駆動**: 状態変更の完全記録、CQRS実装
-- **分散データベース**: Turso (libSQL)、Redis キャッシング、Vector検索
+
+- **クリーンアーキテクチャ**: DDD 準拠、依存関係逆転、レイヤー分離
+- **イベント駆動**: 状態変更の完全記録、CQRS 実装
+- **分散データベース**: Turso (libSQL)、Redis キャッシング、Vector 検索
 - **認証**: Clerk（OAuth 2.0, MFA, 組織管理）
-- **観測性**: LangFuse LLMトレーシング、Prometheus/Grafana監視
-- **エッジ最適化**: Cloudflare Workers/Pages、CDN活用
+- **観測性**: LangFuse LLM トレーシング、Prometheus/Grafana 監視
+- **エッジ最適化**: Cloudflare Workers/Pages、CDN 活用
 
 ### 必須開発ツール
+
 ```bash
 # 環境確認コマンド（最優先）
 git --version     # 2.40+
@@ -402,26 +438,30 @@ python3.13 --version
 ```
 
 ### セキュリティ・コンプライアンス
+
 - **自動セキュリティスキャン**: Trivy、Snyk、OWASP ZAP
 - **秘匿情報検出**: TruffleHog、gitleaks
-- **GDPR準拠**: データポータビリティ、忘れられる権利
-- **セキュリティヘッダー**: CSP、HSTS、XSSプロテクション
+- **GDPR 準拠**: データポータビリティ、忘れられる権利
+- **セキュリティヘッダー**: CSP、HSTS、XSS プロテクション
 
 ### 監視・観測性
+
 - **メトリクス**: Prometheus（システム）、LangFuse（LLM）
-- **ログ**: Loki集約、構造化ログ
-- **アラート**: Slack/Discord通知、DORA メトリクス
+- **ログ**: Loki 集約、構造化ログ
+- **アラート**: Slack/Discord 通知、DORA メトリクス
 - **ダッシュボード**: Grafana（3001）、LangFuse（3002）
 
-### 革新的機能（17項目）
+### 革新的機能（17 項目）
+
 - **意図差分ビューワー**: プロンプト改善ギャップ可視化
 - **スタイル・ゲノム**: ユーザー固有スタイル学習・適用
-- **プロンプトSLO**: 品質メトリクス自動監視
+- **プロンプト SLO**: 品質メトリクス自動監視
 - **Git-like バージョニング**: ブランチ・マージ・ロールバック
 
-## 2025年最新フロントエンド技術詳細
+## 2025 年最新フロントエンド技術詳細
 
-### React 19.1.0新機能
+### React 19.1.0 新機能
+
 ```jsx
 // Server Componentsデフォルト
 export default async function ProductList() {
@@ -441,7 +481,8 @@ function Button({ ref, ...props }) {
 }
 ```
 
-### Next.js 15.5機能
+### Next.js 15.5 機能
+
 ```javascript
 // next.config.js - Turbopack設定
 module.exports = {
@@ -462,17 +503,18 @@ module.exports = {
 };
 ```
 
-### Tailwind CSS 4.0設定
+### Tailwind CSS 4.0 設定
+
 ```css
 /* tailwind.config.ts */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-primary: oklch(59.4% 0.238 251.4);
   --color-secondary: oklch(49.1% 0.3 275.8);
 
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   --spacing-unit: 0.25rem;
   --radius-default: 0.5rem;
@@ -480,27 +522,25 @@ module.exports = {
 
 /* OKLCH色空間の利点 */
 .gradient {
-  background: linear-gradient(
-    in oklch,
-    oklch(90% 0.1 100),
-    oklch(50% 0.2 250)
-  );
+  background: linear-gradient(in oklch, oklch(90% 0.1 100), oklch(50% 0.2 250));
 }
 ```
 
-### パフォーマンスベンチマーク（2025年基準）
-| メトリクス | 目標値 | 実測値 |
-|---------|-------|-------|
-| Turbopack冷起動 | < 500ms | 450ms |
-| React 19ホットリロード | < 100ms | 80ms |
-| TypeScript型チェック | < 2s | 1.5s |
-| 本番ビルド時間 | < 60s | 45s |
-| バンドルサイズ | < 200KB | 180KB |
-| メモリ使用量 | < 512MB | 380MB |
+### パフォーマンスベンチマーク（2025 年基準）
+
+| メトリクス              | 目標値  | 実測値 |
+| ----------------------- | ------- | ------ |
+| Turbopack 冷起動        | < 500ms | 450ms  |
+| React 19 ホットリロード | < 100ms | 80ms   |
+| TypeScript 型チェック   | < 2s    | 1.5s   |
+| 本番ビルド時間          | < 60s   | 45s    |
+| バンドルサイズ          | < 200KB | 180KB  |
+| メモリ使用量            | < 512MB | 380MB  |
 
 ### マイグレーションガイド
 
 #### React 18 → 19
+
 ```bash
 # 自動マイグレーション
 npx react-codemod@latest react-19/remove-forward-ref
@@ -508,6 +548,7 @@ npx react-codemod@latest react-19/use-transition
 ```
 
 #### Tailwind CSS 3 → 4
+
 ```bash
 # アップグレード
 pnpm remove tailwindcss postcss autoprefixer
@@ -518,6 +559,7 @@ npx @tailwindcss/upgrade@next
 ```
 
 #### Next.js 14 → 15.5
+
 ```bash
 # アップグレード
 pnpm add next@15.5 react@19 react-dom@19
@@ -528,29 +570,58 @@ pnpm dev --turbo
 pnpm build --turbo
 ```
 
+## 📊 開発進捗状況
+
+### Phase 1: Git・基盤環境 ✅ 完了
+
+- **1.1 Git 環境**: GitFlow、ブランチ保護、コミットテンプレート ✅
+- **1.2 GitHub 設定**:
+  - CI/CD パイプライン（ci.yml, cd.yml） ✅
+  - Issue/PR テンプレート（日本語対応） ✅
+  - セキュリティ設定（CodeQL, Dependabot, TruffleHog） ✅
+  - リリース管理（Release Please） ✅
+  - DevOps 監視（DORA メトリクス、Discord 通知、GitHub Issues） ✅
+
+### Phase 2: インフラ・Docker 環境 🔄 次フェーズ
+
+- Docker 開発環境構築
+- docker-compose 設定
+- 監視スタック（Prometheus, Grafana, LangFuse）
+
+### Phase 3-6: 未着手
+
+- Phase 3: バックエンド（Python 3.13/FastAPI）
+- Phase 4: データベース（Turso, Redis, libSQL Vector）
+- Phase 5: フロントエンド（Next.js 15.5/React 19）
+- Phase 6: 統合・品質保証
+
 ## 📋 重要な作業指針
 
 ### ✅ 必須ルール
+
 1. **要求された作業のみ実行** - 追加機能の勝手な実装禁止
 2. **既存ファイル優先** - 新規作成より既存ファイル編集を優先
-3. **ドキュメント作成制限** - 明示的要求がない限りREADME等を作成しない
+3. **ドキュメント作成制限** - 明示的要求がない限り README 等を作成しない
 4. **テストカバレッジ遵守** - Backend 80%、Frontend 75%必須
-5. **型安全性厳守** - mypy --strict、tsc --strict必須
+5. **型安全性厳守** - mypy --strict、tsc --strict 必須
 
 ### 🚀 推奨プラクティス
+
 - **並列処理優先**: 独立したタスクは並列実行
-- **TodoWrite活用**: 3段階以上のタスクは必ずTodo管理
+- **TodoWrite 活用**: 3 段階以上のタスクは必ず Todo 管理
 - **エージェント活用**: タスクに適した専門エージェントを選択
-- **メモリ永続化**: Serenaメモリでセッション間の継続性確保
-- **品質ゲート**: コミット前にlint/typecheck/test実行
+- **メモリ永続化**: Serena メモリでセッション間の継続性確保
+- **品質ゲート**: コミット前に lint/typecheck/test 実行
 
 ### ⚠️ 注意事項
-- **秘密情報管理**: .env、API KEY等を絶対にコミットしない
-- **ブランチ戦略**: main直接編集禁止、必ずフィーチャーブランチ使用
-- **コミット規約**: Conventional Commits形式で日本語メッセージ
-- **PR要件**: 最低1名のレビュー必須、CI全パス必須
+
+- **秘密情報管理**: .env、API KEY 等を絶対にコミットしない
+- **ブランチ戦略**: main 直接編集禁止、必ずフィーチャーブランチ使用
+- **コミット規約**: Conventional Commits 形式で日本語メッセージ
+- **PR 要件**: 最低 1 名のレビュー必須、CI 全パス必須
 
 ### 🎯 クイックスタート
+
 ```bash
 # 1. プロジェクト初期化
 git clone https://github.com/daishiman/AutoForgeNexus.git

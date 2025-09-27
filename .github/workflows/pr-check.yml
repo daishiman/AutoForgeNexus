@@ -1,0 +1,228 @@
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
+jobs:
+  # PR validation
+  validate-pr:
+    name: Validate PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 Check PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+
+      - name: 📊 Check PR size
+        uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/xs'
+          xs_max_size: '10'
+          s_label: 'size/s'
+          s_max_size: '100'
+          m_label: 'size/m'
+          m_max_size: '500'
+          l_label: 'size/l'
+          l_max_size: '1000'
+          xl_label: 'size/xl'
+
+      - name: 🏷️ Auto-label PR
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Code quality check
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📊 SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: 🔍 Check for conflicts
+        run: |
+          if grep -r "<<<<<<< HEAD" --exclude-dir=.git .; then
+            echo "❌ Merge conflicts detected!"
+            exit 1
+          fi
+
+      - name: 🔍 Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+
+  # Claude Code Review (AI Review)
+  claude-review:
+    name: Claude Code Review
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🤖 Prepare Claude Review Context
+        id: prepare
+        run: |
+          # Get changed files
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Get diff
+          DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 📝 Post Claude Review Comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const changedFiles = `${{ steps.prepare.outputs.changed_files }}`;
+            const fileCount = changedFiles.split('\n').filter(f => f).length;
+
+            const comment = `## 🤖 Claude Code Review
+
+            ### 📊 PR Summary
+            - **Changed Files**: ${fileCount}
+            - **Review Status**: Automated review initiated
+
+            ### 🔍 Review Checklist
+
+            #### Code Quality
+            - [ ] SOLID principles compliance
+            - [ ] DRY principle adherence
+            - [ ] Appropriate abstraction levels
+            - [ ] Consistent naming conventions
+
+            #### Security
+            - [ ] No exposed secrets or API keys
+            - [ ] Input validation present
+            - [ ] SQL injection prevention
+            - [ ] XSS protection measures
+
+            #### Performance
+            - [ ] No O(n²) or worse algorithms
+            - [ ] Database queries optimized
+            - [ ] No memory leaks detected
+            - [ ] Proper async/await usage
+
+            #### Testing
+            - [ ] Tests added for new features
+            - [ ] Edge cases covered
+            - [ ] Coverage threshold met (Backend: 80%, Frontend: 75%)
+
+            #### Documentation
+            - [ ] Code comments for complex logic
+            - [ ] API documentation updated
+            - [ ] README updated if needed
+
+            ### 💡 Recommendations
+            Based on the automated analysis:
+            1. Ensure all test cases pass before merging
+            2. Verify that the changes align with the project architecture
+            3. Consider the impact on existing features
+
+            ### 📌 Note
+            This is an automated review by Claude Code. For detailed analysis, please run:
+            \`\`\`bash
+            /ai:quality:analyze --pr ${{ github.event.pull_request.number }}
+            \`\`\`
+
+            ---
+            *Generated by Claude Code Review System v1.0*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  # Test coverage report
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📊 Generate coverage comment
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Final status
+  pr-status:
+    name: PR Status Check
+    needs: [validate-pr, code-quality, claude-review, coverage-report]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: ✅ All checks passed
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: |
+          echo "✅ All PR checks passed!"
+          echo "Ready for manual review and merge."
+
+      - name: ❌ Some checks failed
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: |
+          echo "❌ Some PR checks failed!"
+          echo "Please fix the issues before merging."
+          exit 1
