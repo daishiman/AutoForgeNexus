@@ -70,6 +70,22 @@ pnpm run dev
 - [🚀 17の革新的機能](docs/requirements/innovative_features.md)
 - [👥 ユーザーストーリー](docs/requirements/user_stories.md)
 
+## 🚀 CI/CD & 監視
+
+### GitHub Actions ワークフロー
+- **CI Pipeline** - プルリクエスト時の自動テスト・品質チェック
+- **CD Pipeline** - main/tagプッシュ時の自動デプロイ (Cloudflare)
+- **セキュリティスキャン** - CodeQL, Dependabot, TruffleHog
+- **DORAメトリクス** - デプロイ頻度、リードタイム、障害率、MTTR
+- **自動リリース** - Release Please による自動バージョニング
+
+### 監視・アラート
+- **Discord通知** - ワークフロー失敗、セキュリティアラート、パフォーマンス警告
+- **GitHub Issues** - 自動Issue作成、SLA管理、優先度設定
+- **メトリクス収集** - 日次DORA指標、パフォーマンス分析
+
+詳細設定: [📊 監視設定ガイド](docs/monitoring/setup-notifications.md)
+
 ## 🛠️ 開発
 
 ### 開発コマンド
