@@ -22,6 +22,31 @@ env:
   TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
 jobs:
+  # Check project structure
+  check-structure:
+    name: Check Project Structure
+    runs-on: ubuntu-latest
+    outputs:
+      backend-exists: ${{ steps.check.outputs.backend }}
+      frontend-exists: ${{ steps.check.outputs.frontend }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check directories
+        id: check
+        run: |
+          if [ -d "backend" ]; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+          if [ -d "frontend" ]; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
+
   # Deployment decision
   deployment-decision:
     name: Deployment Decision
@@ -50,8 +75,8 @@ jobs:
   # Backend deployment
   deploy-backend:
     name: Deploy Backend
-    needs: deployment-decision
-    if: needs.deployment-decision.outputs.should_deploy == 'true'
+    needs: [deployment-decision, check-structure]
+    if: needs.deployment-decision.outputs.should_deploy == 'true' && needs.check-structure.outputs.backend-exists == 'true'
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.deployment-decision.outputs.environment }}
@@ -103,8 +128,8 @@ jobs:
   # Frontend deployment
   deploy-frontend:
     name: Deploy Frontend
-    needs: [deployment-decision, deploy-backend]
-    if: needs.deployment-decision.outputs.should_deploy == 'true'
+    needs: [deployment-decision, check-structure]
+    if: needs.deployment-decision.outputs.should_deploy == 'true' && needs.check-structure.outputs.frontend-exists == 'true'
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.deployment-decision.outputs.environment }}

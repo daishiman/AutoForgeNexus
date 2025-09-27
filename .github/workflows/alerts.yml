@@ -29,7 +29,7 @@ on:
 permissions:
   contents: read
   actions: read
-  issues: read
+  issues: write  # Issue作成権限を追加
   pull-requests: read
   security-events: read
   checks: read
