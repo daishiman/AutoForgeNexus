@@ -286,14 +286,30 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8000
 
 /backend/           # Python/FastAPI（Phase 3）
   /src/
-    /domain/        # エンティティ・値オブジェクト・集約
-    /application/   # ユースケース・CQRS・イベントハンドラー
-    /infrastructure/ # Turso/Redis/LangFuse実装
-    /presentation/  # REST API・WebSocket・コントローラー
-  /tests/           # pytest（80%+カバレッジ）
-    /unit/         # 単体テスト
-    /integration/  # 統合テスト
-    /performance/  # 負荷テスト（Locust/K6）
+    /domain/        # 機能ベース集約パターン
+      /prompt/      # プロンプト管理機能 ✅
+        /entities/, /value_objects/, /services/, /repositories/
+      /evaluation/, /llm_integration/, /user_interaction/, /workflow/
+      /shared/      # 共通要素
+    /application/   # CQRSパターン ✅
+      /prompt/, /evaluation/, /llm_integration/, /user_interaction/, /workflow/
+        /commands/, /queries/, /services/
+      /shared/      # 共通要素 ✅
+        /commands/, /queries/, /services/, /dto/, /events/
+    /core/          # 横断的関心事層 ✅
+      /config/      # 設定管理（settings/, environments/, validators/, loaders/）
+      /security/    # セキュリティ（authentication/, authorization/, encryption/, validation/）
+      /exceptions/, /logging/, /middleware/, /monitoring/, /dependencies/
+    /infrastructure/ # 機能ベース実装層 ✅
+      /prompt/, /evaluation/, /llm_integration/, /user_interaction/, /workflow/
+        /repositories/, /adapters/
+      /shared/      # database/, monitoring/, auth/
+    /presentation/  # API層
+      /api/v1/      # prompt/, evaluation/, llm/, user/, workflow/
+      /websocket/   # handlers/
+  /tests/           # 機能ごとのテスト構造
+    /unit/domain/prompt/ ✅
+    /integration/, /e2e/
   requirements.txt  # Python依存関係
   alembic.ini      # データベースマイグレーション
 
