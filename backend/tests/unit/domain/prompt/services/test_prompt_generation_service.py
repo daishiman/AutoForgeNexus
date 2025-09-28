@@ -4,11 +4,11 @@
 ユーザー入力からプロンプトを生成するドメインサービスをテストします。
 TDD原則に従い、このテストコードは実装後も変更しません。
 """
-from backend.src.domain.prompt.services.prompt_generation_service import (
+from src.domain.prompt.services.prompt_generation_service import (
     PromptGenerationService,
 )
-from backend.src.domain.prompt.value_objects.user_input import UserInput
-from backend.src.domain.prompt.value_objects.prompt_content import PromptContent
+from src.domain.prompt.value_objects.user_input import UserInput
+from src.domain.prompt.value_objects.prompt_content import PromptContent
 
 
 class TestPromptGenerationService:

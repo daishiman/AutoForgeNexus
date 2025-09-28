@@ -6,9 +6,9 @@ TDD原則に従い、このテストコードは実装後も変更しません�
 """
 import pytest
 from datetime import datetime
-from backend.src.domain.prompt.value_objects.prompt_content import PromptContent
-from backend.src.domain.prompt.value_objects.prompt_metadata import PromptMetadata
-from backend.src.domain.prompt.value_objects.user_input import UserInput
+from src.domain.prompt.value_objects.prompt_content import PromptContent
+from src.domain.prompt.value_objects.prompt_metadata import PromptMetadata
+from src.domain.prompt.value_objects.user_input import UserInput
 
 
 class TestUserInput:

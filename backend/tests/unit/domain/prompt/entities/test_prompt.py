@@ -6,9 +6,9 @@ TDD原則に従い、このテストコードは実装後も変更しません�
 """
 import pytest
 from uuid import UUID
-from backend.src.domain.prompt.entities.prompt import Prompt
-from backend.src.domain.prompt.value_objects.prompt_content import PromptContent
-from backend.src.domain.prompt.value_objects.user_input import UserInput
+from src.domain.prompt.entities.prompt import Prompt
+from src.domain.prompt.value_objects.prompt_content import PromptContent
+from src.domain.prompt.value_objects.user_input import UserInput
 
 
 class TestPromptEntity:

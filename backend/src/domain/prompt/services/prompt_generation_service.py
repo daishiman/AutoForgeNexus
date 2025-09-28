@@ -6,8 +6,8 @@ OpenAI向けに最適化されたプロンプトの生成を行います。
 """
 import re
 from typing import List, Optional
-from backend.src.domain.prompt.value_objects.user_input import UserInput
-from backend.src.domain.prompt.value_objects.prompt_content import PromptContent
+from src.domain.prompt.value_objects.user_input import UserInput
+from src.domain.prompt.value_objects.prompt_content import PromptContent
 
 
 class PromptGenerationService:
