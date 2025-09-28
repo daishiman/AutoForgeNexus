@@ -44,21 +44,51 @@
 ```
 backend/
 ├── src/
-│   ├── domain/           # ドメイン層
-│   │   ├── entities/     # エンティティ
-│   │   ├── value_objects/# 値オブジェクト
-│   │   ├── aggregates/   # 集約
-│   │   └── events/       # ドメインイベント
-│   ├── application/      # アプリケーション層
-│   │   ├── use_cases/    # ユースケース（CQRS）
-│   │   │   ├── commands/ # コマンド側
-│   │   │   └── queries/  # クエリ側
-│   │   └── services/     # アプリケーションサービス
-│   ├── infrastructure/   # インフラストラクチャ層
-│   │   ├── repositories/ # リポジトリ実装
-│   │   ├── llm/         # LLMプロバイダー統合
-│   │   ├── cache/       # Redis実装
-│   │   └── monitoring/  # LangFuse統合
+│   ├── domain/           # ドメイン層（機能ベース集約）
+│   │   ├── prompt/       # プロンプト管理機能
+│   │   │   ├── entities/
+│   │   │   ├── value_objects/
+│   │   │   ├── services/
+│   │   │   └── repositories/
+│   │   ├── evaluation/   # 評価機能
+│   │   ├── llm_integration/ # LLM統合
+│   │   ├── user_interaction/ # ユーザー操作
+│   │   ├── workflow/     # ワークフロー管理
+│   │   └── shared/       # 共通要素
+│   ├── application/      # アプリケーション層（CQRS適用）
+│   │   ├── prompt/
+│   │   │   ├── commands/  # コマンド（書き込み）
+│   │   │   ├── queries/   # クエリ（読み取り）
+│   │   │   └── services/  # ワークフロー調整
+│   │   ├── evaluation/
+│   │   ├── llm_integration/
+│   │   ├── user_interaction/
+│   │   ├── workflow/
+│   │   └── shared/
+│   │       ├── commands/  # 基底コマンド
+│   │       ├── queries/   # 基底クエリ
+│   │       ├── services/  # 基底サービス
+│   │       ├── dto/       # DTO
+│   │       └── events/    # イベントバス
+│   ├── core/            # 横断的関心事
+│   │   ├── config/      # 設定管理
+│   │   │   ├── settings/, environments/, validators/, loaders/
+│   │   ├── security/    # セキュリティ
+│   │   │   ├── authentication/, authorization/, encryption/, validation/
+│   │   ├── exceptions/  # 例外管理
+│   │   ├── logging/     # ログ管理
+│   │   ├── middleware/  # ミドルウェア
+│   │   ├── monitoring/  # 監視
+│   │   └── dependencies/# 依存性注入
+│   ├── infrastructure/   # 外部連携層（機能ベース）
+│   │   ├── prompt/
+│   │   │   ├── repositories/  # DB実装
+│   │   │   └── adapters/     # 外部サービス
+│   │   ├── evaluation/, llm_integration/, user_interaction/, workflow/
+│   │   └── shared/
+│   │       ├── database/  # DB接続
+│   │       ├── monitoring/ # 監視実装
+│   │       └── auth/      # 認証実装
 │   └── presentation/    # プレゼンテーション層
 │       ├── api/         # FastAPI エンドポイント
 │       ├── websocket/   # WebSocketハンドラー
@@ -83,10 +113,13 @@ backend/
 - 自己検証ロジックを内包
 - IDは全て値オブジェクトとして実装
 
-**集約境界の厳守**
-- PromptAggregate: Prompt, Version, Template, Conversation
-- EvaluationAggregate: Evaluation, TestResult, Metrics
-- TestSuiteAggregate: TestSuite, TestCase, ValidationRule
+**集約境界の厳守（機能ベース）**
+- **prompt/**: プロンプト管理機能（Prompt, PromptContent, PromptMetadata, UserInput）
+- **evaluation/**: 評価機能（Evaluation, TestResult, Metrics）
+- **llm_integration/**: LLM統合（Provider, Request, Response, Cost）
+- **user_interaction/**: ユーザー操作（Session, Feedback, History）
+- **workflow/**: ワークフロー（Flow, Step, Condition）
+- 各集約は独立したディレクトリとして管理
 - 集約間は必ずIDで参照（直接参照禁止）
 
 ### 2. アプリケーション層実装方針
@@ -182,11 +215,11 @@ pip install -e .[dev]
 
 #### Phase 1: 基盤構築（Week 1-2）
 **実装順序：**
-1. ドメインモデル定義 → `src/domain/` 配下
-2. リポジトリインターフェース → `src/domain/repositories/`
-3. Turso接続設定 → `src/infrastructure/database/`
-4. 基本CRUD API → `src/presentation/api/v1/`
-5. Clerk認証ミドルウェア → `src/presentation/middleware/`
+1. ドメインモデル定義 → `src/domain/prompt/` 配下（機能ベース）
+2. リポジトリインターフェース → `src/domain/prompt/repositories/`
+3. Turso接続設定 → `src/infrastructure/shared/database/`
+4. 基本CRUD API → `src/presentation/api/v1/prompt/`
+5. Clerk認証ミドルウェア → `src/presentation/api/shared/middleware.py`
 
 **完了基準：**
 - [ ] プロンプトの作成・取得・更新・削除が可能
@@ -195,10 +228,10 @@ pip install -e .[dev]
 
 #### Phase 2: コア機能（Week 3-4）
 **実装順序：**
-1. CreatePromptUseCase → `src/application/use_cases/commands/`
-2. LiteLLM統合 → `src/infrastructure/llm/`
-3. 基本評価機能 → `src/application/use_cases/commands/`
-4. レポート生成 → `src/application/services/`
+1. CreatePromptUseCase → `src/application/prompt/commands/create_prompt.py`
+2. LiteLLM統合 → `src/infrastructure/llm_integration/providers/litellm/`
+3. 基本評価機能 → `src/application/evaluation/commands/`
+4. レポート生成 → `src/application/evaluation/services/`
 
 **完了基準：**
 - [ ] プロンプト作成から評価まで一連のフロー完成
@@ -207,10 +240,10 @@ pip install -e .[dev]
 
 #### Phase 3: 高度な機能（Week 5-6）
 **実装順序：**
-1. CQRSパターン適用 → コマンド/クエリ分離
-2. Redis Streamsイベントバス → `src/infrastructure/events/`
-3. 並列評価実行 → `src/application/services/`
-4. バージョニング機能 → `src/domain/entities/`
+1. CQRSパターン適用 → 各機能のcommands/queries分離
+2. Redis Streamsイベントバス → `src/application/shared/events/`
+3. 並列評価実行 → `src/application/evaluation/services/`
+4. バージョニング機能 → `src/domain/prompt/entities/`
 
 **完了基準：**
 - [ ] 10並列以上の評価実行
