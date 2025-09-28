@@ -49,6 +49,14 @@ AutoForgeNexus は、ユーザーの言語化能力に依存せず、高品質�
 ### Architecture
 
 - **DDD + Clean Architecture**: 明確な責任分離とテスタビリティ
+- **Event-Driven Architecture**: Redis Streamsによる非同期処理
+- **CQRS Pattern**: コマンドとクエリの責任分離で高速化
+- **5つの境界づけられたコンテキスト**: 
+  - Prompt Engineering（プロンプト設計）
+  - Evaluation（評価）
+  - LLM Integration（AI連携）
+  - User Interaction（ユーザー操作）
+  - Data Management（データ管理）
 - **CQRS + Event Sourcing**: 完全な監査証跡とイベント駆動
 - **Edge-First Design**: Cloudflare Workers による低レイテンシ
 - **Zero Trust Security**: 多層防御とGDPR準拠

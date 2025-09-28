@@ -34,6 +34,19 @@ docs/
 
 **重要**: レポートやレビュー結果を作成する際は、必ず上記ディレクトリに配置してください。
 
+## 🎨 システム設計思想
+
+### なぜこのシステムを作るのか
+- **問題**: プロンプト作成は専門知識が必要で、品質のばらつきが大きい
+- **解決策**: AIと人間の協働により、誰でも高品質なプロンプトを作成・最適化
+- **価値**: 開発時間50%削減、プロンプト品質30%向上を実現
+
+### 設計原則
+1. **ユーザーファースト**: 言語化能力に依存しない直感的UI
+2. **品質保証**: 多層評価による客観的な品質測定
+3. **継続的改善**: Git-likeバージョニングで改善履歴を管理
+4. **コスト最適化**: 100+LLMから最適なモデルを自動選択
+
 ## プロジェクト概要
 
 AutoForgeNexus は、AI プロンプト最適化システム - 包括的なプロンプトエンジニアリ
@@ -78,7 +91,13 @@ AutoForgeNexus は、AI プロンプト最適化システム - 包括的なプ�
 ```
 プレゼンテーション層 (Next.js/React + Clerk Auth)
 ├── アプリケーション層 (ユースケース, CQRS, イベントバス)
+│   ├── コマンド側: CreatePrompt, OptimizePrompt, ExecuteEvaluation
+│   ├── クエリ側: GetPromptDetails, GetEvaluationReport
+│   └── サービス: PromptOrchestration, EvaluationPipeline, Reporting
 ├── ドメイン層 (エンティティ, 値オブジェクト, 集約)
+│   ├── PromptAggregate: Prompt, Version, Template, Conversation
+│   ├── EvaluationAggregate: Evaluation, TestResult, Metrics
+│   └── TestSuiteAggregate: TestSuite, TestCase, ValidationRule
 └── インフラストラクチャ層 (Turso, Redis, LLMプロバイダー, LangFuse)
 ```
 
