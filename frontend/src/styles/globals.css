@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 251.4 59.4% 23.8%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 275.8 49.1% 30%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 250 96% 1%;
+    --muted-foreground: 250 45% 2%;
+    --accent: 332 71.7% 25%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 29 59% 25%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 90% 1%;
+    --input: 250 90% 1%;
+    --ring: 251.4 59.4% 23.8%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 251.4 59.4% 23.8%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 275.8 49.1% 30%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 250 20% 10%;
+    --muted-foreground: 250 60% 70%;
+    --accent: 332 71.7% 25%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 29 59% 25%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 20% 15%;
+    --input: 250 20% 15%;
+    --ring: 251.4 59.4% 23.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans font-semibold tracking-tight;
+  }
+
+  code {
+    @apply font-mono text-sm;
+  }
+}
+
+@layer components {
+  .container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .gradient-primary {
+    background: linear-gradient(
+      135deg,
+      oklch(59.4% 0.238 251.4),
+      oklch(49.1% 0.3 275.8)
+    );
+  }
+
+  .gradient-secondary {
+    background: linear-gradient(
+      135deg,
+      oklch(49.1% 0.3 275.8),
+      oklch(71.7% 0.25 332)
+    );
+  }
+
+  .gradient-accent {
+    background: linear-gradient(
+      135deg,
+      oklch(71.7% 0.25 332),
+      oklch(59.4% 0.238 251.4)
+    );
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.primary.DEFAULT') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.primary.DEFAULT');
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
