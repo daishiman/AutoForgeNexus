@@ -85,11 +85,11 @@
     },
     "frontend": {
       "runtime": "Node.js 22 LTS",
-      "framework": "Next.js 15.5",
-      "ui": "React 19.1.0",
+      "framework": "Next.js 15.5.4",
+      "ui": "React 19.0.0",
       "language": "TypeScript 5.9.2",
-      "styling": "Tailwind CSS 4.0",
-      "components": "shadcn/ui"
+      "styling": "Tailwind CSS 4.0.0",
+      "components": "shadcn/ui 3.3.1"
     },
     "database": {
       "primary": "Turso (libSQL)",
@@ -103,11 +103,11 @@
       "container": "Docker 24.0+"
     },
     "ai": {
-      "orchestration": "LangChain 0.3.27 + LangGraph 0.6.7",
-      "llmProxy": "LiteLLM 1.76.1",
-      "observability": "LangFuse"
+      "orchestration": "LangChain 0.3.27 + LangGraph 0.2.60",
+      "llmProxy": "LiteLLM 1.77.5",
+      "observability": "LangFuse 2.56.2"
     },
-    "auth": "Clerk"
+    "auth": "Clerk 6.32.0"
   },
   "qualityStandards": {
     "testCoverage": {
@@ -124,7 +124,7 @@
     },
     "testing": {
       "unit": ["pytest", "jest"],
-      "e2e": "playwright",
+      "e2e": "Playwright 1.50.0",
       "load": ["k6", "locust"]
     },
     "performance": {
@@ -451,7 +451,7 @@
   },
   "metadata": {
     "created": "2024-09-23",
-    "lastUpdated": "2025-09-26",
+    "lastUpdated": "2025-09-28",
     "maintainers": ["daishiman"],
     "license": "MIT",
     "repository": "https://github.com/daishiman/AutoForgeNexus"

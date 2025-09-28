@@ -4,7 +4,7 @@
 
 ## 🎯 フロントエンド概要
 
-Next.js 15.5 + React 19による最新のエッジファーストフロントエンド実装。Cloudflare Pagesでのデプロイ最適化。
+Next.js 15.5.4 + React 19.0.0による最新のエッジファーストフロントエンド実装。Cloudflare Pagesでのデプロイ最適化。
 
 ## 🏗️ アーキテクチャ
 
@@ -12,36 +12,36 @@ Next.js 15.5 + React 19による最新のエッジファーストフロントエ
 
 ```
 src/
-├── app/                # Next.js 15.5 App Router
+├── app/                # Next.js 15.5.4 App Router
 │   ├── api/           # API Routes (Edge Functions)
 │   ├── dashboard/     # ダッシュボード
 │   └── (auth)/        # 認証関連ページ
-├── components/         # React 19 コンポーネント
+├── components/         # React 19.0.0 コンポーネント
 │   ├── auth/          # 認証コンポーネント
 │   ├── client/        # Client Components
 │   ├── server/        # Server Components
 │   └── providers/     # Context Providers
 ├── lib/               # ユーティリティ
-│   ├── auth/          # Clerk認証
+│   ├── auth/          # Clerk 6.32.0認証
 │   └── monitoring/    # クライアント監視
 ├── middleware/        # エッジミドルウェア
 │   └── observability.ts # 監視ミドルウェア
-├── hooks/             # React 19 カスタムフック
-├── stores/            # Zustand状態管理
+├── hooks/             # React 19.0.0 カスタムフック
+├── stores/            # Zustand 5.0.8状態管理
 └── types/             # TypeScript型定義
 ```
 
 ### 主要技術
 
-- **Framework**: Next.js 15.5 (Turbopack)
-- **UI Library**: React 19.1.0
+- **Framework**: Next.js 15.5.4 (Turbopack)
+- **UI Library**: React 19.0.0
 - **Language**: TypeScript 5.9.2
-- **Styling**: Tailwind CSS 4.0 (OKLCH色空間)
-- **Components**: shadcn/ui (React 19対応)
+- **Styling**: Tailwind CSS 4.0.0 (OKLCH色空間)
+- **Components**: shadcn/ui 3.3.1 (React 19対応)
 - **State**: Zustand 5.0.8
-- **Auth**: Clerk (OAuth 2.0, MFA)
+- **Auth**: Clerk 6.32.0 (OAuth 2.0, MFA)
 
-## 🚀 React 19 新機能活用
+## 🚀 React 19.0.0 新機能活用
 
 ### Server Components（デフォルト）
 
@@ -66,13 +66,13 @@ function SearchResults({ searchPromise }) {
 ### forwardRef不要
 
 ```tsx
-// ✅ React 19でforwardRef不要
+// ✅ React 19.0.0でforwardRef不要
 function Button({ ref, ...props }) {
   return <button ref={ref} {...props} />;
 }
 ```
 
-## 🎨 Tailwind CSS 4.0設定
+## 🎨 Tailwind CSS 4.0.0設定
 
 ### OKLCH色空間
 
@@ -307,5 +307,5 @@ export async function middleware(request: NextRequest) {
 
 - [プロジェクトCLAUDE.md](../CLAUDE.md) - プロジェクト全体ガイド
 - [バックエンドCLAUDE.md](../backend/CLAUDE.md) - API仕様
-- [Next.js 15.5ドキュメント](https://nextjs.org/docs) - 公式ドキュメント
-- [React 19ドキュメント](https://react.dev) - 公式ドキュメント
+- [Next.js 15.5.4ドキュメント](https://nextjs.org/docs) - 公式ドキュメント
+- [React 19.0.0ドキュメント](https://react.dev) - 公式ドキュメント

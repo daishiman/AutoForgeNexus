@@ -73,18 +73,18 @@ AutoForgeNexus は、AI プロンプト最適化システム - 包括的なプ�
 ### 技術スタック（2025 年 9 月最新版）
 
 - **バックエンド**: Python 3.13, FastAPI 0.116.1, SQLAlchemy 2.0.32, Pydantic v2
-- **フロントエンド**: Next.js 15.5 (Turbopack), React 19.1.0, TypeScript 5.9.2,
-  Tailwind CSS 4.0
+- **フロントエンド**: Next.js 15.5.4 (Turbopack), React 19.0.0, TypeScript 5.9.2,
+  Tailwind CSS 4.0.0
 - **データベース**: Turso (libSQL) 分散型, Redis 7.4.1, libSQL Vector Extension
-- **認証**: Clerk（OAuth 2.0, MFA, 組織管理）
-- **AI/ML**: LangChain 0.3.27, LangGraph 0.6.7, LiteLLM 1.76.1
-- **LLM 観測**: LangFuse（分散トレーシング・評価・コスト監視）
+- **認証**: Clerk 6.32.0（OAuth 2.0, MFA, 組織管理）
+- **AI/ML**: LangChain 0.3.27, LangGraph 0.2.60, LiteLLM 1.77.5
+- **LLM 観測**: LangFuse 2.56.2（分散トレーシング・評価・コスト監視）
 - **インフラ**: Cloudflare (Workers Python, Pages, R2), Docker 24.0+
 - **Node.js**: 22 LTS "Jod" (ネイティブ TypeScript 対応, WebSocket 内蔵)
 - **パッケージ管理**: pnpm 9.x (Node.js 22 最適化)
 - **状態管理**: Zustand 5.0.8
-- **UI ライブラリ**: shadcn/ui (React 19・Tailwind v4 対応)
-- **品質**: Ruff 0.7.4, mypy 1.13.0 (strict), pytest 8.3.3, Playwright
+- **UI ライブラリ**: shadcn/ui 3.3.1 (React 19・Tailwind v4 対応)
+- **品質**: Ruff 0.7.4, mypy 1.13.0 (strict), pytest 8.3.3, Playwright 1.50.0
 
 ### レイヤーアーキテクチャ
 
@@ -185,7 +185,7 @@ alembic upgrade head
 /ai:data:migrate zero-downtime-migration
 ```
 
-### Phase 5: フロントエンド (Next.js 15.5/React 19)
+### Phase 5: フロントエンド (Next.js 15.5.4/React 19.0.0)
 
 ```bash
 # Node.js環境セットアップ (M1/M2/M3最適化)
@@ -196,7 +196,7 @@ pnpm config set store-dir ~/.pnpm-store
 # フロントエンド環境構築
 cd frontend
 pnpm install                    # 依存関係インストール
-npx shadcn@canary init         # shadcn/ui (React 19・Tailwind v4対応)
+npx shadcn@latest init         # shadcn/ui 3.3.1 (React 19・Tailwind v4対応)
 pnpm dev --turbo               # Turbopack開発サーバー (localhost:3000)
 
 # ビルドとテスト
@@ -313,18 +313,18 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8000
   requirements.txt  # Python依存関係
   alembic.ini      # データベースマイグレーション
 
-/frontend/          # Next.js 15.5/React 19（Phase 5）
+/frontend/          # Next.js 15.5.4/React 19.0.0（Phase 5）
   /src/
-    /app/          # App Router (Next.js 15.5)
-    /components/   # React 19 Server Components + shadcn/ui
+    /app/          # App Router (Next.js 15.5.4)
+    /components/   # React 19.0.0 Server Components + shadcn/ui 3.3.1
     /lib/          # ユーティリティ・Clerk統合
-    /hooks/        # React 19 カスタムフック (use API)
+    /hooks/        # React 19.0.0 カスタムフック (use API)
     /stores/       # Zustand 5.0.8状態管理
-    /styles/       # Tailwind CSS 4.0 スタイル
+    /styles/       # Tailwind CSS 4.0.0 スタイル
   /tests/          # Jest + Playwright E2E (75%+カバレッジ)
   playwright.config.ts  # E2Eテスト設定
-  tailwind.config.ts    # Tailwind CSS 4.0設定 (OKLCH)
-  next.config.js   # Next.js 15.5 Turbopack設定
+  tailwind.config.ts    # Tailwind CSS 4.0.0設定 (OKLCH)
+  next.config.js   # Next.js 15.5.4 Turbopack設定
   tsconfig.json    # TypeScript 5.9.2 strict設定
 
 /monitoring/        # 観測性設定（Phase 6）
@@ -375,8 +375,8 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8000
 
 #### フロントエンド開発
 
-- `frontend-architect`: React 19/Next.js 15.5 アーキテクチャ
-- `uiux-designer`: shadcn/ui、OKLCH 色空間
+- `frontend-architect`: React 19.0.0/Next.js 15.5.4 アーキテクチャ
+- `uiux-designer`: shadcn/ui 3.3.1、OKLCH 色空間
 - `real-time-specialist`: WebSocket/WebRTC 実装
 
 #### バックエンド開発
@@ -449,8 +449,8 @@ git status && git branch
 2. **Phase 2**: インフラ・Docker 環境 → docker-compose.dev.yml 構築
 3. **Phase 3**: バックエンド → Python 3.13・FastAPI・DDD 構造
 4. **Phase 4**: データベース → Turso・Redis・libSQL Vector
-5. **Phase 5**: フロントエンド → Next.js 15.5・React 19・Tailwind CSS
-   4.0・shadcn/ui
+5. **Phase 5**: フロントエンド → Next.js 15.5.4・React 19.0.0・Tailwind CSS
+   4.0.0・shadcn/ui 3.3.1
 6. **Phase 6**: 統合・品質保証 → テスト・監視・セキュリティ
 
 ### 開発品質基準
@@ -461,8 +461,8 @@ git status && git branch
 - **パフォーマンス**:
   - API P95 < 200ms
   - WebSocket 10,000 同時接続 (Node.js 22 ネイティブ)
-  - Turbopack: 50%高速冷起動
-  - React 19: 30%高速ホットリロード
+  - Turbopack: 50%高速冷起動 (Next.js 15.5.4)
+  - React 19.0.0: 30%高速ホットリロード
   - Core Web Vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1
 - **CI/CD**: 並列実行で 5 分以内、Cloudflare 自動デプロイ
 
@@ -471,7 +471,7 @@ git status && git branch
 - **クリーンアーキテクチャ**: DDD 準拠、依存関係逆転、レイヤー分離
 - **イベント駆動**: 状態変更の完全記録、CQRS 実装
 - **分散データベース**: Turso (libSQL)、Redis キャッシング、Vector 検索
-- **認証**: Clerk（OAuth 2.0, MFA, 組織管理）
+- **認証**: Clerk 6.32.0（OAuth 2.0, MFA, 組織管理）
 - **観測性**: LangFuse LLM トレーシング、Prometheus/Grafana 監視
 - **エッジ最適化**: Cloudflare Workers/Pages、CDN 活用
 
@@ -509,7 +509,7 @@ python3.13 --version
 
 ## 2025 年最新フロントエンド技術詳細
 
-### React 19.1.0 新機能
+### React 19.0.0 新機能
 
 ```jsx
 // Server Componentsデフォルト
@@ -530,7 +530,7 @@ function Button({ ref, ...props }) {
 }
 ```
 
-### Next.js 15.5 機能
+### Next.js 15.5.4 機能
 
 ```javascript
 // next.config.js - Turbopack設定
@@ -552,7 +552,7 @@ module.exports = {
 };
 ```
 
-### Tailwind CSS 4.0 設定
+### Tailwind CSS 4.0.0 設定
 
 ```css
 /* tailwind.config.ts */
@@ -580,7 +580,7 @@ module.exports = {
 | メトリクス              | 目標値  | 実測値 |
 | ----------------------- | ------- | ------ |
 | Turbopack 冷起動        | < 500ms | 450ms  |
-| React 19 ホットリロード | < 100ms | 80ms   |
+| React 19.0.0 ホットリロード | < 100ms | 80ms   |
 | TypeScript 型チェック   | < 2s    | 1.5s   |
 | 本番ビルド時間          | < 60s   | 45s    |
 | バンドルサイズ          | < 200KB | 180KB  |
@@ -588,7 +588,7 @@ module.exports = {
 
 ### マイグレーションガイド
 
-#### React 18 → 19
+#### React 18 → 19.0.0
 
 ```bash
 # 自動マイグレーション
@@ -596,23 +596,23 @@ npx react-codemod@latest react-19/remove-forward-ref
 npx react-codemod@latest react-19/use-transition
 ```
 
-#### Tailwind CSS 3 → 4
+#### Tailwind CSS 3 → 4.0.0
 
 ```bash
 # アップグレード
 pnpm remove tailwindcss postcss autoprefixer
-pnpm add -D tailwindcss@next @tailwindcss/vite@next
+pnpm add -D tailwindcss@4.0.0 postcss autoprefixer
 
 # 設定移行
-npx @tailwindcss/upgrade@next
+npx @tailwindcss/upgrade@latest
 ```
 
-#### Next.js 14 → 15.5
+#### Next.js 14 → 15.5.4
 
 ```bash
 # アップグレード
-pnpm add next@15.5 react@19 react-dom@19
-pnpm add -D @types/react@latest @types/react-dom@latest
+pnpm add next@15.5.4 react@19.0.0 react-dom@19.0.0
+pnpm add -D @types/react@19.0.6 @types/react-dom@19.0.2
 
 # Turbopack有効化
 pnpm dev --turbo
@@ -658,7 +658,7 @@ pnpm build --turbo
 ### Phase 4-6: 未着手
 
 - Phase 4: データベース（Turso, Redis, libSQL Vector）
-- Phase 5: フロントエンド（Next.js 15.5/React 19）
+- Phase 5: フロントエンド（Next.js 15.5.4/React 19.0.0）
 - Phase 6: 統合・品質保証
 
 ## 📋 重要な作業指針

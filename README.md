@@ -6,24 +6,24 @@ AutoForgeNexus は、ユーザーの言語化能力に依存せず、高品質�
 
 ## 🎯 プロジェクトステータス
 
-### Phase 2: インフラ・監視基盤構築 🚧 進行中
+### Phase 3: バックエンド構築 (Python 3.13/FastAPI) 🚧 進行中
 
 | フェーズ | 状態 | 完了度 |
 |----------|------|-------|
 | Phase 1: Git・基盤環境 | ✅ 完了 | 100% |
-| **Phase 2: インフラ・監視** | 🚧 進行中 | **85%** |
-| Phase 3: バックエンド | ⏳ 待機 | 0% |
+| Phase 2: インフラ・監視 | ✅ 完了 | 100% |
+| **Phase 3: バックエンド** | 🚧 進行中 | **40%** |
 | Phase 4: データベース | ⏳ 待機 | 0% |
 | Phase 5: フロントエンド | ⏳ 待機 | 0% |
 | Phase 6: 統合・品質保証 | ⏳ 待機 | 0% |
 
-### 最近の実装（2025年9月27日更新）
+### 最近の実装（2025年9月28日更新）
 
-- ✅ Cloudflare Workers/Pages設定完了
-- ✅ デプロイ・ロールバックスクリプト実装
-- ✅ 包括的監視基盤構築（99.9% SLO対応）
-- ✅ 構造化ログとヘルスチェック実装
-- ✅ セキュリティミドルウェア実装
+- ✅ Phase 2: インフラ・監視基盤構築完了 (100%)
+- ✅ Phase 5: フロントエンド環境設定ドキュメント更新
+- ✅ FastAPI 0.116.1 + Python 3.13環境構築
+- ✅ DDD + Clean Architectureディレクトリ構造
+- 🚧 ドメインモデル・認証システム実装中
 
 ## 🚀 主要機能
 
@@ -39,12 +39,12 @@ AutoForgeNexus は、ユーザーの言語化能力に依存せず、高品質�
 ### Core Technologies
 
 - **Backend**: Python 3.13 + FastAPI 0.116.1 + SQLAlchemy 2.0.32
-- **Frontend**: Next.js 15.5 + React 19.1.0 + TypeScript 5.9.2
+- **Frontend**: Next.js 15.5.4 + React 19.0.0 + TypeScript 5.9.2 + Tailwind CSS 4.0.0
 - **Database**: Turso (libSQL/SQLite) + libSQL Vector + Redis 7.4.1
-- **Authentication**: Clerk (OAuth 2.0, MFA, Organization Management)
+- **Authentication**: Clerk 6.32.0 (OAuth 2.0, MFA, Organization Management)
 - **Infrastructure**: Cloudflare (Workers Python/Pages/R2/Analytics)
 - **Monitoring**: Prometheus + Grafana + LangFuse + Structured Logging
-- **AI/ML**: LangChain 0.3.27 + LangGraph 0.6.7 + LiteLLM 1.76.1
+- **AI/ML**: LangChain 0.3.27 + LangGraph 0.2.60 + LiteLLM 1.77.5 + LangFuse 2.56.2
 
 ### Architecture
 
@@ -66,7 +66,7 @@ AutoForgeNexus は、ユーザーの言語化能力に依存せず、高品質�
 ### 前提条件
 
 - Python 3.13+
-- Node.js 18+ & pnpm
+- Node.js 22 LTS & pnpm 9.x
 - Turso CLI
 - Docker (オプション)
 
@@ -87,13 +87,16 @@ cp .env.example .env
 
 # バックエンドセットアップ
 cd backend
-make setup
-make dev
+python3.13 -m venv venv
+source venv/bin/activate
+pip install -e .[dev]
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 # フロントエンドセットアップ
 cd frontend
 pnpm install
-pnpm run dev
+npx shadcn@latest init  # shadcn/ui 3.3.1初期化
+pnpm dev --turbo  # Turbopack開発サーバー
 ```
 
 ## 📚 ドキュメント
