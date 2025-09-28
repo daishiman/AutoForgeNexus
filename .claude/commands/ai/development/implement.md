@@ -9,7 +9,7 @@ agents:
     backend-developer,
     frontend-architect,
     real-time-features-specialist,
-    domain-modellerr,
+    domain-modeller,
     version-control-specialist,
   ]
 ---
@@ -53,7 +53,7 @@ Key behaviors:
 - **backend-developer** → サーバーサイド実装
 - **frontend-architect** → クライアントサイド実装
 - **real-time-features-specialist** → WebSocket/リアルタイム
-- **domain-modellerr** → ドメインロジック検証
+- **domain-modeller** → ドメインロジック検証（機能ベース集約）
 
 ## Tool Coordination
 
