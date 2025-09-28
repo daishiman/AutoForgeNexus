@@ -3,8 +3,10 @@
 
 プロンプトが新規作成された際に発行されるイベント
 """
-from typing import List, Optional, Dict, Any
+
 from datetime import datetime
+from typing import Any
+
 from src.domain.shared.events.domain_event import DomainEvent
 
 
@@ -29,9 +31,9 @@ class PromptCreatedEvent(DomainEvent):
         user_id: str,
         title: str,
         content: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        **kwargs
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        **kwargs,
     ):
         """初期化"""
         self.prompt_id = prompt_id
@@ -50,7 +52,7 @@ class PromptCreatedEvent(DomainEvent):
             aggregate_id=prompt_id, event_type="PromptCreated", **kwargs_copy
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """イベントを辞書形式に変換"""
         base_dict = super().to_dict()
         base_dict["payload"] = {
@@ -64,7 +66,7 @@ class PromptCreatedEvent(DomainEvent):
         return base_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PromptCreatedEvent":
+    def from_dict(cls, data: dict[str, Any]) -> "PromptCreatedEvent":
         """辞書からイベントを復元"""
         payload = data.get("payload", {})
         occurred_at = data.get("occurred_at")

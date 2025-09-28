@@ -3,7 +3,9 @@
 
 TDD原則に従い、実装前にテストを作成
 """
+
 from datetime import datetime
+
 from src.domain.prompt.events import (
     PromptCreatedEvent,
     PromptSavedEvent,

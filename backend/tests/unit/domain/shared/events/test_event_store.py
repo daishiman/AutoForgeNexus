@@ -3,8 +3,9 @@
 
 イベントの永続化とリトリーブのテスト
 """
-from src.domain.shared.events import DomainEvent, InMemoryEventStore
+
 from src.domain.prompt.events import PromptCreatedEvent
+from src.domain.shared.events import DomainEvent, InMemoryEventStore
 
 
 class TestEventStore:
@@ -34,10 +35,16 @@ class TestEventStore:
         # Arrange
         store = InMemoryEventStore()
         event1 = PromptCreatedEvent(
-            prompt_id="prompt_001", user_id="user_123", title="プロンプト1", content="内容1"
+            prompt_id="prompt_001",
+            user_id="user_123",
+            title="プロンプト1",
+            content="内容1",
         )
         event2 = PromptCreatedEvent(
-            prompt_id="prompt_002", user_id="user_123", title="プロンプト2", content="内容2"
+            prompt_id="prompt_002",
+            user_id="user_123",
+            title="プロンプト2",
+            content="内容2",
         )
 
         # Act

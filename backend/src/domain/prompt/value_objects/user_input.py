@@ -4,8 +4,8 @@ UserInput値オブジェクト
 ユーザーからの入力を表現する不変の値オブジェクト。
 プロンプト生成の入力として使用されます。
 """
+
 from dataclasses import dataclass, field
-from typing import List
 
 
 @dataclass(frozen=True)
@@ -22,8 +22,8 @@ class UserInput:
 
     goal: str
     context: str
-    constraints: List[str] = field(default_factory=list)
-    examples: List[str] = field(default_factory=list)
+    constraints: list[str] = field(default_factory=list)
+    examples: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """初期化後のバリデーション"""

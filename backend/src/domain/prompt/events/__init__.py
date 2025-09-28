@@ -3,6 +3,7 @@
 
 プロンプトのライフサイクルで発生するすべてのイベント
 """
+
 from .prompt_created import PromptCreatedEvent
 from .prompt_saved import PromptSavedEvent
 from .prompt_updated import PromptUpdatedEvent

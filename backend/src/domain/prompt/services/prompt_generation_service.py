@@ -4,10 +4,11 @@
 ユーザー入力からプロンプトを生成するドメインサービス。
 OpenAI向けに最適化されたプロンプトの生成を行います。
 """
+
 import re
-from typing import List, Optional
-from src.domain.prompt.value_objects.user_input import UserInput
+
 from src.domain.prompt.value_objects.prompt_content import PromptContent
+from src.domain.prompt.value_objects.user_input import UserInput
 
 
 class PromptGenerationService:
@@ -213,7 +214,7 @@ class PromptGenerationService:
 
         return " ".join(parts)
 
-    def _extract_template_variables(self, template: str) -> List[str]:
+    def _extract_template_variables(self, template: str) -> list[str]:
         """テンプレートから変数を抽出"""
         variables = re.findall(r"\{(\w+)\}", template)
         return list(set(variables))
@@ -227,7 +228,8 @@ class PromptGenerationService:
             # より具体的な指示を追加
             if "要約" in template:
                 improved = template.replace(
-                    "要約してください", "以下の観点で具体的に要約してください:\n1. 主要なポイント\n2. 長所と短所\n3. 総合的な評価"
+                    "要約してください",
+                    "以下の観点で具体的に要約してください:\n1. 主要なポイント\n2. 長所と短所\n3. 総合的な評価",
                 )
             else:
                 improved = improved.replace(":", "について具体的に:")
@@ -243,9 +245,7 @@ class PromptGenerationService:
 
         return improved
 
-    def _improve_system_message(
-        self, system_message: Optional[str], feedback: str
-    ) -> str:
+    def _improve_system_message(self, system_message: str | None, feedback: str) -> str:
         """フィードバックに基づいてシステムメッセージを改善"""
         if not system_message:
             return "改善されたアシスタントです。"

@@ -4,8 +4,9 @@
 すべてのドメインイベントの基底クラス
 イベント駆動アーキテクチャの中核となるクラス
 """
+
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import uuid4
 
 
@@ -28,10 +29,10 @@ class DomainEvent:
         self,
         aggregate_id: str,
         event_type: str,
-        event_id: Optional[str] = None,
-        occurred_at: Optional[datetime] = None,
+        event_id: str | None = None,
+        occurred_at: datetime | None = None,
         version: int = 1,
-        payload: Optional[Dict[str, Any]] = None,
+        payload: dict[str, Any] | None = None,
     ):
         """初期化"""
         self.aggregate_id = aggregate_id
@@ -41,7 +42,7 @@ class DomainEvent:
         self.version = version
         self.payload = payload or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         イベントを辞書形式に変換
 
@@ -60,7 +61,7 @@ class DomainEvent:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DomainEvent":
+    def from_dict(cls, data: dict[str, Any]) -> "DomainEvent":
         """
         辞書からイベントを復元
 

@@ -4,9 +4,11 @@ Promptエンティティ
 プロンプト管理の中核となるエンティティ。
 プロンプトのライフサイクル全体を管理します。
 """
-from uuid import UUID, uuid4
+
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any
+from uuid import UUID, uuid4
+
 from src.domain.prompt.value_objects.prompt_content import PromptContent
 from src.domain.prompt.value_objects.prompt_metadata import PromptMetadata
 from src.domain.prompt.value_objects.user_input import UserInput
@@ -25,7 +27,7 @@ class Prompt:
         id: UUID,
         content: PromptContent,
         metadata: PromptMetadata,
-        history: Optional[List[Dict[str, Any]]] = None,
+        history: list[dict[str, Any]] | None = None,
     ):
         """
         Promptエンティティの初期化
@@ -132,7 +134,7 @@ class Prompt:
         }
         self.history.append(entry)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         辞書形式に変換
 
@@ -173,7 +175,7 @@ class Prompt:
         return template
 
     @staticmethod
-    def _extract_variables(template: str) -> List[str]:
+    def _extract_variables(template: str) -> list[str]:
         """
         テンプレートから変数を抽出
 

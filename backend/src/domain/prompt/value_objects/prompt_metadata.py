@@ -4,9 +4,9 @@ PromptMetadata値オブジェクト
 プロンプトのメタデータを表現する不変の値オブジェクト。
 バージョン、ステータス、作成日時などを管理します。
 """
+
 from dataclasses import dataclass, replace
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class PromptMetadata:
     version: int
     status: str
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime | None
     created_by: str
 
     # 有効なステータス

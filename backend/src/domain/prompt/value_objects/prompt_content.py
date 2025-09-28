@@ -4,9 +4,10 @@ PromptContent値オブジェクト
 プロンプトの内容を表現する不変の値オブジェクト。
 テンプレート、変数、システムメッセージを保持します。
 """
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+
 import re
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -21,8 +22,8 @@ class PromptContent:
     """
 
     template: str
-    variables: List[str] = field(default_factory=list)
-    system_message: Optional[str] = None
+    variables: list[str] = field(default_factory=list)
+    system_message: str | None = None
 
     def __post_init__(self):
         """初期化後のバリデーション"""
@@ -49,7 +50,7 @@ class PromptContent:
         """
         return self.template.format(**kwargs)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """辞書形式に変換"""
         return {
             "template": self.template,

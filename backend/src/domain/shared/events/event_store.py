@@ -3,8 +3,9 @@
 
 イベントソーシングのためのイベント永続化レイヤー
 """
+
 from abc import ABC, abstractmethod
-from typing import List, Dict
+
 from src.domain.shared.events.domain_event import DomainEvent
 
 
@@ -26,7 +27,7 @@ class EventStore(ABC):
         pass
 
     @abstractmethod
-    def get_events(self, aggregate_id: str) -> List[DomainEvent]:
+    def get_events(self, aggregate_id: str) -> list[DomainEvent]:
         """
         集約IDに関連するすべてのイベントを取得
 
@@ -39,7 +40,7 @@ class EventStore(ABC):
         pass
 
     @abstractmethod
-    def get_events_after(self, aggregate_id: str, version: int) -> List[DomainEvent]:
+    def get_events_after(self, aggregate_id: str, version: int) -> list[DomainEvent]:
         """
         特定バージョン以降のイベントを取得
 
@@ -53,7 +54,7 @@ class EventStore(ABC):
         pass
 
     @abstractmethod
-    def get_all_events(self) -> List[DomainEvent]:
+    def get_all_events(self) -> list[DomainEvent]:
         """
         すべてのイベントを取得
 
@@ -63,7 +64,7 @@ class EventStore(ABC):
         pass
 
     @abstractmethod
-    def get_events_by_type(self, event_type: str) -> List[DomainEvent]:
+    def get_events_by_type(self, event_type: str) -> list[DomainEvent]:
         """
         特定タイプのイベントを取得
 
@@ -86,8 +87,8 @@ class InMemoryEventStore(EventStore):
 
     def __init__(self):
         """イベントストアの初期化"""
-        self._events: List[DomainEvent] = []
-        self._events_by_aggregate: Dict[str, List[DomainEvent]] = {}
+        self._events: list[DomainEvent] = []
+        self._events_by_aggregate: dict[str, list[DomainEvent]] = {}
 
     def append(self, event: DomainEvent) -> None:
         """
@@ -103,7 +104,7 @@ class InMemoryEventStore(EventStore):
             self._events_by_aggregate[event.aggregate_id] = []
         self._events_by_aggregate[event.aggregate_id].append(event)
 
-    def get_events(self, aggregate_id: str) -> List[DomainEvent]:
+    def get_events(self, aggregate_id: str) -> list[DomainEvent]:
         """
         集約IDに関連するすべてのイベントを取得
 
@@ -115,7 +116,7 @@ class InMemoryEventStore(EventStore):
         """
         return self._events_by_aggregate.get(aggregate_id, [])
 
-    def get_events_after(self, aggregate_id: str, version: int) -> List[DomainEvent]:
+    def get_events_after(self, aggregate_id: str, version: int) -> list[DomainEvent]:
         """
         特定バージョン以降のイベントを取得
 
@@ -129,7 +130,7 @@ class InMemoryEventStore(EventStore):
         events = self.get_events(aggregate_id)
         return [e for e in events if e.version > version]
 
-    def get_all_events(self) -> List[DomainEvent]:
+    def get_all_events(self) -> list[DomainEvent]:
         """
         すべてのイベントを取得
 
@@ -138,7 +139,7 @@ class InMemoryEventStore(EventStore):
         """
         return self._events.copy()
 
-    def get_events_by_type(self, event_type: str) -> List[DomainEvent]:
+    def get_events_by_type(self, event_type: str) -> list[DomainEvent]:
         """
         特定タイプのイベントを取得
 

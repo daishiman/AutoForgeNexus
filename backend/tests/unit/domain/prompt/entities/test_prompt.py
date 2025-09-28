@@ -4,8 +4,11 @@ Promptエンティティのテストコード
 プロンプト管理の中核となるPromptエンティティの振る舞いをテストします。
 TDD原則に従い、このテストコードは実装後も変更しません。
 """
-import pytest
+
 from uuid import UUID
+
+import pytest
+
 from src.domain.prompt.entities.prompt import Prompt
 from src.domain.prompt.value_objects.prompt_content import PromptContent
 from src.domain.prompt.value_objects.user_input import UserInput
@@ -118,7 +121,10 @@ class TestPromptEntity:
         """プロンプトを辞書形式に変換できることを検証"""
         # Arrange
         user_input = UserInput(
-            goal="シリアライズテスト", context="テストコンテキスト", constraints=["制約1"], examples=["例1"]
+            goal="シリアライズテスト",
+            context="テストコンテキスト",
+            constraints=["制約1"],
+            examples=["例1"],
         )
         prompt = Prompt.create_from_user_input(user_input)
 

@@ -3,8 +3,10 @@
 
 TDD原則に従い、実装前にテストを作成
 """
+
 from datetime import datetime
 from uuid import UUID
+
 from src.domain.shared.events.domain_event import DomainEvent
 
 

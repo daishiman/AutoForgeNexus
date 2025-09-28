@@ -4,11 +4,12 @@
 ユーザー入力からプロンプトを生成するドメインサービスをテストします。
 TDD原則に従い、このテストコードは実装後も変更しません。
 """
+
 from src.domain.prompt.services.prompt_generation_service import (
     PromptGenerationService,
 )
-from src.domain.prompt.value_objects.user_input import UserInput
 from src.domain.prompt.value_objects.prompt_content import PromptContent
+from src.domain.prompt.value_objects.user_input import UserInput
 
 
 class TestPromptGenerationService:
@@ -63,7 +64,10 @@ class TestPromptGenerationService:
             goal="FAQ回答生成",
             context="製品サポート",
             constraints=[],
-            examples=["Q: 返品可能ですか？ A: はい、30日以内なら可能です", "Q: 送料は？ A: 5000円以上で無料です"],
+            examples=[
+                "Q: 返品可能ですか？ A: はい、30日以内なら可能です",
+                "Q: 送料は？ A: 5000円以上で無料です",
+            ],
         )
 
         # Act
@@ -117,7 +121,10 @@ class TestPromptGenerationService:
         """制約条件が空でも正常に動作することを検証"""
         # Arrange
         user_input = UserInput(
-            goal="シンプルなテキスト生成", context="一般的な用途", constraints=[], examples=[]
+            goal="シンプルなテキスト生成",
+            context="一般的な用途",
+            constraints=[],
+            examples=[],
         )
 
         # Act
@@ -150,7 +157,10 @@ class TestPromptGenerationService:
         """生成されたプロンプトが有効であることを検証"""
         # Arrange
         user_input = UserInput(
-            goal="テストプロンプト", context="検証用", constraints=["テスト制約"], examples=[]
+            goal="テストプロンプト",
+            context="検証用",
+            constraints=["テスト制約"],
+            examples=[],
         )
 
         # Act

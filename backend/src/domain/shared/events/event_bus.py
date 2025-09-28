@@ -4,11 +4,11 @@
 イベントの発行と購読を管理する基本的なイベントバス実装。
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Callable, Type
-from dataclasses import dataclass, field
 import asyncio
 import logging
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from dataclasses import dataclass, field
 
 from src.domain.shared.events.domain_event import DomainEvent
 
@@ -38,7 +38,7 @@ class EventBus(ABC):
         pass
 
     @abstractmethod
-    def subscribe(self, event_type: Type[DomainEvent], handler: EventHandler) -> None:
+    def subscribe(self, event_type: type[DomainEvent], handler: EventHandler) -> None:
         """
         イベントタイプに対してハンドラーを登録する
 
@@ -49,7 +49,7 @@ class EventBus(ABC):
         pass
 
     @abstractmethod
-    def unsubscribe(self, event_type: Type[DomainEvent], handler: EventHandler) -> None:
+    def unsubscribe(self, event_type: type[DomainEvent], handler: EventHandler) -> None:
         """
         イベントタイプからハンドラーを削除する
 
@@ -68,8 +68,8 @@ class InMemoryEventBus(EventBus):
     開発・テスト用の簡易実装。
     """
 
-    _handlers: Dict[Type[DomainEvent], List[EventHandler]] = field(default_factory=dict)
-    _event_history: List[DomainEvent] = field(default_factory=list)
+    _handlers: dict[type[DomainEvent], list[EventHandler]] = field(default_factory=dict)
+    _event_history: list[DomainEvent] = field(default_factory=list)
     _enable_history: bool = field(default=False)
 
     def publish(self, event: DomainEvent) -> None:
@@ -106,7 +106,7 @@ class InMemoryEventBus(EventBus):
                 )
                 # エラーが発生してもその他のハンドラーは実行を継続
 
-    def subscribe(self, event_type: Type[DomainEvent], handler: EventHandler) -> None:
+    def subscribe(self, event_type: type[DomainEvent], handler: EventHandler) -> None:
         """
         イベントタイプに対してハンドラーを登録する
 
@@ -123,7 +123,7 @@ class InMemoryEventBus(EventBus):
                 f"Handler {handler.__name__} subscribed to {event_type.__name__}"
             )
 
-    def unsubscribe(self, event_type: Type[DomainEvent], handler: EventHandler) -> None:
+    def unsubscribe(self, event_type: type[DomainEvent], handler: EventHandler) -> None:
         """
         イベントタイプからハンドラーを削除する
 
@@ -143,7 +143,7 @@ class InMemoryEventBus(EventBus):
         self._handlers.clear()
         logger.debug("All handlers cleared")
 
-    def get_event_history(self) -> List[DomainEvent]:
+    def get_event_history(self) -> list[DomainEvent]:
         """イベント履歴を取得する（テスト用）"""
         return self._event_history.copy()
 
@@ -160,7 +160,7 @@ class AsyncEventBus(EventBus):
     """
 
     def __init__(self):
-        self._handlers: Dict[Type[DomainEvent], List[AsyncEventHandler]] = {}
+        self._handlers: dict[type[DomainEvent], list[AsyncEventHandler]] = {}
         self._event_queue: asyncio.Queue = asyncio.Queue()
         self._running = False
 
@@ -183,7 +183,7 @@ class AsyncEventBus(EventBus):
         asyncio.create_task(self.publish_async(event))
 
     def subscribe(
-        self, event_type: Type[DomainEvent], handler: AsyncEventHandler
+        self, event_type: type[DomainEvent], handler: AsyncEventHandler
     ) -> None:
         """
         イベントタイプに対してハンドラーを登録する
@@ -199,7 +199,7 @@ class AsyncEventBus(EventBus):
             self._handlers[event_type].append(handler)
 
     def unsubscribe(
-        self, event_type: Type[DomainEvent], handler: AsyncEventHandler
+        self, event_type: type[DomainEvent], handler: AsyncEventHandler
     ) -> None:
         """
         イベントタイプからハンドラーを削除する
@@ -219,7 +219,7 @@ class AsyncEventBus(EventBus):
             try:
                 event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)
                 await self._process_event(event)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except Exception as e:
                 logger.error(f"Error processing event: {e}", exc_info=True)

@@ -2,12 +2,12 @@
 イベントバスのテスト
 """
 
-import pytest
 import asyncio
-from typing import List
 
-from src.domain.shared.events import InMemoryEventBus, AsyncEventBus, DomainEvent
+import pytest
+
 from src.domain.prompt.events import PromptCreatedEvent, PromptSavedEvent
+from src.domain.shared.events import AsyncEventBus, DomainEvent, InMemoryEventBus
 
 
 class TestInMemoryEventBus:
@@ -17,7 +17,7 @@ class TestInMemoryEventBus:
         """イベントの発行と購読が正しく動作すること"""
         # Arrange
         bus = InMemoryEventBus()
-        received_events: List[DomainEvent] = []
+        received_events: list[DomainEvent] = []
 
         def handler(event: DomainEvent):
             received_events.append(event)
@@ -42,8 +42,8 @@ class TestInMemoryEventBus:
         """複数のハンドラーが登録できること"""
         # Arrange
         bus = InMemoryEventBus()
-        handler1_events: List[DomainEvent] = []
-        handler2_events: List[DomainEvent] = []
+        handler1_events: list[DomainEvent] = []
+        handler2_events: list[DomainEvent] = []
 
         def handler1(event: DomainEvent):
             handler1_events.append(event)
@@ -74,8 +74,8 @@ class TestInMemoryEventBus:
         """異なるイベントタイプごとにハンドラーが動作すること"""
         # Arrange
         bus = InMemoryEventBus()
-        created_events: List[PromptCreatedEvent] = []
-        saved_events: List[PromptSavedEvent] = []
+        created_events: list[PromptCreatedEvent] = []
+        saved_events: list[PromptSavedEvent] = []
 
         def created_handler(event: PromptCreatedEvent):
             created_events.append(event)
@@ -114,7 +114,7 @@ class TestInMemoryEventBus:
         """ハンドラーの購読解除が正しく動作すること"""
         # Arrange
         bus = InMemoryEventBus()
-        received_events: List[DomainEvent] = []
+        received_events: list[DomainEvent] = []
 
         def handler(event: DomainEvent):
             received_events.append(event)
@@ -150,7 +150,7 @@ class TestInMemoryEventBus:
         """ベースクラスへの購読が動作すること"""
         # Arrange
         bus = InMemoryEventBus()
-        all_events: List[DomainEvent] = []
+        all_events: list[DomainEvent] = []
 
         def handler(event: DomainEvent):
             all_events.append(event)
@@ -255,7 +255,7 @@ class TestAsyncEventBus:
         """非同期イベントの発行と購読が正しく動作すること"""
         # Arrange
         bus = AsyncEventBus()
-        received_events: List[DomainEvent] = []
+        received_events: list[DomainEvent] = []
 
         async def handler(event: DomainEvent):
             received_events.append(event)
@@ -296,7 +296,7 @@ class TestAsyncEventBus:
         """複数のハンドラーが並列実行されること"""
         # Arrange
         bus = AsyncEventBus()
-        handler_order: List[str] = []
+        handler_order: list[str] = []
 
         async def slow_handler(event: DomainEvent):
             await asyncio.sleep(0.05)
