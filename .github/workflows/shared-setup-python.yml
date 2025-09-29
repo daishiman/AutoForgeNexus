@@ -1,0 +1,89 @@
+name: "共有Python環境セットアップ"
+# キャッシング機能付きPython環境の再利用可能なワークフロー
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "セットアップするPythonバージョン"
+        required: false
+        default: "3.13"
+        type: string
+      working-directory:
+        description: "Python操作用の作業ディレクトリ"
+        required: false
+        default: "./backend"
+        type: string
+      cache-key-suffix:
+        description: "キャッシュキーの追加サフィックス"
+        required: false
+        default: ""
+        type: string
+      install-dev-deps:
+        description: "開発用依存関係のインストール"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  setup-python:
+    name: Python環境セットアップ
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache-deps.outputs.cache-hit }}
+      python-cache-key: ${{ steps.cache-key.outputs.key }}
+
+    steps:
+      - name: 📥 コードのチェックアウト
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: 🐍 Pythonセットアップ
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: 🔑 キャッシュキー生成
+        id: cache-key
+        run: |
+          REQUIREMENTS_HASH=$(sha256sum ${{ inputs.working-directory }}/requirements*.txt | sha256sum | cut -d' ' -f1)
+          CACHE_KEY="python-${{ inputs.python-version }}-${{ runner.os }}-${REQUIREMENTS_HASH}${{ inputs.cache-key-suffix }}"
+          echo "key=${CACHE_KEY}" >> $GITHUB_OUTPUT
+          echo "生成されたキャッシュキー: ${CACHE_KEY}"
+
+      - name: 📦 Python依存関係のキャッシュ
+        id: cache-deps
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: |
+            ~/.cache/pip
+            ${{ inputs.working-directory }}/venv
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            python-${{ inputs.python-version }}-${{ runner.os }}-
+
+      - name: 📦 仮想環境の作成
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+
+      - name: 📦 依存関係のインストール
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
+          if [ "${{ inputs.install-dev-deps }}" == "true" ] && [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
+          fi
+
+      - name: 📤 Python環境のアップロード
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        with:
+          name: python-env-${{ github.run_id }}
+          path: ${{ inputs.working-directory }}/venv
+          retention-days: 1
