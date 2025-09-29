@@ -11,8 +11,8 @@ on:
     workflows: ["*"]
     types: [completed]
   schedule:
-    # 監査ログの日次集約
-    - cron: '0 2 * * *'  # UTC 02:00 = JST 11:00
+    # 監査ログの週次集約（コスト最適化）
+    - cron: '0 2 * * 1'  # UTC 02:00 = JST 11:00 (毎週月曜日)
   workflow_dispatch:
     inputs:
       audit_period:

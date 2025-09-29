@@ -6,8 +6,8 @@ on:
   pull_request:
     types: [ opened, synchronize ]
   schedule:
-    # セキュリティチェックを毎時実行
-    - cron: '0 * * * *'
+    # セキュリティチェックを毎日実行（コスト最適化のため頻度削減）
+    - cron: '0 3 * * *'  # UTC 03:00 = JST 12:00
   workflow_dispatch:
     inputs:
       check_type:

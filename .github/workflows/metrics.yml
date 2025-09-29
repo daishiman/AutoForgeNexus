@@ -6,8 +6,8 @@ on:
   pull_request:
     types: [ opened, closed ]  # 'merged'はtypeとして存在しない
   schedule:
-    # 毎日午前3時（JST）にメトリクス収集
-    - cron: '0 18 * * *'  # UTC 18:00 = JST 03:00
+    # 週一回のメトリクス収集（コスト最適化）
+    - cron: '0 18 * * 1'  # UTC 18:00 = JST 03:00 (毎週月曜日)
   workflow_dispatch:
     inputs:
       period:
