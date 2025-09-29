@@ -633,6 +633,8 @@ pnpm build --turbo
 - **2.2 Cloudflare設定**: Workers Python、Pages、セキュリティ ✅
 - **2.3 デプロイメント**: CI/CD、自動デプロイ、ロールバック ✅
 - **2.4 監視基盤**: Prometheus、Grafana、LangFuse、構造化ログ ✅
+- **2.5 CI/CD最適化**: GitHub Actions共有ワークフロー、52.3%コスト削減 ✅
+- **2.6 セキュリティ強化**: CodeQL、TruffleHog、監査ログ実装 ✅
 
 ### Phase 3: バックエンド (Python 3.13/FastAPI) 🚧 進行中 (40%)
 
