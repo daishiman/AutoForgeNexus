@@ -1,0 +1,22 @@
+{
+  "name": "autoforge-nexus",
+  "version": "1.0.0",
+  "description": "AI Prompt Optimization System",
+  "private": true,
+  "volta": {
+    "node": "22.20.0",
+    "pnpm": "9.15.9"
+  },
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "test": "pnpm --filter frontend test"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "devDependencies": {
+    "pnpm": "^9.15.9"
+  }
+}
