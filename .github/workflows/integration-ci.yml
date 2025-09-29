@@ -17,46 +17,32 @@ env:
   PNPM_VERSION: '9'
 
 jobs:
-  # Shared environment setup for integration tests
-  setup-environments:
-    name: 🔧 Setup Both Environments
-    runs-on: ubuntu-latest
-    outputs:
-      python-cache-hit: ${{ steps.setup-python.outputs.cache-hit }}
-      node-cache-hit: ${{ steps.setup-node.outputs.cache-hit }}
+  # Python environment setup
+  setup-python:
+    name: 🐍 Setup Python Environment
+    uses: ./.github/workflows/shared-setup-python.yml
+    with:
+      python-version: '3.13'
+      working-directory: './backend'
+      cache-key-suffix: '-integration'
+      install-dev-deps: true
 
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          persist-credentials: false
-
-      # Setup Python environment
-      - name: 🐍 Setup Python Environment
-        id: setup-python
-        uses: ./.github/workflows/shared-setup-python.yml
-        with:
-          python-version: '3.13'
-          working-directory: './backend'
-          cache-key-suffix: '-integration'
-          install-dev-deps: true
-
-      # Setup Node.js environment
-      - name: 🟢 Setup Node.js Environment
-        id: setup-node
-        uses: ./.github/workflows/shared-setup-node.yml
-        with:
-          node-version: '22'
-          pnpm-version: '9'
-          working-directory: './frontend'
-          cache-key-suffix: '-integration'
-          install-playwright: true
+  # Node.js environment setup
+  setup-node:
+    name: 🟢 Setup Node.js Environment
+    uses: ./.github/workflows/shared-setup-node.yml
+    with:
+      node-version: '22'
+      pnpm-version: '9'
+      working-directory: './frontend'
+      cache-key-suffix: '-integration'
+      install-playwright: true
 
   # Full stack integration tests
   full-stack-integration:
     name: 🔗 Full Stack Integration Tests
     runs-on: ubuntu-latest
-    needs: setup-environments
+    needs: [setup-python, setup-node]
 
     services:
       redis:
@@ -75,28 +61,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python
+      - name: 🐍 Setup Python  # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Setup pnpm
+      - name: 📦 Setup pnpm  # 必要最小限のセットアップ
         uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: 🟢 Setup Node.js
+      - name: 🟢 Setup Node.js  # 必要最小限のセットアップ
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: 📥 Download Python environment
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend/venv
-
-      - name: 📥 Download Node.js environment
+      - name: 📥 Restore cached dependencies
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: node-env-${{ github.run_id }}

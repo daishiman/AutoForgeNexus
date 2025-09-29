@@ -68,23 +68,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 📦 Setup pnpm
+      - name: 📦 Setup pnpm  # 必要最小限のセットアップ
         uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: 🟢 Setup Node.js
+      - name: 🟢 Setup Node.js  # 必要最小限のセットアップ
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: 📥 Download Node.js environment
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: 📥 Restore cached dependencies
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: node-env-${{ github.run_id }}
-          path: ./frontend/
+          path: |
+            frontend/node_modules
+            ~/.cache/ms-playwright
+          key: node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-
 
       - name: 🎯 Run ${{ matrix.name }}
         run: ${{ matrix.command }}
@@ -121,23 +123,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 📦 Setup pnpm
+      - name: 📦 Setup pnpm  # 必要最小限のセットアップ
         uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: 🟢 Setup Node.js
+      - name: 🟢 Setup Node.js  # 必要最小限のセットアップ
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: 📥 Download Node.js environment
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: 📥 Restore cached dependencies
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: node-env-${{ github.run_id }}
-          path: ./frontend/
+          path: |
+            frontend/node_modules
+            ~/.cache/ms-playwright
+          key: node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-
 
       - name: 🧪 Run ${{ matrix.test-type }} tests
         run: ${{ matrix.command }}

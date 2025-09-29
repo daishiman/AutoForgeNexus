@@ -66,20 +66,26 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python
+      - name: 🐍 Setup Python  # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📥 Download Python environment
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: 📥 Restore cached dependencies
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend/venv
+          path: |
+            ~/.cache/pip
+            ./backend/venv
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/requirements*.txt') }}
+          restore-keys: |
+            python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
       - name: 🎯 Run ${{ matrix.name }}
         run: |
-          source venv/bin/activate
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
           if [ "${{ matrix.check-type }}" == "security" ]; then
             pip install bandit[toml] safety
           fi
@@ -118,20 +124,26 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python
+      - name: 🐍 Setup Python  # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📥 Download Python environment
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: 📥 Restore cached dependencies
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend/venv
+          path: |
+            ~/.cache/pip
+            ./backend/venv
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/requirements*.txt') }}
+          restore-keys: |
+            python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
       - name: 🧪 Run ${{ matrix.test-type }} tests
         run: |
-          source venv/bin/activate
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
           pytest ${{ matrix.path }} \
             --cov=src \
             --cov-report=xml:coverage-${{ matrix.test-type }}.xml \
@@ -199,20 +211,26 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python
+      - name: 🐍 Setup Python  # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📥 Download Python environment
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: 📥 Restore cached dependencies
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend/venv
+          path: |
+            ~/.cache/pip
+            ./backend/venv
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/requirements*.txt') }}
+          restore-keys: |
+            python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
       - name: 📄 Generate OpenAPI specification
         run: |
-          source venv/bin/activate
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
           python -c "
           from src.main import app
           import json
@@ -255,20 +273,26 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python
+      - name: 🐍 Setup Python  # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📥 Download Python environment
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      - name: 📥 Restore cached dependencies
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend/venv
+          path: |
+            ~/.cache/pip
+            ./backend/venv
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/requirements*.txt') }}
+          restore-keys: |
+            python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
       - name: 🚀 Run performance tests
         run: |
-          source venv/bin/activate
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
           if [ -f tests/performance/locustfile.py ]; then
             pip install locust
             echo "Performance tests would run here"
