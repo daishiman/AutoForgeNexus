@@ -1,0 +1,505 @@
+name: Dependency Update - Automated Security
+
+on:
+  schedule:
+    # 毎週火曜日午前2時（JST）に依存関係更新
+    - cron: '0 17 * * 2'
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: '更新タイプ'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch    # パッチバージョンのみ
+          - minor    # マイナーバージョンまで
+          - major    # メジャーバージョンまで（注意）
+      include_dev_deps:
+        description: '開発依存関係も更新'
+        required: false
+        default: true
+        type: boolean
+      auto_merge:
+        description: '自動マージ（パッチ更新のみ）'
+        required: false
+        default: false
+        type: boolean
+
+# セキュリティ強化：依存関係更新専用権限
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  checks: read
+  security-events: read
+
+# 同時実行制御：依存関係更新は単一実行
+concurrency:
+  group: dependency-update
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9'
+  # 更新戦略設定
+  UPDATE_TYPE: ${{ inputs.update_type || 'patch' }}
+  INCLUDE_DEV_DEPS: ${{ inputs.include_dev_deps || true }}
+
+jobs:
+  # セキュリティアップデート検出
+  security-update-detection:
+    name: 🔍 Security Update Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      has-security-updates: ${{ steps.detect.outputs.security-updates-found }}
+      critical-count: ${{ steps.detect.outputs.critical-count }}
+      security-packages: ${{ steps.detect.outputs.security-packages }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            registry.npmjs.org:443
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install current dependencies
+        run: pnpm install --frozen-lockfile
+
+      # セキュリティ脆弱性の検出
+      - name: Detect security vulnerabilities
+        id: detect
+        run: |
+          echo "::group::セキュリティ脆弱性検出"
+
+          # npm auditでセキュリティ問題を検出
+          pnpm audit --json > audit-current.json || true
+
+          # 脆弱性数カウント
+          if [ -f audit-current.json ]; then
+            CRITICAL=$(jq -r '.vulnerabilities | to_entries[] | select(.value.severity == "critical") | .key' audit-current.json 2>/dev/null | wc -l || echo "0")
+            HIGH=$(jq -r '.vulnerabilities | to_entries[] | select(.value.severity == "high") | .key' audit-current.json 2>/dev/null | wc -l || echo "0")
+            MODERATE=$(jq -r '.vulnerabilities | to_entries[] | select(.value.severity == "moderate") | .key' audit-current.json 2>/dev/null | wc -l || echo "0")
+
+            echo "現在の脆弱性:"
+            echo "- Critical: $CRITICAL"
+            echo "- High: $HIGH"
+            echo "- Moderate: $MODERATE"
+
+            # 出力設定
+            echo "critical-count=$CRITICAL" >> $GITHUB_OUTPUT
+
+            if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+              echo "security-updates-found=true" >> $GITHUB_OUTPUT
+
+              # セキュリティ更新が必要なパッケージリスト
+              SECURITY_PACKAGES=$(jq -r '.vulnerabilities | to_entries[] | select(.value.severity == "critical" or .value.severity == "high") | .key' audit-current.json 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+              echo "security-packages=$SECURITY_PACKAGES" >> $GITHUB_OUTPUT
+            else
+              echo "security-updates-found=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "security-updates-found=false" >> $GITHUB_OUTPUT
+            echo "critical-count=0" >> $GITHUB_OUTPUT
+          fi
+
+          echo "::endgroup::"
+
+  # 依存関係更新実行
+  dependency-update:
+    name: 📦 Dependency Update Execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: security-update-detection
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Create update branch
+        run: |
+          BRANCH_NAME="chore/dependency-update-$(date +%Y%m%d)"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      # 現在の依存関係状態保存
+      - name: Save current state
+        run: |
+          cp package.json package.json.backup
+          cp pnpm-lock.yaml pnpm-lock.yaml.backup
+
+      # 依存関係更新実行
+      - name: Update dependencies
+        run: |
+          echo "::group::依存関係更新実行"
+
+          case "${{ env.UPDATE_TYPE }}" in
+            "patch")
+              echo "パッチバージョン更新中..."
+              pnpm update --latest --depth 1
+              ;;
+            "minor")
+              echo "マイナーバージョン更新中..."
+              pnpm update --latest
+              ;;
+            "major")
+              echo "⚠️ メジャーバージョン更新は慎重に..."
+              # メジャー更新は手動確認推奨
+              pnpm update --latest --interactive
+              ;;
+          esac
+
+          # 開発依存関係更新
+          if [ "${{ env.INCLUDE_DEV_DEPS }}" = "true" ]; then
+            echo "開発依存関係更新中..."
+            pnpm update --dev --latest
+          fi
+
+          echo "::endgroup::"
+
+      # 更新後のセキュリティ検証
+      - name: Post-update security verification
+        run: |
+          echo "::group::更新後セキュリティ検証"
+
+          # 新しい依存関係でのセキュリティ監査
+          pnpm install
+          pnpm audit --json > audit-updated.json || true
+
+          if [ -f audit-updated.json ]; then
+            CRITICAL_NEW=$(jq -r '.vulnerabilities | to_entries[] | select(.value.severity == "critical") | .key' audit-updated.json 2>/dev/null | wc -l || echo "0")
+            HIGH_NEW=$(jq -r '.vulnerabilities | to_entries[] | select(.value.severity == "high") | .key' audit-updated.json 2>/dev/null | wc -l || echo "0")
+
+            echo "更新後の脆弱性:"
+            echo "- Critical: $CRITICAL_NEW"
+            echo "- High: $HIGH_NEW"
+
+            # セキュリティ改善確認
+            CRITICAL_BEFORE="${{ needs.security-update-detection.outputs.critical-count }}"
+            if [ "$CRITICAL_NEW" -lt "$CRITICAL_BEFORE" ]; then
+              echo "::notice::Critical脆弱性が${CRITICAL_BEFORE}件から${CRITICAL_NEW}件に改善されました"
+            elif [ "$CRITICAL_NEW" -gt "$CRITICAL_BEFORE" ]; then
+              echo "::error::Critical脆弱性が増加しました (${CRITICAL_BEFORE} → ${CRITICAL_NEW})"
+              exit 1
+            fi
+          fi
+
+          echo "::endgroup::"
+
+      # 更新内容の分析
+      - name: Analyze update changes
+        run: |
+          echo "::group::更新内容分析"
+
+          # 変更されたパッケージの詳細
+          echo "## 📦 更新されたパッケージ" > update-summary.md
+          echo "" >> update-summary.md
+
+          # package.jsonの差分確認
+          if ! diff -u package.json.backup package.json > package-diff.txt; then
+            echo "### 本番依存関係" >> update-summary.md
+            echo "\`\`\`diff" >> update-summary.md
+            grep -E '^\+.*".*":' package-diff.txt | sed 's/^\+//' >> update-summary.md || true
+            echo "\`\`\`" >> update-summary.md
+            echo "" >> update-summary.md
+          fi
+
+          # 主要フレームワークの更新チェック
+          MAJOR_PACKAGES=("react" "next" "@clerk/nextjs" "tailwindcss")
+          echo "### 🔍 主要パッケージ更新状況" >> update-summary.md
+          echo "" >> update-summary.md
+
+          for pkg in "${MAJOR_PACKAGES[@]}"; do
+            OLD_VERSION=$(jq -r ".dependencies[\"$pkg\"] // .devDependencies[\"$pkg\"] // \"なし\"" package.json.backup)
+            NEW_VERSION=$(jq -r ".dependencies[\"$pkg\"] // .devDependencies[\"$pkg\"] // \"なし\"" package.json)
+
+            if [ "$OLD_VERSION" != "$NEW_VERSION" ] && [ "$OLD_VERSION" != "なし" ]; then
+              echo "- **$pkg**: $OLD_VERSION → $NEW_VERSION" >> update-summary.md
+            fi
+          done
+
+          echo "" >> update-summary.md
+
+          # セキュリティ改善情報
+          if [ "${{ needs.security-update-detection.outputs.has-security-updates }}" = "true" ]; then
+            echo "### 🛡️ セキュリティ改善" >> update-summary.md
+            echo "- 以下のパッケージでセキュリティ問題を修正:" >> update-summary.md
+            echo "- ${{ needs.security-update-detection.outputs.security-packages }}" >> update-summary.md
+            echo "" >> update-summary.md
+          fi
+
+          cat update-summary.md
+
+          echo "::endgroup::"
+
+      # 品質チェック
+      - name: Quality verification
+        run: |
+          echo "::group::品質検証"
+
+          # TypeScript型チェック
+          echo "TypeScript型チェック実行中..."
+          if ! pnpm type-check; then
+            echo "::error::TypeScript型チェックに失敗しました"
+            exit 1
+          fi
+
+          # Lint実行
+          echo "ESLint実行中..."
+          if ! pnpm lint; then
+            echo "::warning::ESLintで警告が検出されました（継続）"
+          fi
+
+          # 基本テスト実行
+          echo "単体テスト実行中..."
+          if ! pnpm test --passWithNoTests; then
+            echo "::error::単体テストに失敗しました"
+            exit 1
+          fi
+
+          echo "::notice::品質検証完了"
+          echo "::endgroup::"
+
+      # ビルド検証
+      - name: Build verification
+        run: |
+          echo "::group::ビルド検証"
+
+          if ! pnpm build; then
+            echo "::error::ビルドに失敗しました"
+            exit 1
+          fi
+
+          echo "::notice::ビルド検証完了"
+          echo "::endgroup::"
+
+      # 変更のコミット
+      - name: Commit dependency updates
+        run: |
+          echo "::group::変更コミット"
+
+          # 変更があるかチェック
+          if git diff --quiet package.json pnpm-lock.yaml; then
+            echo "依存関係に変更はありませんでした"
+            echo "NO_CHANGES=true" >> $GITHUB_ENV
+          else
+            # 更新内容をコミット
+            git add package.json pnpm-lock.yaml
+
+            # コミットメッセージ作成
+            COMMIT_MSG="chore(deps): 依存関係セキュリティ更新 (${{ env.UPDATE_TYPE }})"
+
+            if [ "${{ needs.security-update-detection.outputs.has-security-updates }}" = "true" ]; then
+              COMMIT_MSG="$COMMIT_MSG - 🛡️ Critical脆弱性修正"
+            fi
+
+            git commit -m "$COMMIT_MSG
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+            git push origin "$BRANCH_NAME"
+            echo "CHANGES_COMMITTED=true" >> $GITHUB_ENV
+          fi
+
+          echo "::endgroup::"
+
+      # プルリクエスト作成
+      - name: Create Pull Request
+        if: env.CHANGES_COMMITTED == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const updateSummary = fs.readFileSync('update-summary.md', 'utf8');
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 依存関係更新 (${{ env.UPDATE_TYPE }}) - ${{ needs.security-update-detection.outputs.has-security-updates == 'true' && '🛡️ セキュリティ修正含む' || '定期更新' }}`,
+              head: process.env.BRANCH_NAME,
+              base: 'main',
+              body: `## 🔄 依存関係自動更新
+
+            このPRは依存関係の自動更新により作成されました。
+
+            ${updateSummary}
+
+            ## ✅ 実行済み検証
+
+            - [x] TypeScript型チェック
+            - [x] ESLint検証
+            - [x] 単体テスト実行
+            - [x] 本番ビルド検証
+            - [x] セキュリティ脆弱性チェック
+
+            ## 📋 レビューポイント
+
+            - [ ] 主要パッケージの破壊的変更がないか確認
+            - [ ] セキュリティ改善効果の確認
+            - [ ] 動作確認（必要に応じて）
+
+            ## 🚀 デプロイ準備
+
+            ${${{ inputs.auto_merge == true && env.UPDATE_TYPE == 'patch' }} ? '✅ **自動マージ有効** - パッチ更新のため自動マージされます' : '⚠️ **手動レビュー必須** - マイナー/メジャー更新または手動実行のため、レビュー後にマージしてください'}
+
+            ---
+            🤖 Generated with [Claude Code](https://claude.com/claude-code)
+            `,
+              draft: false
+            });
+
+            // セキュリティ修正の場合は優先ラベル
+            const labels = ['dependencies', 'automated'];
+            if ('${{ needs.security-update-detection.outputs.has-security-updates }}' === 'true') {
+              labels.push('security', 'priority');
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: labels
+            });
+
+            console.log(`PR作成完了: ${pr.html_url}`);
+            return pr.number;
+
+  # 自動マージ（パッチ更新のみ）
+  auto-merge:
+    name: 🤖 Auto Merge (Patch Only)
+    runs-on: ubuntu-latest
+    needs: [security-update-detection, dependency-update]
+    if: inputs.auto_merge == true && inputs.update_type == 'patch' && needs.dependency-update.result == 'success'
+
+    steps:
+      - name: Auto merge patch updates
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            // 最新のPRを検索
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:chore/dependency-update-${new Date().toISOString().slice(0,10).replace(/-/g,'')}`,
+              state: 'open'
+            });
+
+            if (prs.length > 0) {
+              const pr = prs[0];
+
+              // CI成功を待機
+              console.log('CI完了を待機中...');
+              await new Promise(resolve => setTimeout(resolve, 30000)); // 30秒待機
+
+              // ステータスチェック
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
+
+              const allPassed = checks.check_runs.every(check =>
+                check.status === 'completed' && check.conclusion === 'success'
+              );
+
+              if (allPassed) {
+                // 自動マージ実行
+                await github.rest.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  commit_title: `chore(deps): 依存関係パッチ更新自動マージ`,
+                  commit_message: `セキュリティパッチ更新の自動マージ\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)`,
+                  merge_method: 'squash'
+                });
+
+                console.log(`✅ PR #${pr.number} が自動マージされました`);
+              } else {
+                console.log('❌ CIが失敗したため自動マージをスキップしました');
+              }
+            }
+
+  # 更新レポート
+  update-report:
+    name: 📊 Update Report
+    runs-on: ubuntu-latest
+    needs: [security-update-detection, dependency-update, auto-merge]
+    if: always()
+
+    steps:
+      - name: Generate update report
+        run: |
+          echo "### 📦 依存関係更新レポート" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**実行日時**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**更新タイプ**: ${{ env.UPDATE_TYPE }}" >> $GITHUB_STEP_SUMMARY
+          echo "**開発依存関係**: ${{ env.INCLUDE_DEV_DEPS == 'true' && '含む' || '除外' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🛡️ セキュリティ状況" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.security-update-detection.outputs.has-security-updates }}" = "true" ]; then
+            echo "- **Critical脆弱性**: ${{ needs.security-update-detection.outputs.critical-count }}件" >> $GITHUB_STEP_SUMMARY
+            echo "- **影響パッケージ**: ${{ needs.security-update-detection.outputs.security-packages }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **修正ステータス**: ${{ needs.dependency-update.result == 'success' && '✅ 修正済み' || '❌ 修正失敗' }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ✅ **セキュリティ問題なし**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📋 更新結果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 段階 | ステータス | 詳細 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 脆弱性検出 | ${{ needs.security-update-detection.result == 'success' && '✅ 完了' || '❌ 失敗' }} | セキュリティ問題の特定 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 依存関係更新 | ${{ needs.dependency-update.result == 'success' && '✅ 完了' || '❌ 失敗' }} | パッケージ更新・検証 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 自動マージ | ${{ needs.auto-merge.result == 'success' && '✅ 実行' || needs.auto-merge.result == 'skipped' && '⏭️ スキップ' || '❌ 失敗' }} | パッチ更新の自動適用 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 次回実行予定
+          echo "**次回自動更新**: 毎週火曜日午前2時（JST）" >> $GITHUB_STEP_SUMMARY

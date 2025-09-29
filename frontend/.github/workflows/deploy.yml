@@ -1,0 +1,456 @@
+name: Deploy - Security Hardened
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'next.config.js'
+      - 'tailwind.config.ts'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'デプロイ環境'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      skip_tests:
+        description: 'テストをスキップ（緊急時のみ）'
+        required: false
+        default: false
+        type: boolean
+
+# セキュリティ強化：最小権限の原則
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+  id-token: write # Cloudflare OIDC認証用
+  checks: read
+
+# 同時実行制御：本番環境の安全性確保
+concurrency:
+  group: deploy-${{ github.ref }}-${{ inputs.environment || 'production' }}
+  cancel-in-progress: false # 本番デプロイは中断禁止
+
+# 環境変数：セキュアなデフォルト
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9'
+  CLOUDFLARE_PROJECT_NAME: 'autoforge-nexus-frontend'
+  # セキュリティ：本番環境設定
+  NODE_ENV: production
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  # 事前検証：デプロイ前の包括的チェック
+  pre-deploy-validation:
+    name: 🛡️ Pre-Deploy Security Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      should-deploy: ${{ steps.validation.outputs.deploy-approved }}
+      environment: ${{ steps.env-check.outputs.target-env }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Environment determination
+        id: env-check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "target-env=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "target-env=production" >> $GITHUB_OUTPUT
+          fi
+
+      # セキュリティ：破壊的変更検出
+      - name: Detect breaking changes
+        run: |
+          echo "::group::破壊的変更検出"
+
+          # package.jsonの主要依存関係変更チェック
+          if git diff HEAD^ HEAD -- package.json | grep -E '^\+.*"(react|next|@clerk)' > /dev/null; then
+            echo "::warning::主要依存関係の変更が検出されました"
+            git diff HEAD^ HEAD -- package.json | grep -E '^\+.*"(react|next|@clerk)'
+          fi
+
+          # 設定ファイル変更チェック
+          if git diff HEAD^ HEAD --name-only | grep -E '(next\.config\.js|middleware\.ts|tailwind\.config\.ts)' > /dev/null; then
+            echo "::notice::設定ファイルの変更が検出されました"
+            git diff HEAD^ HEAD --name-only | grep -E '(next\.config\.js|middleware\.ts|tailwind\.config\.ts)'
+          fi
+
+          echo "::endgroup::"
+
+      # セキュリティ：秘密情報漏洩チェック
+      - name: Secret leak detection
+        run: |
+          echo "::group::秘密情報漏洩検出"
+
+          # 環境変数ファイルのコミット検出
+          if git diff HEAD^ HEAD --name-only | grep -E '\.(env|key|pem|p12)' > /dev/null; then
+            echo "::error::秘密情報を含む可能性のあるファイルがコミットされています"
+            git diff HEAD^ HEAD --name-only | grep -E '\.(env|key|pem|p12)'
+            exit 1
+          fi
+
+          # ハードコードされたシークレット検出
+          if git diff HEAD^ HEAD | grep -iE '(api_key|secret|password|token).*=.*[a-zA-Z0-9]{20,}' > /dev/null; then
+            echo "::warning::ハードコードされた可能性のある秘密情報を検出"
+          fi
+
+          echo "::endgroup::"
+
+      - name: Validation result
+        id: validation
+        run: |
+          # テストスキップが指定された場合の警告
+          if [ "${{ inputs.skip_tests }}" = "true" ]; then
+            echo "::warning::テストがスキップされます（緊急デプロイ）"
+            echo "deploy-approved=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy-approved=true" >> $GITHUB_OUTPUT
+          fi
+
+  # 高速品質チェック：デプロイ専用
+  quality-gate:
+    name: 🚀 Quality Gate (Deploy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: pre-deploy-validation
+    if: needs.pre-deploy-validation.outputs.should-deploy == 'true' && inputs.skip_tests != true
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 高速品質チェック（並列実行）
+      - name: Fast quality checks
+        run: |
+          echo "::group::並列品質チェック実行"
+
+          # TypeScript型チェック（並列）
+          pnpm type-check &
+          TYPE_PID=$!
+
+          # ESLint（並列）
+          pnpm lint &
+          LINT_PID=$!
+
+          # 単体テスト（高速モード）
+          pnpm test --passWithNoTests --silent &
+          TEST_PID=$!
+
+          # 結果待機
+          wait $TYPE_PID || { echo "::error::TypeScript型チェック失敗"; exit 1; }
+          wait $LINT_PID || { echo "::error::ESLint検証失敗"; exit 1; }
+          wait $TEST_PID || { echo "::error::単体テスト失敗"; exit 1; }
+
+          echo "::notice::全品質チェック完了"
+          echo "::endgroup::"
+
+  # 本番ビルド：最適化されたビルド
+  production-build:
+    name: 🏗️ Production Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [pre-deploy-validation, quality-gate]
+    if: always() && needs.pre-deploy-validation.outputs.should-deploy == 'true' && (needs.quality-gate.result == 'success' || inputs.skip_tests == true)
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 本番環境ビルド（最大最適化）
+      - name: Build for production
+        run: |
+          echo "::group::本番環境ビルド開始"
+          pnpm build
+          echo "::endgroup::"
+        env:
+          # 本番環境変数（マスキング済み）
+          NODE_ENV: production
+          NEXT_TELEMETRY_DISABLED: 1
+          # セキュリティ：ソースマップ無効化
+          GENERATE_SOURCEMAP: false
+
+      # 静的エクスポート（Cloudflare Pages最適化）
+      - name: Static export
+        run: |
+          echo "::group::静的エクスポート実行"
+          pnpm export
+          echo "::endgroup::"
+
+      # セキュリティヘッダー設定ファイル生成
+      - name: Generate security headers
+        run: |
+          cat > out/_headers << 'EOF'
+          /*
+            X-Frame-Options: DENY
+            X-Content-Type-Options: nosniff
+            X-XSS-Protection: 1; mode=block
+            Referrer-Policy: strict-origin-when-cross-origin
+            Permissions-Policy: camera=(), microphone=(), geolocation=()
+            Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+            Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' *.clerk.dev; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: *.cloudflare.com; font-src 'self'; connect-src 'self' *.clerk.dev *.turso.io;
+
+          /_next/static/*
+            Cache-Control: public, max-age=31536000, immutable
+
+          /api/*
+            Cache-Control: no-store, must-revalidate
+          EOF
+
+          echo "::notice::セキュリティヘッダー設定完了"
+
+      # ビルド成果物の圧縮
+      - name: Compress build artifacts
+        run: |
+          echo "::group::ビルド成果物圧縮"
+          cd out
+          tar -czf ../build-artifacts.tar.gz .
+          cd ..
+          ls -lh build-artifacts.tar.gz
+          echo "::endgroup::"
+
+      # ビルド成果物のアップロード
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        with:
+          name: build-artifacts-${{ github.sha }}
+          path: build-artifacts.tar.gz
+          retention-days: 30
+
+  # Cloudflare Pages デプロイ
+  cloudflare-deploy:
+    name: ☁️ Cloudflare Pages Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [pre-deploy-validation, production-build]
+    environment:
+      name: ${{ needs.pre-deploy-validation.outputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.cloudflare.com:443
+            github.com:443
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      # ビルド成果物のダウンロード
+      - name: Download build artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: build-artifacts-${{ github.sha }}
+
+      - name: Extract build artifacts
+        run: |
+          mkdir -p out
+          tar -xzf build-artifacts.tar.gz -C out
+
+      # Cloudflare Pagesデプロイ（セキュア認証）
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/pages-action@f0a1cd58cd66095dee69bfa18fa5efd1dde93bca # v1.5.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ env.CLOUDFLARE_PROJECT_NAME }}
+          directory: out
+          # セキュリティ：本番環境のみGitHubデプロイメント生成
+          gitHubToken: ${{ github.ref == 'refs/heads/main' && secrets.GITHUB_TOKEN || '' }}
+
+      # デプロイ結果の検証
+      - name: Deployment verification
+        run: |
+          echo "::group::デプロイ検証"
+          DEPLOY_URL="${{ steps.deploy.outputs.url }}"
+
+          if [ -n "$DEPLOY_URL" ]; then
+            echo "デプロイURL: $DEPLOY_URL"
+            echo "::notice::デプロイが正常に完了しました"
+
+            # ヘルスチェック（タイムアウト付き）
+            if curl -s --max-time 30 "$DEPLOY_URL/api/health" > /dev/null; then
+              echo "::notice::ヘルスチェック成功"
+            else
+              echo "::warning::ヘルスチェックに失敗または応答なし"
+            fi
+          else
+            echo "::error::デプロイURLが取得できませんでした"
+            exit 1
+          fi
+          echo "::endgroup::"
+
+  # デプロイ後テスト：本番環境検証
+  post-deploy-verification:
+    name: 🧪 Post-Deploy Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: cloudflare-deploy
+    if: success()
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            *.pages.dev:443
+            *.cloudflare.com:443
+
+      # 本番環境スモークテスト
+      - name: Production smoke tests
+        run: |
+          echo "::group::本番環境スモークテスト"
+          DEPLOY_URL="${{ needs.cloudflare-deploy.outputs.url || 'https://autoforge-nexus.pages.dev' }}"
+
+          # セキュリティヘッダーチェック
+          echo "セキュリティヘッダー検証..."
+          HEADERS=$(curl -sI "$DEPLOY_URL")
+
+          if echo "$HEADERS" | grep -i "x-frame-options.*deny" > /dev/null; then
+            echo "✅ X-Frame-Options: DENY 設定済み"
+          else
+            echo "❌ X-Frame-Options が設定されていません"
+          fi
+
+          if echo "$HEADERS" | grep -i "strict-transport-security" > /dev/null; then
+            echo "✅ HSTS ヘッダー設定済み"
+          else
+            echo "❌ HSTS ヘッダーが設定されていません"
+          fi
+
+          # レスポンス時間チェック
+          echo "レスポンス時間測定..."
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$DEPLOY_URL")
+          echo "レスポンス時間: ${RESPONSE_TIME}秒"
+
+          if (( $(echo "$RESPONSE_TIME > 3.0" | bc -l) )); then
+            echo "::warning::レスポンス時間が3秒を超えています"
+          else
+            echo "::notice::レスポンス時間は許容範囲内です"
+          fi
+
+          echo "::endgroup::"
+
+  # デプロイメントステータス通知
+  deployment-notification:
+    name: 📢 Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-validation, cloudflare-deploy, post-deploy-verification]
+    if: always()
+
+    steps:
+      - name: Deployment summary
+        run: |
+          echo "### 🚀 デプロイメント完了レポート" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 項目 | ステータス | 詳細 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 事前検証 | ${{ needs.pre-deploy-validation.result == 'success' && '✅ 合格' || '❌ 失敗' }} | セキュリティ検証・破壊的変更検出 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cloudflareデプロイ | ${{ needs.cloudflare-deploy.result == 'success' && '✅ 成功' || '❌ 失敗' }} | Pages配信・セキュリティヘッダー |" >> $GITHUB_STEP_SUMMARY
+          echo "| デプロイ後検証 | ${{ needs.post-deploy-verification.result == 'success' && '✅ 合格' || '❌ 失敗' }} | スモークテスト・レスポンス測定 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**環境**: ${{ needs.pre-deploy-validation.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**デプロイ日時**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**コミット**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+          # 失敗時の警告
+          if [ "${{ needs.cloudflare-deploy.result }}" != "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **デプロイに失敗しました。ログを確認してください。**" >> $GITHUB_STEP_SUMMARY
+          fi

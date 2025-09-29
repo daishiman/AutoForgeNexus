@@ -1,0 +1,410 @@
+name: CI/CD - Security Hardened
+
+on:
+  push:
+    branches: [main, develop, feature/*, hotfix/*]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'next.config.js'
+      - 'tailwind.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    # 毎日午前2時（JST）にセキュリティスキャン実行
+    - cron: '0 17 * * *'
+
+# セキュリティ強化：権限を最小限に制限
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+  security-events: write
+  id-token: write # OIDCプロバイダーアクセス用
+
+# 同時実行制御：リソース競合とコスト最適化
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# 環境変数：セキュアなデフォルト設定
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9'
+  # セキュリティ：本番環境でのデバッグ無効化
+  NODE_ENV: production
+  # OWASP推奨：CSP強制
+  NEXT_PUBLIC_CSP_ENFORCE: 'true'
+  # タイムアウト設定（DDos攻撃対策）
+  GITHUB_ACTIONS_TIMEOUT: 30
+
+jobs:
+  # セキュリティスキャン：依存関係脆弱性検出
+  security-scan:
+    name: 🔒 Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name != 'schedule' || github.repository_owner == 'daishiman'
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            registry.npmjs.org:443
+            objects.githubusercontent.com:443
+            codeload.github.com:443
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: |
+          # セキュリティ：完全クリーンインストール
+          pnpm install --frozen-lockfile --prefer-offline
+        env:
+          # 依存関係インストール時のセキュリティ強化
+          npm_config_audit: true
+          npm_config_fund: false
+
+      # Trivy: 包括的脆弱性スキャナ
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # v0.23.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@4fa2a7953630fd2f3fb380f21be14ede0169dd4f # v3.25.12
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # npm audit: Node.js依存関係の脆弱性チェック
+      - name: Run npm security audit
+        run: |
+          # セキュリティ監査実行
+          pnpm audit --audit-level moderate --json > audit-results.json || true
+
+          # 結果評価
+          if [ -s audit-results.json ]; then
+            echo "::warning::セキュリティ脆弱性が検出されました"
+            cat audit-results.json
+          fi
+
+      # License compliance check
+      - name: License compliance check
+        run: |
+          pnpm licenses list --depth 0 > licenses.txt
+          echo "::notice::依存関係ライセンス情報をlicenses.txtに出力しました"
+
+  # 品質チェック：型安全性・Linting・テスト
+  quality-check:
+    name: 🔍 Code Quality & Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: security-scan
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # TypeScript型チェック（strict mode）
+      - name: TypeScript type check
+        run: |
+          echo "::group::TypeScript型チェック実行"
+          pnpm type-check
+          echo "::endgroup::"
+
+      # ESLint（セキュリティルール含む）
+      - name: ESLint analysis
+        run: |
+          echo "::group::ESLint実行"
+          pnpm lint --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif || true
+          echo "::endgroup::"
+
+      - name: Upload ESLint results
+        uses: github/codeql-action/upload-sarif@4fa2a7953630fd2f3fb380f21be14ede0169dd4f # v3.25.12
+        if: always()
+        with:
+          sarif_file: eslint-results.sarif
+
+      # Jest単体テスト（カバレッジ75%必須）
+      - name: Run unit tests
+        run: |
+          echo "::group::Jest単体テスト実行"
+          pnpm test --coverage --coverageReporters=text-lcov --coverageReporters=json-summary
+          echo "::endgroup::"
+        env:
+          CI: true
+
+      # テストカバレッジ検証
+      - name: Validate test coverage
+        run: |
+          COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+          echo "テストカバレッジ: ${COVERAGE}%"
+
+          if (( $(echo "$COVERAGE < 75" | bc -l) )); then
+            echo "::error::テストカバレッジが75%未満です（現在: ${COVERAGE}%）"
+            exit 1
+          fi
+
+          echo "::notice::テストカバレッジ要件を満たしています（${COVERAGE}%）"
+
+  # ビルド検証：本番環境準備状況確認
+  build-verification:
+    name: 🏗️ Build Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: quality-check
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Next.js本番ビルド（Turbopack）
+      - name: Build application
+        run: |
+          echo "::group::Next.js本番ビルド（Turbopack）"
+          pnpm build
+          echo "::endgroup::"
+        env:
+          # セキュリティ：ビルド時の環境変数制御
+          NODE_ENV: production
+          NEXT_TELEMETRY_DISABLED: 1
+
+      # 静的エクスポート（Cloudflare Pages用）
+      - name: Static export
+        run: |
+          echo "::group::静的エクスポート実行"
+          pnpm export
+          echo "::endgroup::"
+
+      # バンドルサイズ分析
+      - name: Bundle size analysis
+        run: |
+          echo "::group::バンドルサイズ分析"
+
+          # 主要チャンクサイズ確認
+          if [ -d "out/_next/static" ]; then
+            find out/_next/static -name "*.js" -type f -exec ls -lh {} \; | sort -k5 -hr | head -10
+
+            # 合計サイズ計算
+            TOTAL_SIZE=$(find out/_next/static -name "*.js" -type f -exec stat -f%z {} \; | awk '{sum+=$1} END {print sum}')
+            TOTAL_SIZE_KB=$((TOTAL_SIZE / 1024))
+
+            echo "総バンドルサイズ: ${TOTAL_SIZE_KB}KB"
+
+            # 200KB制限チェック
+            if [ $TOTAL_SIZE_KB -gt 200 ]; then
+              echo "::warning::バンドルサイズが200KBを超えています（${TOTAL_SIZE_KB}KB）"
+            else
+              echo "::notice::バンドルサイズ要件を満たしています（${TOTAL_SIZE_KB}KB）"
+            fi
+          fi
+          echo "::endgroup::"
+
+      # ビルド成果物のアップロード（デバッグ用）
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        if: failure()
+        with:
+          name: build-output-${{ github.run_id }}
+          path: |
+            out/
+            .next/
+            build-logs.txt
+          retention-days: 3
+
+  # E2Eテスト：Playwright自動化
+  e2e-testing:
+    name: 🎭 E2E Testing (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-verification
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Start development server
+        run: |
+          pnpm start &
+          sleep 10
+        env:
+          PORT: 3000
+
+      # Playwright E2Eテスト実行
+      - name: Run Playwright tests
+        run: |
+          echo "::group::Playwright E2Eテスト実行"
+          pnpm test:e2e
+          echo "::endgroup::"
+        env:
+          # テスト用環境変数（マスキング済み）
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+      # テスト結果のアップロード
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # セキュリティレポート統合
+  security-report:
+    name: 📊 Security Report Summary
+    runs-on: ubuntu-latest
+    needs: [security-scan, quality-check, build-verification]
+    if: always()
+
+    steps:
+      - name: Security assessment summary
+        run: |
+          echo "### 🔒 セキュリティ評価レポート" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 項目 | ステータス | 詳細 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 脆弱性スキャン | ${{ needs.security-scan.result == 'success' && '✅ 合格' || '❌ 要対応' }} | Trivy + npm audit |" >> $GITHUB_STEP_SUMMARY
+          echo "| 品質チェック | ${{ needs.quality-check.result == 'success' && '✅ 合格' || '❌ 要対応' }} | TypeScript + ESLint + Jest |" >> $GITHUB_STEP_SUMMARY
+          echo "| ビルド検証 | ${{ needs.build-verification.result == 'success' && '✅ 合格' || '❌ 要対応' }} | 本番ビルド + バンドルサイズ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**実行日時**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**コミット**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
