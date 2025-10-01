@@ -1,0 +1,264 @@
+# ==========================================
+# Production Docker Compose Configuration
+# ==========================================
+# Phase 4: Database Vector Setup - Production Environment
+
+services:
+  # ===================
+  # Backend API Service
+  # ===================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: autoforge-backend-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - HOST=0.0.0.0
+      - PORT=8000
+      # Turso Production Database
+      - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
+      - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
+      # Redis Production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=0
+      - REDIS_SSL=true
+      # Security
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+      # Clerk Authentication
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLERK_PUBLIC_KEY=${CLERK_PUBLIC_KEY}
+      - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
+      # LLM Providers
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # JWT
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRATION_MINUTES=60
+    volumes:
+      - backend-data:/app/data
+      - backend-logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+    networks:
+      - autoforge-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # ===================
+  # Frontend Service
+  # ===================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
+        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    container_name: autoforge-frontend-prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: node server.js
+    networks:
+      - autoforge-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ===================
+  # Redis Cache Service (Production)
+  # ===================
+  redis:
+    image: redis:7.4-alpine
+    container_name: autoforge-redis-prod
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    networks:
+      - autoforge-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # ===================
+  # Nginx Reverse Proxy
+  # ===================
+  nginx:
+    image: nginx:alpine
+    container_name: autoforge-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - nginx-cache:/var/cache/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - autoforge-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================
+  # Monitoring Stack (Production)
+  # ===================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: autoforge-prometheus-prod
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.prod.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - autoforge-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: autoforge-grafana-prod
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=redis-datasource,cloudflare-app
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - autoforge-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # ===================
+  # LangFuse LLM Monitoring
+  # ===================
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: autoforge-langfuse-prod
+    ports:
+      - "3002:3000"
+    environment:
+      - DATABASE_URL=${LANGFUSE_DATABASE_URL}
+      - NEXTAUTH_SECRET=${LANGFUSE_NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${LANGFUSE_NEXTAUTH_URL}
+      - TELEMETRY_ENABLED=true
+    networks:
+      - autoforge-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+# ===================
+# Networks
+# ===================
+networks:
+  autoforge-network:
+    driver: bridge
+    name: autoforge-network-prod
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ===================
+# Volumes
+# ===================
+volumes:
+  backend-data:
+    name: autoforge-backend-data-prod
+  backend-logs:
+    name: autoforge-backend-logs-prod
+  redis-data:
+    name: autoforge-redis-data-prod
+  nginx-cache:
+    name: autoforge-nginx-cache-prod
+  prometheus-data:
+    name: autoforge-prometheus-data-prod
+  grafana-data:
+    name: autoforge-grafana-data-prod
