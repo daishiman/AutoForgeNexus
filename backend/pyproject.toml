@@ -22,7 +22,7 @@ dependencies = [
     # Database
     "sqlalchemy==2.0.32",
     "alembic==1.13.3",
-    "libsql-experimental==0.0.28",
+    "libsql-client==0.3.1",  # Pure Python client (no Rust required)
 
     # Cache & Queue
     "redis==5.2.0",

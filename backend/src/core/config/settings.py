@@ -58,6 +58,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         json_schema_mode_override="validation",
+        extra="ignore",  # 未定義の環境変数を許可
     )
 
     # === Application Settings ===
