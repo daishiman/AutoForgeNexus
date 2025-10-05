@@ -19,6 +19,13 @@ concurrency:
   group: frontend-ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: read
+  checks: write
+
 env:
   NODE_VERSION: '22'
   PNPM_VERSION: '9'

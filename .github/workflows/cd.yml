@@ -16,6 +16,15 @@ on:
           - staging
           - production
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: read
+  checks: write
+  deployments: write
+  id-token: write
+
 env:
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
