@@ -16,7 +16,7 @@ export function useAsync<T>(promise: Promise<T> | null) {
 }
 
 // 非同期アクション実行フック
-export function useAsyncAction<T extends (...args: any[]) => Promise<any>>() {
+export function useAsyncAction<T extends (...args: never[]) => Promise<unknown>>() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 

@@ -94,6 +94,6 @@ export interface WorkflowStep {
   id: string
   name: string
   type: 'prompt' | 'evaluation' | 'transform' | 'branch'
-  config: Record<string, any>
+  config: Record<string, unknown>
   nextSteps: string[]
 }

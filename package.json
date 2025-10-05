@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "pnpm --filter frontend dev",
     "build": "pnpm --filter frontend build",
-    "test": "pnpm --filter frontend test"
+    "test": "pnpm --filter frontend test",
+    "prepare": "husky"
   },
   "workspaces": [
     "frontend",

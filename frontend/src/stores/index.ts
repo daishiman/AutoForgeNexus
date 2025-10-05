@@ -126,7 +126,7 @@ export const useAppStore = create<AppStore>()(
           removeNotification: (id) =>
             set((state) => {
               state.notifications = state.notifications.filter(
-                (n) => n.id !== id
+                (n: Notification) => n.id !== id
               )
             }),
         }))
