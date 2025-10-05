@@ -7,13 +7,13 @@
 
 **⚠️ 重要警告**: 現在の.envファイルには公開されたAPIキーやトークンが含まれています。これらは直ちに無効化し、新しいものを生成してください。
 
-### 🔒 セキュリティ侵害の検出
+### 🔒 セキュリティ侵害の検出（例示）
 
-以下の認証情報が露出しています（即座に無効化が必要）:
-- GitHub Personal Access Token: `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`
-- Cloudflare API Token: `FgOoUC-WVOS0_ALqVUsbos61jy0eyO06To6RNaE0`
-- Discord Webhook URL: `https://discord.com/api/webhooks/...`
-- Brave API Key: `BSABTeXrpBy5UtjduTGyrXHzbVRDo8h`
+以下の認証情報形式が露出していた例（モック値）:
+- GitHub Personal Access Token: `ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
+- Cloudflare API Token: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`
+- Discord Webhook URL: `https://discord.com/api/webhooks/XXXXX/XXXXX`
+- Brave API Key: `BSABXXXXXXXXXXXXXXXXXXXXXXX`
 
 **対応手順**:
 1. 上記トークンを各サービスで即座に無効化
