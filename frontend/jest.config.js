@@ -41,9 +41,7 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/tests/e2e/',
   ],
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['@swc/jest'],
-  },
+  // transform設定を削除してNext.jsのデフォルトを使用
   transformIgnorePatterns: [
     '/node_modules/',
     '^.+\\.module\\.(css|sass|scss)$',
