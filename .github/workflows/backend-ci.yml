@@ -86,7 +86,9 @@ jobs:
           if [ -d venv ]; then
             source venv/bin/activate
           fi
-          if [ "${{ matrix.check-type }}" == "security" ]; then
+          if [ "${{ matrix.check-type }}" == "format" ]; then
+            pip install black==24.10.0
+          elif [ "${{ matrix.check-type }}" == "security" ]; then
             pip install bandit[toml] safety
           fi
           ${{ matrix.command }}
