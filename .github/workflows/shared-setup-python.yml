@@ -47,8 +47,17 @@ jobs:
       - name: 🔑 キャッシュキー生成
         id: cache-key
         run: |
-          REQUIREMENTS_HASH=$(sha256sum ${{ inputs.working-directory }}/requirements*.txt | sha256sum | cut -d' ' -f1)
-          CACHE_KEY="python-${{ inputs.python-version }}-${{ runner.os }}-${REQUIREMENTS_HASH}${{ inputs.cache-key-suffix }}"
+          cd ${{ inputs.working-directory }}
+          # pyproject.toml方式
+          if [ -f pyproject.toml ]; then
+            DEPS_HASH=$(sha256sum pyproject.toml | cut -d' ' -f1)
+          # requirements.txt方式
+          elif [ -f requirements.txt ]; then
+            DEPS_HASH=$(sha256sum requirements*.txt 2>/dev/null | sha256sum | cut -d' ' -f1)
+          else
+            DEPS_HASH="no-deps-$(date +%s)"
+          fi
+          CACHE_KEY="python-${{ inputs.python-version }}-${{ runner.os }}-${DEPS_HASH}${{ inputs.cache-key-suffix }}"
           echo "key=${CACHE_KEY}" >> $GITHUB_OUTPUT
           echo "生成されたキャッシュキー: ${CACHE_KEY}"
 
@@ -76,9 +85,22 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: |
           source venv/bin/activate
-          pip install -r requirements.txt
-          if [ "${{ inputs.install-dev-deps }}" == "true" ] && [ -f requirements-dev.txt ]; then
-            pip install -r requirements-dev.txt
+          # pyproject.toml方式（推奨）
+          if [ -f pyproject.toml ]; then
+            if [ "${{ inputs.install-dev-deps }}" == "true" ]; then
+              pip install -e .[dev]
+            else
+              pip install -e .
+            fi
+          # requirements.txt方式（フォールバック）
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+            if [ "${{ inputs.install-dev-deps }}" == "true" ] && [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
+          else
+            echo "❌ No dependency file found (pyproject.toml or requirements.txt)"
+            exit 1
           fi
 
       - name: 📤 Python環境のアップロード
