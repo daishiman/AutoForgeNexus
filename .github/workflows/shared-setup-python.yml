@@ -103,9 +103,17 @@ jobs:
             exit 1
           fi
 
-      - name: 📤 Python環境のアップロード
+      - name: 📦 venvをtar.gzアーカイブ化（シンボリックリンク保持）
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          # シンボリックリンクと権限を保持してtar圧縮
+          tar -czf venv.tar.gz -C . venv
+          echo "📊 アーカイブサイズ: $(du -h venv.tar.gz | cut -f1)"
+          ls -lh venv.tar.gz
+
+      - name: 📤 Python環境アーカイブのアップロード
         uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           name: python-env-${{ github.run_id }}
-          path: ${{ inputs.working-directory }}/venv
+          path: ${{ inputs.working-directory }}/venv.tar.gz
           retention-days: 1

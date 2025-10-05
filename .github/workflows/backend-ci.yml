@@ -23,13 +23,21 @@ env:
   PYTHON_VERSION: '3.13'
 
 jobs:
-  # Shared setup removed - each job handles its own dependencies
+  # Shared setup for all jobs
+  setup-environment:
+    name: 🔧 Setup Environment
+    uses: ./.github/workflows/shared-setup-python.yml
+    with:
+      python-version: '3.13'
+      working-directory: './backend'
+      cache-key-suffix: '-backend'
+      install-dev-deps: true
 
   # Parallel quality checks with matrix strategy
   quality-checks:
     name: 🔍 Quality Checks
     runs-on: ubuntu-latest
-    # needs: setup-environment  # Removed - independent execution
+    needs: setup-environment
     strategy:
       fail-fast: false
       matrix:
@@ -63,57 +71,56 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Restore or create cached dependencies
+      - name: 📥 Restore cached dependencies
         id: cache-deps
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/pip
             ./backend/venv
-          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}-v2
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 🔧 Create venv if cache miss
+      - name: 📥 Download Python environment artifact
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: python-env-${{ github.run_id }}
+          path: ./backend
+
+      - name: 🔓 Extract venv from archive
         if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel
-          if [ -f pyproject.toml ]; then
-            pip install -e .[dev]
-          elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          if [ -f venv.tar.gz ]; then
+            echo "📦 Extracting venv archive with symlinks preservation..."
+            tar -xzf venv.tar.gz
+            rm venv.tar.gz
+            echo "✅ venv extracted successfully"
+            ls -la venv/bin/activate
+          else
+            echo "❌ venv.tar.gz not found"
+            exit 1
           fi
 
       - name: 🎯 Run ${{ matrix.name }}
-        working-directory: ./backend
         run: |
-          source venv/bin/activate
-          
-          # Install tool-specific dependencies if needed
-          case "${{ matrix.check-type }}" in
-            format)
-              pip install black==24.10.0
-              ;;
-            type-check)
-              pip install mypy types-requests types-pydantic
-              ;;
-            security)
-              pip install bandit[toml] safety
-              ;;
-          esac
-          
-          # Run the check
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
+          if [ "${{ matrix.check-type }}" == "format" ]; then
+            pip install black==24.10.0
+          elif [ "${{ matrix.check-type }}" == "security" ]; then
+            pip install bandit[toml] safety
+          fi
           ${{ matrix.command }}
 
   # Parallel test execution with matrix
   test-suite:
     name: 🧪 Test Suite
     runs-on: ubuntu-latest
-    # needs: setup-environment  # Removed - independent execution
+    needs: setup-environment
     strategy:
       fail-fast: false
       matrix:
@@ -147,35 +154,44 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Restore or create cached dependencies
-        id: cache-test-deps
+      - name: 📥 Restore cached dependencies
+        id: cache-deps
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/pip
             ./backend/venv
-          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}-v2
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 🔧 Create venv if cache miss
-        if: steps.cache-test-deps.outputs.cache-hit != 'true'
+      - name: 📥 Download Python environment artifact
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: python-env-${{ github.run_id }}
+          path: ./backend
+
+      - name: 🔓 Extract venv from archive
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel
-          if [ -f pyproject.toml ]; then
-            pip install -e .[dev]
-          elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          if [ -f venv.tar.gz ]; then
+            echo "📦 Extracting venv archive with symlinks preservation..."
+            tar -xzf venv.tar.gz
+            rm venv.tar.gz
+            echo "✅ venv extracted successfully"
+            ls -la venv/bin/activate
+          else
+            echo "❌ venv.tar.gz not found"
+            exit 1
           fi
 
       - name: 🧪 Run ${{ matrix.test-type }} tests
-        working-directory: ./backend
         run: |
-          source venv/bin/activate
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
           pytest ${{ matrix.path }} \
             --cov=src \
             --cov-report=xml:coverage-${{ matrix.test-type }}.xml \
@@ -232,7 +248,7 @@ jobs:
   build-artifacts:
     name: 🔧 Build Artifacts
     runs-on: ubuntu-latest
-    # needs: setup-environment  # Removed - independent execution
+    needs: setup-environment
     defaults:
       run:
         working-directory: ./backend
@@ -248,35 +264,44 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Restore or create cached dependencies
-        id: cache-build-deps
+      - name: 📥 Restore cached dependencies
+        id: cache-deps
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/pip
             ./backend/venv
-          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}-v2
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 🔧 Create venv if cache miss
-        if: steps.cache-build-deps.outputs.cache-hit != 'true'
+      - name: 📥 Download Python environment artifact
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: python-env-${{ github.run_id }}
+          path: ./backend
+
+      - name: 🔓 Extract venv from archive
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel
-          if [ -f pyproject.toml ]; then
-            pip install -e .[dev]
-          elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          if [ -f venv.tar.gz ]; then
+            echo "📦 Extracting venv archive with symlinks preservation..."
+            tar -xzf venv.tar.gz
+            rm venv.tar.gz
+            echo "✅ venv extracted successfully"
+            ls -la venv/bin/activate
+          else
+            echo "❌ venv.tar.gz not found"
+            exit 1
           fi
 
       - name: 📄 Generate OpenAPI specification
-        working-directory: ./backend
         run: |
-          source venv/bin/activate
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
           python -c "
           from src.main import app
           import json
@@ -287,6 +312,7 @@ jobs:
       - name: 📦 Package for deployment
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
         run: |
+          cd ..
           tar -czf backend-${{ github.sha }}.tar.gz \
             --exclude='backend/venv' \
             --exclude='backend/__pycache__' \
@@ -306,7 +332,7 @@ jobs:
   performance-test:
     name: ⚡ Performance Test
     runs-on: ubuntu-latest
-    needs: [test-suite]  # Only depends on tests, not setup
+    needs: [setup-environment, test-suite]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     defaults:
       run:
@@ -323,35 +349,44 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Restore or create cached dependencies
-        id: cache-perf-deps
+      - name: 📥 Restore cached dependencies
+        id: cache-deps
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/pip
             ./backend/venv
-          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}-v2
+          key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 🔧 Create venv if cache miss
-        if: steps.cache-perf-deps.outputs.cache-hit != 'true'
+      - name: 📥 Download Python environment artifact
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: python-env-${{ github.run_id }}
+          path: ./backend
+
+      - name: 🔓 Extract venv from archive
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel
-          if [ -f pyproject.toml ]; then
-            pip install -e .[dev]
-          elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          if [ -f venv.tar.gz ]; then
+            echo "📦 Extracting venv archive with symlinks preservation..."
+            tar -xzf venv.tar.gz
+            rm venv.tar.gz
+            echo "✅ venv extracted successfully"
+            ls -la venv/bin/activate
+          else
+            echo "❌ venv.tar.gz not found"
+            exit 1
           fi
 
       - name: 🚀 Run performance tests
-        working-directory: ./backend
         run: |
-          source venv/bin/activate
+          if [ -d venv ]; then
+            source venv/bin/activate
+          fi
           if [ -f tests/performance/locustfile.py ]; then
             pip install locust
             echo "Performance tests would run here"
@@ -364,7 +399,7 @@ jobs:
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [quality-checks, test-suite, docker-build, build-artifacts]  # Removed setup-environment dependency
+    needs: [setup-environment, quality-checks, test-suite, docker-build, build-artifacts]
     if: always()
 
     steps:
