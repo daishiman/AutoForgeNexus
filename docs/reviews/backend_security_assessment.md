@@ -174,11 +174,11 @@ async def authenticate_request(request: Request, call_next):
 
 ### Critical Security Issues:
 
-#### 1. Secret Exposure Risk
+#### 1. Secret Exposure Risk（例示 - モック値）
 ```bash
 # .env.local - Line 116-117
-DISCORD_WEBHOOK_URL=https://REDACTED_DISCORD_WEBHOOK
-# ⚠️ EXPOSED: Live Discord webhook URL committed
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/XXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# ⚠️ EXPOSED: Live Discord webhook URL committed（モック例）
 ```
 
 #### 2. Insecure Default Values
