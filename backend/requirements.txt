@@ -3,4 +3,4 @@ cryptography==43.0.3
 libsql-client==0.3.1
 packaging==24.2
 pycparser==2.22
-wheel @ file:///opt/homebrew/Cellar/python%403.13/3.13.0_1/libexec/wheel-0.44.0-py3-none-any.whl#sha256=f49b82715dce6365f75eddcb0a9bb47d0d46feaf14bbc739dfcbd677b7073f5b
+wheel==0.44.0
