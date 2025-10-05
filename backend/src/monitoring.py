@@ -230,9 +230,11 @@ class HealthChecker:
                 version="turso",
                 metadata={
                     "connection_pool": "active",
-                    "database_url": os.getenv("TURSO_DATABASE_URL", "").split("@")[-1]
-                    if os.getenv("TURSO_DATABASE_URL")
-                    else "not_configured",
+                    "database_url": (
+                        os.getenv("TURSO_DATABASE_URL", "").split("@")[-1]
+                        if os.getenv("TURSO_DATABASE_URL")
+                        else "not_configured"
+                    ),
                 },
             )
 

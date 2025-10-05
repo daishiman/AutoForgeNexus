@@ -6,6 +6,7 @@ DDDアーキテクチャ準拠:
 - 各ドメインモデルはこのBaseを継承
 - 共通Mixinで横断的関心事を実装
 """
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, func
@@ -57,7 +58,10 @@ class SoftDeleteMixin:
     """
 
     deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=None, comment="削除日時（論理削除）"
+        DateTime(timezone=True),
+        nullable=True,
+        default=None,
+        comment="削除日時（論理削除）",
     )
 
     @property

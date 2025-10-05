@@ -7,6 +7,7 @@ DDDアーキテクチャ準拠:
 - 直接的なrelationshipを使わず、IDで参照
 - リポジトリパターンを想定したテスト設計
 """
+
 import os
 from datetime import UTC, datetime
 

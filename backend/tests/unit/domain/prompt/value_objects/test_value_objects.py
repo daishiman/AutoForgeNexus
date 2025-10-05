@@ -86,7 +86,9 @@ class TestPromptContent:
         """テンプレートが必須であることを検証"""
         # Arrange & Act & Assert
         with pytest.raises(ValueError, match="テンプレートは必須です"):
-            PromptContent(template="", variables=[], system_message="システムメッセージ")
+            PromptContent(
+                template="", variables=[], system_message="システムメッセージ"
+            )
 
     def test_変数の整合性チェック(self):
         """テンプレート内の変数が正しく定義されていることを検証"""

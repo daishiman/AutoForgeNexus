@@ -37,7 +37,10 @@ class TestPromptGenerationService:
         assert prompt_content.template is not None
         assert len(prompt_content.template) > 0
         assert prompt_content.system_message is not None
-        assert "商品レビュー" in prompt_content.template or "レビュー" in prompt_content.template
+        assert (
+            "商品レビュー" in prompt_content.template
+            or "レビュー" in prompt_content.template
+        )
 
     def test_制約条件の反映(self):
         """制約条件がプロンプトに反映されることを検証"""
@@ -54,8 +57,13 @@ class TestPromptGenerationService:
 
         # Assert
         assert "丁寧" in prompt_content.template or "敬語" in prompt_content.template
-        assert "100文字" in prompt_content.template or "文字数" in prompt_content.template
-        assert "ポジティブ" in prompt_content.template or "前向き" in prompt_content.template
+        assert (
+            "100文字" in prompt_content.template or "文字数" in prompt_content.template
+        )
+        assert (
+            "ポジティブ" in prompt_content.template
+            or "前向き" in prompt_content.template
+        )
 
     def test_例の組み込み(self):
         """提供された例がプロンプトに組み込まれることを検証"""

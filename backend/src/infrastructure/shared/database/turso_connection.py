@@ -2,6 +2,7 @@
 Phase 4: Database Vector Setup - Turso Connection Module
 Handles connection to Turso (libSQL) database for staging/production environments
 """
+
 # cspell:ignore libsql libSQL Turso authToken
 
 import os
