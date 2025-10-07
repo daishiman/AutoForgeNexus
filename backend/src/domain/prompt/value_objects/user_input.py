@@ -25,12 +25,12 @@ class UserInput:
     constraints: list[str] = field(default_factory=list)
     examples: list[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初期化後のバリデーション"""
         if not self.goal or not self.goal.strip():
             raise ValueError("ゴールは必須です")
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, str | list[str]]:
         """辞書形式に変換"""
         return {
             "goal": self.goal,

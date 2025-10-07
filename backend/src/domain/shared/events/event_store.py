@@ -85,7 +85,7 @@ class InMemoryEventStore(EventStore):
     本番環境では永続化層（Redis, Turso等）を使用
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """イベントストアの初期化"""
         self._events: list[DomainEvent] = []
         self._events_by_aggregate: dict[str, list[DomainEvent]] = {}

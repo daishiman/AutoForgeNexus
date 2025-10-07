@@ -25,7 +25,7 @@ class PromptContent:
     variables: list[str] = field(default_factory=list)
     system_message: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初期化後のバリデーション"""
         if not self.template or not self.template.strip():
             raise ValueError("テンプレートは必須です")
@@ -38,7 +38,7 @@ class PromptContent:
         if template_vars != provided_vars:
             raise ValueError("テンプレート内の変数が一致しません")
 
-    def format(self, **kwargs) -> str:
+    def format(self, **kwargs: Any) -> str:
         """
         テンプレートに値を埋め込む
 

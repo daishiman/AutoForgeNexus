@@ -33,8 +33,8 @@ class PromptCreatedEvent(DomainEvent):
         content: str,
         tags: list[str] | None = None,
         metadata: dict[str, Any] | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """初期化"""
         self.prompt_id = prompt_id
         self.user_id = user_id

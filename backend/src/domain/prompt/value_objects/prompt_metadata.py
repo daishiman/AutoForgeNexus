@@ -7,6 +7,7 @@ PromptMetadata値オブジェクト
 
 from dataclasses import dataclass, replace
 from datetime import datetime
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -31,7 +32,7 @@ class PromptMetadata:
     # 有効なステータス
     VALID_STATUSES = {"draft", "saved", "published"}
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初期化後のバリデーション"""
         if self.version < 1:
             raise ValueError("バージョンは1以上である必要があります")
@@ -39,7 +40,7 @@ class PromptMetadata:
         if self.status not in self.VALID_STATUSES:
             raise ValueError(f"無効なステータス: {self.status}")
 
-    def with_update(self, **kwargs) -> "PromptMetadata":
+    def with_update(self, **kwargs: Any) -> "PromptMetadata":
         """
         更新された新しいインスタンスを作成
 
@@ -55,7 +56,7 @@ class PromptMetadata:
 
         return replace(self, **kwargs)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """辞書形式に変換"""
         return {
             "version": self.version,

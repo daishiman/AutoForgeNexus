@@ -7,13 +7,13 @@ import json
 import logging
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import Any
+from typing import TypedDict
 
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from ..monitoring import metrics_collector
@@ -22,16 +22,86 @@ from ..monitoring import metrics_collector
 logger = logging.getLogger("autoforgenexus.observability")
 
 
+# TypedDict定義
+class RequestContext(TypedDict, total=False):
+    """リクエストコンテキスト型"""
+
+    request_id: str
+    timestamp: str
+    method: str
+    path: str
+    query_params: dict[str, str]
+    headers: dict[str, str]
+    client_ip: str
+    user_agent: str | None
+    request_body: str
+
+
+class ResponseContext(RequestContext, total=False):
+    """レスポンスコンテキスト型"""
+
+    status_code: int
+    duration_ms: float
+    response_headers: dict[str, str]
+    response_body: str
+
+
+class ErrorContext(RequestContext, total=False):
+    """エラーコンテキスト型"""
+
+    duration_ms: float
+    error: str
+    error_type: str
+
+
+class LLMCallContext(TypedDict, total=False):
+    """LLM呼び出しコンテキスト型"""
+
+    call_id: str
+    provider: str
+    model: str
+    user_id: str | None
+    session_id: str | None
+    timestamp: str
+    prompt_length: int
+    duration_ms: float
+    error: str
+    error_type: str
+
+
+class LLMResultContext(TypedDict):
+    """LLM結果コンテキスト型"""
+
+    call_id: str
+    response_length: int
+    tokens_used: int
+    cost_usd: float
+    metadata: dict[str, str | int | float | bool]
+
+
+class QueryContext(TypedDict, total=False):
+    """データベースクエリコンテキスト型"""
+
+    query_id: str
+    operation: str
+    table: str | None
+    user_id: str | None
+    timestamp: str
+    duration_ms: float
+    error: str
+    error_type: str
+
+
 class ObservabilityMiddleware(BaseHTTPMiddleware):
     """包括的観測可能性ミドルウェア"""
 
     def __init__(
         self,
         app: ASGIApp,
-        exclude_paths: list | None = None,
+        exclude_paths: list[str] | None = None,
         include_request_body: bool = False,
         include_response_body: bool = False,
-        sensitive_headers: list | None = None,
+        sensitive_headers: list[str] | None = None,
     ):
         super().__init__(app)
         self.exclude_paths = exclude_paths or ["/health", "/metrics", "/favicon.ico"]
@@ -44,7 +114,9 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             "x-auth-token",
         ]
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         """リクエスト処理と観測データ収集"""
 
         # 除外パスのチェック
@@ -58,7 +130,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         request_id = str(uuid.uuid4())
 
         # コンテキスト情報
-        context = {
+        context: RequestContext = {
             "request_id": request_id,
             "timestamp": datetime.now(UTC).isoformat(),
             "method": request.method,
@@ -88,13 +160,23 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             # 処理時間計算
             duration = time.time() - start_time
 
-            # レスポンス情報
-            response_context = {
-                **context,
+            # レスポンス情報（基本）
+            response_context: ResponseContext = {
+                "request_id": context["request_id"],
+                "timestamp": context["timestamp"],
+                "method": context["method"],
+                "path": context["path"],
+                "query_params": context["query_params"],
+                "headers": context["headers"],
+                "client_ip": context["client_ip"],
+                "user_agent": context.get("user_agent"),
                 "status_code": response.status_code,
                 "duration_ms": duration * 1000,
                 "response_headers": self._sanitize_headers(dict(response.headers)),
             }
+            # リクエストボディがあれば追加
+            if "request_body" in context:
+                response_context["request_body"] = context["request_body"]
 
             # レスポンスボディの記録（設定されている場合）
             if self.include_response_body and response.status_code < 400:
@@ -136,7 +218,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             # エラー発生時の処理
             duration = time.time() - start_time
 
-            error_context = {
+            error_context: ErrorContext = {
                 **context,
                 "duration_ms": duration * 1000,
                 "error": str(e),
@@ -193,7 +275,8 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             # JSON の場合
             data = json.loads(body.decode("utf-8"))
             if isinstance(data, dict):
-                return self._sanitize_dict(data)
+                sanitized = self._sanitize_dict(data)
+                return json.dumps(sanitized, ensure_ascii=False)
             return str(data)
         except (json.JSONDecodeError, UnicodeDecodeError):
             # JSON でない場合はサイズ制限のみ
@@ -202,8 +285,13 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
                 return text[:1000] + "... [TRUNCATED]"
             return text
 
-    def _sanitize_dict(self, data: dict[str, Any], depth: int = 0) -> dict[str, Any]:
-        """辞書データの機密情報をサニタイズ"""
+    def _sanitize_dict(
+        self, data: dict[str, object], depth: int = 0
+    ) -> dict[str, str]:
+        """辞書データの機密情報をサニタイズ
+
+        戻り値は常にdict[str, str]に正規化され、ネストは文字列化される
+        """
         # Prevent deep nesting DoS attacks
         max_depth = 10
         if depth > max_depth:
@@ -221,14 +309,16 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             "cookie",
         ]
 
-        sanitized = {}
+        sanitized: dict[str, str] = {}
         for key, value in data.items():
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
                 sanitized[key] = "[REDACTED]"
             elif isinstance(value, dict):
-                sanitized[key] = self._sanitize_dict(value, depth + 1)
+                # 再帰的にサニタイズしてJSON文字列として格納
+                nested_sanitized = self._sanitize_dict(value, depth + 1)
+                sanitized[key] = json.dumps(nested_sanitized, ensure_ascii=False)
             else:
-                sanitized[key] = value
+                sanitized[key] = str(value)
 
         return sanitized
 
@@ -236,7 +326,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
 class LLMObservabilityMiddleware:
     """LLM呼び出し専用の観測ミドルウェア"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("autoforgenexus.llm")
 
     @asynccontextmanager
@@ -247,12 +337,12 @@ class LLMObservabilityMiddleware:
         prompt: str,
         user_id: str | None = None,
         session_id: str | None = None,
-    ):
+    ) -> AsyncGenerator[str, None]:
         """LLM呼び出しの追跡"""
         start_time = time.time()
         call_id = str(uuid.uuid4())
 
-        context = {
+        context: LLMCallContext = {
             "call_id": call_id,
             "provider": provider,
             "model": model,
@@ -274,16 +364,15 @@ class LLMObservabilityMiddleware:
 
         except Exception as e:
             duration = time.time() - start_time
-            context.update(
-                {
-                    "duration_ms": duration * 1000,
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                }
-            )
+            error_context: LLMCallContext = {
+                **context,
+                "duration_ms": duration * 1000,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            }
 
             self.logger.error(
-                "LLM call failed", extra={"context": context}, exc_info=True
+                "LLM call failed", extra={"context": error_context}, exc_info=True
             )
 
             # エラーメトリクス記録
@@ -299,10 +388,10 @@ class LLMObservabilityMiddleware:
         response: str,
         tokens_used: int,
         cost: float = 0.0,
-        metadata: dict[str, Any] | None = None,
-    ):
+        metadata: dict[str, str | int | float | bool] | None = None,
+    ) -> None:
         """LLM呼び出し結果の記録"""
-        context = {
+        context: LLMResultContext = {
             "call_id": call_id,
             "response_length": len(response),
             "tokens_used": tokens_used,
@@ -316,7 +405,7 @@ class LLMObservabilityMiddleware:
 class DatabaseObservabilityMiddleware:
     """データベース操作の観測ミドルウェア"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("autoforgenexus.database")
 
     @asynccontextmanager
@@ -325,12 +414,12 @@ class DatabaseObservabilityMiddleware:
         operation: str,
         table: str | None = None,
         user_id: str | None = None,
-    ):
+    ) -> AsyncGenerator[str, None]:
         """データベースクエリの追跡"""
         start_time = time.time()
         query_id = str(uuid.uuid4())
 
-        context = {
+        context: QueryContext = {
             "query_id": query_id,
             "operation": operation,
             "table": table,
@@ -356,16 +445,15 @@ class DatabaseObservabilityMiddleware:
 
         except Exception as e:
             duration = time.time() - start_time
-            context.update(
-                {
-                    "duration_ms": duration * 1000,
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                }
-            )
+            error_context: QueryContext = {
+                **context,
+                "duration_ms": duration * 1000,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            }
 
             self.logger.error(
-                "Database query failed", extra={"context": context}, exc_info=True
+                "Database query failed", extra={"context": error_context}, exc_info=True
             )
 
             # エラーメトリクス記録
@@ -377,8 +465,8 @@ class DatabaseObservabilityMiddleware:
 
 
 # グローバルインスタンス
-llm_observability = LLMObservabilityMiddleware()
-db_observability = DatabaseObservabilityMiddleware()
+llm_observability: LLMObservabilityMiddleware = LLMObservabilityMiddleware()
+db_observability: DatabaseObservabilityMiddleware = DatabaseObservabilityMiddleware()
 
 
 # 使用例とヘルパー関数
@@ -399,14 +487,14 @@ async def track_prompt_processing(
     ) as call_id:
         # ここで実際のLLM呼び出し処理
         # ...
-        return call_id
+        return str(call_id)
 
 
-def setup_observability_logging():
+def setup_observability_logging() -> None:
     """観測可能性ログの設定"""
     import logging.config
 
-    config = {
+    config: dict[str, object] = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {

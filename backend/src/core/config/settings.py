@@ -146,7 +146,7 @@ class Settings(BaseSettings):
 
     @field_validator("cors_allow_origins")
     @classmethod
-    def parse_cors_origins(cls, v) -> list[str]:
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
         """CORS許可オリジンをリストに変換"""
         if isinstance(v, str):
             if v == "*":
@@ -158,7 +158,7 @@ class Settings(BaseSettings):
 
     @field_validator("cors_allow_methods")
     @classmethod
-    def parse_cors_methods(cls, v) -> list[str]:
+    def parse_cors_methods(cls, v: str | list[str]) -> list[str]:
         """CORS許可メソッドをリストに変換"""
         if isinstance(v, str):
             if v == "*":
@@ -170,7 +170,7 @@ class Settings(BaseSettings):
 
     @field_validator("cors_allow_headers")
     @classmethod
-    def parse_cors_headers(cls, v) -> list[str]:
+    def parse_cors_headers(cls, v: str | list[str]) -> list[str]:
         """CORS許可ヘッダーをリストに変換"""
         if isinstance(v, str):
             if v == "*":

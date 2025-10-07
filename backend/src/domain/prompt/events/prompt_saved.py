@@ -29,8 +29,8 @@ class PromptSavedEvent(DomainEvent):
         saved_by: str,
         saved_version: int,
         metadata: dict[str, Any] | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """初期化"""
         self.prompt_id = prompt_id
         self.saved_by = saved_by

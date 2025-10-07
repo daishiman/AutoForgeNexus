@@ -6,9 +6,12 @@ Handles connection to Turso (libSQL) database for staging/production environment
 # cspell:ignore libsql libSQL Turso authToken
 
 import os
+from collections.abc import Generator
 
 import libsql_client
+from libsql_client import ResultSet
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -18,11 +21,11 @@ from src.core.config.settings import Settings
 class TursoConnection:
     """Turso database connection manager"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.settings = Settings()
-        self._engine = None
-        self._session_factory = None
-        self._client = None
+        self._engine: Engine | None = None
+        self._session_factory: sessionmaker[Session] | None = None
+        self._client: libsql_client.Client | None = None
 
     def get_connection_url(self) -> str:
         """Get appropriate database URL based on environment"""
@@ -77,7 +80,7 @@ class TursoConnection:
 
         return self._client
 
-    def get_engine(self):
+    def get_engine(self) -> Engine:
         """Get SQLAlchemy engine"""
         if self._engine is None:
             connection_url = self.get_connection_url()
@@ -102,7 +105,7 @@ class TursoConnection:
 
         return self._engine
 
-    def get_session_factory(self) -> sessionmaker:
+    def get_session_factory(self) -> sessionmaker[Session]:
         """Get session factory"""
         if self._session_factory is None:
             self._session_factory = sessionmaker(
@@ -115,21 +118,28 @@ class TursoConnection:
         session_factory = self.get_session_factory()
         return session_factory()
 
-    async def execute_raw(self, query: str, params: dict | None = None):
+    async def execute_raw(
+        self,
+        query: str,
+        params: dict[str, str | int | float | bool | None] | None = None
+    ) -> ResultSet:
         """Execute raw SQL query using libSQL client"""
         client = self.get_libsql_client()
         return await client.execute(query, params or {})
 
-    async def batch_execute(self, queries: list[tuple[str, dict]]):
+    async def batch_execute(
+        self,
+        queries: list[tuple[str, dict[str, str | int | float | bool | None]]]
+    ) -> list[ResultSet]:
         """Execute multiple queries in a batch"""
         client = self.get_libsql_client()
-        results = []
+        results: list[ResultSet] = []
         for query, params in queries:
             result = await client.execute(query, params)
             results.append(result)
         return results
 
-    def close(self):
+    def close(self) -> None:
         """Close all connections"""
         if self._engine:
             self._engine.dispose()
@@ -149,7 +159,7 @@ def get_turso_connection() -> TursoConnection:
     return _turso_connection
 
 
-def get_db_session() -> Session:
+def get_db_session() -> Generator[Session, None, None]:
     """Get database session for dependency injection"""
     session = _turso_connection.get_session()
     try:

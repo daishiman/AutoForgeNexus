@@ -84,7 +84,7 @@ class HealthCheckResponse:
 class HealthChecker:
     """ヘルスチェック実行クラス"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = time.time()
         self.service_name = "AutoForgeNexus Backend"
         self.version = os.getenv("APP_VERSION", "0.1.0")
@@ -400,13 +400,13 @@ class HealthChecker:
 class MetricsCollector:
     """メトリクス収集クラス"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics: dict[str, Any] = {}
         self.start_time = time.time()
 
     def record_request_metrics(
         self, method: str, endpoint: str, status_code: int, duration: float
-    ):
+    ) -> None:
         """リクエストメトリクスを記録"""
         timestamp = datetime.now(UTC).isoformat()
 
@@ -424,7 +424,7 @@ class MetricsCollector:
 
     def record_llm_metrics(
         self, provider: str, model: str, tokens_used: int, cost: float, duration: float
-    ):
+    ) -> None:
         """LLMメトリクスを記録"""
         timestamp = datetime.now(UTC).isoformat()
 
@@ -442,8 +442,8 @@ class MetricsCollector:
         logger.info("LLM metric", extra={"metric": metric})
 
     def record_error_metrics(
-        self, error_type: str, error_message: str, stack_trace: str = None
-    ):
+        self, error_type: str, error_message: str, stack_trace: str | None = None
+    ) -> None:
         """エラーメトリクスを記録"""
         timestamp = datetime.now(UTC).isoformat()
 

@@ -31,8 +31,8 @@ class PromptUpdatedEvent(DomainEvent):
         changes: dict[str, dict[str, Any]],
         previous_version: int | None = None,
         new_version: int | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """初期化"""
         self.prompt_id = prompt_id
         self.updated_by = updated_by
@@ -81,7 +81,7 @@ class PromptUpdatedEvent(DomainEvent):
             version=data.get("version", 1),
         )
 
-    def get_changed_fields(self) -> list:
+    def get_changed_fields(self) -> list[str]:
         """変更されたフィールド名のリストを返す"""
         return list(self.changes.keys())
 
