@@ -29,7 +29,7 @@ review:
         - メモリリーク可能性
 
     - testing:
-        - テストカバレッジ（Backend: 80%+, Frontend: 75%+）
+        - テストカバレッジ（Backend:80%+, Frontend:75%+）
         - エッジケースのテスト
         - モックの適切性
         - E2Eテストの必要性
