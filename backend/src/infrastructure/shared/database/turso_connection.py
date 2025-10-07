@@ -121,15 +121,14 @@ class TursoConnection:
     async def execute_raw(
         self,
         query: str,
-        params: dict[str, str | int | float | bool | None] | None = None
+        params: dict[str, str | int | float | bool | None] | None = None,
     ) -> ResultSet:
         """Execute raw SQL query using libSQL client"""
         client = self.get_libsql_client()
         return await client.execute(query, params or {})
 
     async def batch_execute(
-        self,
-        queries: list[tuple[str, dict[str, str | int | float | bool | None]]]
+        self, queries: list[tuple[str, dict[str, str | int | float | bool | None]]]
     ) -> list[ResultSet]:
         """Execute multiple queries in a batch"""
         client = self.get_libsql_client()

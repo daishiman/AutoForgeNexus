@@ -285,9 +285,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
                 return text[:1000] + "... [TRUNCATED]"
             return text
 
-    def _sanitize_dict(
-        self, data: dict[str, object], depth: int = 0
-    ) -> dict[str, str]:
+    def _sanitize_dict(self, data: dict[str, object], depth: int = 0) -> dict[str, str]:
         """辞書データの機密情報をサニタイズ
 
         戻り値は常にdict[str, str]に正規化され、ネストは文字列化される
