@@ -85,35 +85,37 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: |
           source venv/bin/activate
-          # pyproject.toml方式（推奨）
-          if [ -f pyproject.toml ]; then
+
+          # requirements.lock方式（ハッシュ検証付き・推奨）
+          if [ -f requirements.lock ]; then
+            echo "🔐 Installing with hash verification from requirements.lock"
+            pip install --require-hashes -r requirements.lock
+          # pyproject.toml方式（フォールバック）
+          elif [ -f pyproject.toml ]; then
+            echo "⚠️ WARNING: Installing without hash verification (requirements.lock not found)"
+            echo "⚠️ Generate requirements.lock with: pip-compile --generate-hashes pyproject.toml"
             if [ "${{ inputs.install-dev-deps }}" == "true" ]; then
               pip install -e .[dev]
             else
               pip install -e .
             fi
-          # requirements.txt方式（フォールバック）
+          # requirements.txt方式（レガシー）
           elif [ -f requirements.txt ]; then
+            echo "⚠️ WARNING: Installing without hash verification (requirements.txt)"
             pip install -r requirements.txt
             if [ "${{ inputs.install-dev-deps }}" == "true" ] && [ -f requirements-dev.txt ]; then
               pip install -r requirements-dev.txt
             fi
           else
-            echo "❌ No dependency file found (pyproject.toml or requirements.txt)"
+            echo "❌ No dependency file found (requirements.lock, pyproject.toml, or requirements.txt)"
             exit 1
           fi
 
-      - name: 📦 venvをtar.gzアーカイブ化（シンボリックリンク保持）
+      - name: ✅ 環境セットアップ完了検証
         working-directory: ${{ inputs.working-directory }}
         run: |
-          # シンボリックリンクと権限を保持してtar圧縮
-          tar -czf venv.tar.gz -C . venv
-          echo "📊 アーカイブサイズ: $(du -h venv.tar.gz | cut -f1)"
-          ls -lh venv.tar.gz
-
-      - name: 📤 Python環境アーカイブのアップロード
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
-        with:
-          name: python-env-${{ github.run_id }}
-          path: ${{ inputs.working-directory }}/venv.tar.gz
-          retention-days: 1
+          source venv/bin/activate
+          echo "📊 Python version: $(python --version)"
+          echo "📦 Pip version: $(pip --version)"
+          echo "📋 Installed packages count: $(pip list | wc -l)"
+          echo "✅ setup-environment completed successfully"

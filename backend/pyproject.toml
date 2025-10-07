@@ -66,6 +66,10 @@ dev = [
     "mypy==1.13.0",
     "pre-commit==4.0.1",
 
+    # Security (CI/CD用)
+    "bandit[toml]>=1.7.9",
+    "safety>=3.2.0",
+
     # Type Stubs
     "types-redis==4.6.0.20241004",
     "types-passlib==1.7.7.20240819",
@@ -73,6 +77,7 @@ dev = [
     # Development Tools
     "ipython==8.31.0",
     "watchfiles==1.0.3",
+    "pip-tools>=7.5.0",
 ]
 
 [tool.setuptools.packages.find]
