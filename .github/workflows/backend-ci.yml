@@ -38,6 +38,12 @@ jobs:
     name: 🔍 Quality Checks
     runs-on: ubuntu-latest
     needs: setup-environment
+
+    # 明示的な権限定義（推奨緩和策4対応）
+    permissions:
+      contents: read        # リポジトリ読み取り
+      statuses: write       # ステータスチェック更新
+
     strategy:
       fail-fast: false
       matrix:
@@ -82,38 +88,113 @@ jobs:
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 📥 Download Python environment artifact
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend
-
-      - name: 🔓 Extract venv from archive
+      - name: "🔧 Fallback: Recreate venv if cache miss"
         if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          if [ -f venv.tar.gz ]; then
-            echo "📦 Extracting venv archive with symlinks preservation..."
-            tar -xzf venv.tar.gz
-            rm venv.tar.gz
-            echo "✅ venv extracted successfully"
-            ls -la venv/bin/activate
-          else
-            echo "❌ venv.tar.gz not found"
+          echo "⚠️ Cache miss detected - rebuilding Python environment"
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f pyproject.toml ]; then
+            pip install -e .[dev]
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          fi
+          echo "✅ venv recreated successfully"
+
+      - name: ✅ Verify venv restoration
+        working-directory: ./backend
+        run: |
+          if [ ! -d venv ]; then
+            echo "❌ ERROR: venv directory not found after cache restoration"
+            echo "Expected path: $(pwd)/venv"
+            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
+            ls -la . || true
+            exit 1
+          fi
+          if [ ! -f venv/bin/activate ]; then
+            echo "❌ ERROR: venv/bin/activate not found"
+            ls -la venv/bin/ || true
             exit 1
           fi
 
-      - name: 🎯 Run ${{ matrix.name }}
+          # Python実行可能性検証（LOW-2025-001対応）
+          if [ ! -x venv/bin/python ]; then
+            echo "❌ ERROR: venv/bin/python is not executable"
+            ls -lh venv/bin/python || true
+            exit 1
+          fi
+
+          # venv完全性検証
+          source venv/bin/activate
+          python --version || { echo "❌ ERROR: Python execution failed"; exit 1; }
+          pip --version || { echo "❌ ERROR: pip not available"; exit 1; }
+          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
+          echo "✅ venv verified: $(ls -lh venv/bin/activate)"
+          echo "✅ Python executable: $(python --version)"
+          echo "✅ Pip version: $(pip --version)"
+
+      - name: 🔐 Verify cache integrity
+        if: steps.cache-deps.outputs.cache-hit == 'true'
+        working-directory: ./backend
         run: |
-          if [ -d venv ]; then
-            source venv/bin/activate
+          source venv/bin/activate
+
+          # インストール済みパッケージの検証（MED-2025-001対応）
+          pip list --format=freeze | sort > /tmp/installed.txt
+          INSTALLED_HASH=$(sha256sum /tmp/installed.txt | cut -d' ' -f1)
+          INSTALLED_COUNT=$(wc -l < /tmp/installed.txt)
+
+          # 期待されるパッケージ数の概算（pyproject.tomlベース）
+          EXPECTED_COUNT=$(grep -E '^\s*"[a-zA-Z0-9_-]+' pyproject.toml | grep -c '==' || echo "0")
+
+          echo "📊 Cache Integrity Report:"
+          echo "  - Installed packages: ${INSTALLED_COUNT}"
+          echo "  - Expected packages (approx): ${EXPECTED_COUNT}"
+          echo "  - Package list hash: ${INSTALLED_HASH}"
+
+          # 最小限のパッケージ数チェック（FastAPI, pytest, ruff, mypy等）
+          MIN_PACKAGES=30
+          if [ "$INSTALLED_COUNT" -lt "$MIN_PACKAGES" ]; then
+            echo "⚠️ WARNING: Package count too low (expected: >=${MIN_PACKAGES}, installed: $INSTALLED_COUNT)"
+            echo "This may indicate cache corruption. Rebuilding cache..."
+            exit 1  # キャッシュ無効化して再ビルド
           fi
-          if [ "${{ matrix.check-type }}" == "format" ]; then
-            pip install black==24.10.0
-          elif [ "${{ matrix.check-type }}" == "security" ]; then
-            pip install bandit[toml] safety
-          fi
+
+          # 重要パッケージの存在確認
+          REQUIRED_PACKAGES="fastapi pytest ruff mypy black"
+          for pkg in $REQUIRED_PACKAGES; do
+            if ! pip show "$pkg" > /dev/null 2>&1; then
+              echo "❌ ERROR: Required package '$pkg' not found in venv"
+              echo "Cache may be corrupted. Rebuilding..."
+              exit 1
+            fi
+          done
+
+          echo "✅ Cache integrity verified (hash: ${INSTALLED_HASH})"
+
+      - name: 🎯 Run ${{ matrix.name }}
+        working-directory: ./backend
+        run: |
+          source venv/bin/activate
+          
+          # Verify required tools are installed
+          case "${{ matrix.check-type }}" in
+            format)
+              black --version || { echo "❌ Black not found in venv"; exit 1; }
+              ;;
+            type-check)
+              mypy --version || { echo "❌ mypy not found in venv"; exit 1; }
+              ;;
+            security)
+              bandit --version || { echo "❌ Bandit not found in venv"; exit 1; }
+              safety --version || { echo "❌ Safety not found in venv"; exit 1; }
+              ;;
+          esac
+          
+          # Run the check
           ${{ matrix.command }}
 
   # Parallel test execution with matrix
@@ -121,6 +202,13 @@ jobs:
     name: 🧪 Test Suite
     runs-on: ubuntu-latest
     needs: setup-environment
+
+    # 明示的な権限定義（推奨緩和策4対応）
+    permissions:
+      contents: read        # リポジトリ読み取り
+      pull-requests: write  # Codecovコメント投稿
+      statuses: write       # ステータスチェック更新
+
     strategy:
       fail-fast: false
       matrix:
@@ -165,33 +253,97 @@ jobs:
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 📥 Download Python environment artifact
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend
-
-      - name: 🔓 Extract venv from archive
+      - name: "🔧 Fallback: Recreate venv if cache miss"
         if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          if [ -f venv.tar.gz ]; then
-            echo "📦 Extracting venv archive with symlinks preservation..."
-            tar -xzf venv.tar.gz
-            rm venv.tar.gz
-            echo "✅ venv extracted successfully"
-            ls -la venv/bin/activate
-          else
-            echo "❌ venv.tar.gz not found"
+          echo "⚠️ Cache miss detected - rebuilding Python environment"
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f pyproject.toml ]; then
+            pip install -e .[dev]
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          fi
+          echo "✅ venv recreated successfully"
+
+      - name: ✅ Verify venv restoration
+        working-directory: ./backend
+        run: |
+          if [ ! -d venv ]; then
+            echo "❌ ERROR: venv directory not found after cache restoration"
+            echo "Expected path: $(pwd)/venv"
+            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
+            ls -la . || true
+            exit 1
+          fi
+          if [ ! -f venv/bin/activate ]; then
+            echo "❌ ERROR: venv/bin/activate not found"
+            ls -la venv/bin/ || true
             exit 1
           fi
 
-      - name: 🧪 Run ${{ matrix.test-type }} tests
-        run: |
-          if [ -d venv ]; then
-            source venv/bin/activate
+          # Python実行可能性検証（LOW-2025-001対応）
+          if [ ! -x venv/bin/python ]; then
+            echo "❌ ERROR: venv/bin/python is not executable"
+            ls -lh venv/bin/python || true
+            exit 1
           fi
+
+          # venv完全性検証
+          source venv/bin/activate
+          python --version || { echo "❌ ERROR: Python execution failed"; exit 1; }
+          pip --version || { echo "❌ ERROR: pip not available"; exit 1; }
+          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
+          echo "✅ venv verified: $(ls -lh venv/bin/activate)"
+          echo "✅ Python executable: $(python --version)"
+          echo "✅ Pip version: $(pip --version)"
+
+      - name: 🔐 Verify cache integrity
+        if: steps.cache-deps.outputs.cache-hit == 'true'
+        working-directory: ./backend
+        run: |
+          source venv/bin/activate
+
+          # インストール済みパッケージの検証（MED-2025-001対応）
+          pip list --format=freeze | sort > /tmp/installed.txt
+          INSTALLED_HASH=$(sha256sum /tmp/installed.txt | cut -d' ' -f1)
+          INSTALLED_COUNT=$(wc -l < /tmp/installed.txt)
+
+          # 期待されるパッケージ数の概算（pyproject.tomlベース）
+          EXPECTED_COUNT=$(grep -E '^\s*"[a-zA-Z0-9_-]+' pyproject.toml | grep -c '==' || echo "0")
+
+          echo "📊 Cache Integrity Report:"
+          echo "  - Installed packages: ${INSTALLED_COUNT}"
+          echo "  - Expected packages (approx): ${EXPECTED_COUNT}"
+          echo "  - Package list hash: ${INSTALLED_HASH}"
+
+          # 最小限のパッケージ数チェック（FastAPI, pytest, ruff, mypy等）
+          MIN_PACKAGES=30
+          if [ "$INSTALLED_COUNT" -lt "$MIN_PACKAGES" ]; then
+            echo "⚠️ WARNING: Package count too low (expected: >=${MIN_PACKAGES}, installed: $INSTALLED_COUNT)"
+            echo "This may indicate cache corruption. Rebuilding cache..."
+            exit 1  # キャッシュ無効化して再ビルド
+          fi
+
+          # 重要パッケージの存在確認
+          REQUIRED_PACKAGES="fastapi pytest"
+          for pkg in $REQUIRED_PACKAGES; do
+            if ! pip show "$pkg" > /dev/null 2>&1; then
+              echo "❌ ERROR: Required package '$pkg' not found in venv"
+              echo "Cache may be corrupted. Rebuilding..."
+              exit 1
+            fi
+          done
+
+          echo "✅ Cache integrity verified (hash: ${INSTALLED_HASH})"
+
+      - name: 🧪 Run ${{ matrix.test-type }} tests
+        working-directory: ./backend
+        run: |
+          source venv/bin/activate
           pytest ${{ matrix.path }} \
             --cov=src \
             --cov-report=xml:coverage-${{ matrix.test-type }}.xml \
@@ -249,6 +401,12 @@ jobs:
     name: 🔧 Build Artifacts
     runs-on: ubuntu-latest
     needs: setup-environment
+
+    # 明示的な権限定義（推奨緩和策4対応）
+    permissions:
+      contents: read        # リポジトリ読み取り
+      actions: write        # アーティファクトアップロード
+
     defaults:
       run:
         working-directory: ./backend
@@ -275,33 +433,90 @@ jobs:
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 📥 Download Python environment artifact
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend
-
-      - name: 🔓 Extract venv from archive
+      - name: "🔧 Fallback: Recreate venv if cache miss"
         if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          if [ -f venv.tar.gz ]; then
-            echo "📦 Extracting venv archive with symlinks preservation..."
-            tar -xzf venv.tar.gz
-            rm venv.tar.gz
-            echo "✅ venv extracted successfully"
-            ls -la venv/bin/activate
-          else
-            echo "❌ venv.tar.gz not found"
+          echo "⚠️ Cache miss detected - rebuilding Python environment"
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f pyproject.toml ]; then
+            pip install -e .[dev]
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          fi
+          echo "✅ venv recreated successfully"
+
+      - name: ✅ Verify venv restoration
+        working-directory: ./backend
+        run: |
+          if [ ! -d venv ]; then
+            echo "❌ ERROR: venv directory not found after cache restoration"
+            echo "Expected path: $(pwd)/venv"
+            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
+            ls -la . || true
+            exit 1
+          fi
+          if [ ! -f venv/bin/activate ]; then
+            echo "❌ ERROR: venv/bin/activate not found"
+            ls -la venv/bin/ || true
             exit 1
           fi
 
-      - name: 📄 Generate OpenAPI specification
-        run: |
-          if [ -d venv ]; then
-            source venv/bin/activate
+          # Python実行可能性検証（LOW-2025-001対応）
+          if [ ! -x venv/bin/python ]; then
+            echo "❌ ERROR: venv/bin/python is not executable"
+            ls -lh venv/bin/python || true
+            exit 1
           fi
+
+          # venv完全性検証
+          source venv/bin/activate
+          python --version || { echo "❌ ERROR: Python execution failed"; exit 1; }
+          pip --version || { echo "❌ ERROR: pip not available"; exit 1; }
+          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
+          echo "✅ venv verified: $(ls -lh venv/bin/activate)"
+          echo "✅ Python executable: $(python --version)"
+          echo "✅ Pip version: $(pip --version)"
+
+      - name: 🔐 Verify cache integrity
+        if: steps.cache-deps.outputs.cache-hit == 'true'
+        working-directory: ./backend
+        run: |
+          source venv/bin/activate
+
+          # インストール済みパッケージの検証（MED-2025-001対応）
+          pip list --format=freeze | sort > /tmp/installed.txt
+          INSTALLED_HASH=$(sha256sum /tmp/installed.txt | cut -d' ' -f1)
+          INSTALLED_COUNT=$(wc -l < /tmp/installed.txt)
+
+          echo "📊 Cache Integrity Report:"
+          echo "  - Installed packages: ${INSTALLED_COUNT}"
+          echo "  - Package list hash: ${INSTALLED_HASH}"
+
+          # 最小限のパッケージ数チェック
+          MIN_PACKAGES=30
+          if [ "$INSTALLED_COUNT" -lt "$MIN_PACKAGES" ]; then
+            echo "⚠️ WARNING: Package count too low (expected: >=${MIN_PACKAGES}, installed: $INSTALLED_COUNT)"
+            echo "This may indicate cache corruption. Rebuilding cache..."
+            exit 1
+          fi
+
+          # FastAPI存在確認（OpenAPI生成に必須）
+          if ! pip show fastapi > /dev/null 2>&1; then
+            echo "❌ ERROR: FastAPI not found in venv"
+            echo "Cache may be corrupted. Rebuilding..."
+            exit 1
+          fi
+
+          echo "✅ Cache integrity verified (hash: ${INSTALLED_HASH})"
+
+      - name: 📄 Generate OpenAPI specification
+        working-directory: ./backend
+        run: |
+          source venv/bin/activate
           python -c "
           from src.main import app
           import json
@@ -360,33 +575,49 @@ jobs:
           restore-keys: |
             python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
-      - name: 📥 Download Python environment artifact
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: python-env-${{ github.run_id }}
-          path: ./backend
-
-      - name: 🔓 Extract venv from archive
+      - name: "🔧 Fallback: Recreate venv if cache miss"
         if: steps.cache-deps.outputs.cache-hit != 'true'
         working-directory: ./backend
         run: |
-          if [ -f venv.tar.gz ]; then
-            echo "📦 Extracting venv archive with symlinks preservation..."
-            tar -xzf venv.tar.gz
-            rm venv.tar.gz
-            echo "✅ venv extracted successfully"
-            ls -la venv/bin/activate
-          else
-            echo "❌ venv.tar.gz not found"
+          echo "⚠️ Cache miss detected - rebuilding Python environment"
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f pyproject.toml ]; then
+            pip install -e .[dev]
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+          fi
+          echo "✅ venv recreated successfully"
+
+      - name: ✅ Verify venv restoration
+        working-directory: ./backend
+        run: |
+          if [ ! -d venv ]; then
+            echo "❌ ERROR: venv directory not found after cache restoration"
+            echo "Expected path: $(pwd)/venv"
+            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
+            ls -la . || true
             exit 1
           fi
+          if [ ! -f venv/bin/activate ]; then
+            echo "❌ ERROR: venv/bin/activate not found"
+            ls -la venv/bin/ || true
+            exit 1
+          fi
+          
+          # venv完全性検証
+          source venv/bin/activate
+          python --version
+          pip --version
+          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
+          echo "✅ venv verified and validated"
 
       - name: 🚀 Run performance tests
+        working-directory: ./backend
         run: |
-          if [ -d venv ]; then
-            source venv/bin/activate
-          fi
+          source venv/bin/activate
           if [ -f tests/performance/locustfile.py ]; then
             pip install locust
             echo "Performance tests would run here"
