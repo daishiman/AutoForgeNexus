@@ -28,6 +28,10 @@ share/python-wheels/
 MANIFEST
 backend/.venv.sha256
 
+# Test/Quality check results
+backend/coverage.json
+backend/mypy_result.txt
+
 # PyInstaller
 *.manifest
 *.spec
