@@ -64,7 +64,7 @@ AutoForgeNexus は、ユーザーの言語化能力に依存せず、高品質�
 - **DDD + Clean Architecture**: 明確な責任分離とテスタビリティ
 - **Event-Driven Architecture**: Redis Streamsによる非同期処理
 - **CQRS Pattern**: コマンドとクエリの責任分離で高速化
-- **5つの境界づけられたコンテキスト**: 
+- **5つの境界づけられたコンテキスト**:
   - Prompt Engineering（プロンプト設計）
   - Evaluation（評価）
   - LLM Integration（AI連携）
@@ -252,3 +252,4 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
 ---
 
 **AutoForgeNexus** - プロンプトエンジニアリングの未来を創造する
+
