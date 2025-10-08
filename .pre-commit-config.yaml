@@ -7,7 +7,7 @@
 
 default_stages: [commit, push]
 fail_fast: false
-minimum_pre_commit_version: "3.5.0"
+minimum_pre_commit_version: '3.5.0'
 
 repos:
   # ==========================================
@@ -167,7 +167,7 @@ repos:
     hooks:
       - id: check-yaml
         name: ✅ Validate YAML Files
-        args: [--unsafe]  # Allow custom tags
+        args: [--unsafe] # Allow custom tags
 
       - id: check-json
         name: ✅ Validate JSON Files
@@ -197,7 +197,7 @@ ci:
   autoupdate_commit_msg: '🔄 [pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: weekly
   skip:
-    - trufflehog-git        # Skip in CI (heavy operation)
+    - trufflehog-git # Skip in CI (heavy operation)
     - trufflehog-filesystem # Skip in CI (heavy operation)
-    - mypy                  # Skip in CI (requires dependencies)
-    - bandit                # Skip in CI (covered by GitHub Actions)
+    - mypy # Skip in CI (requires dependencies)
+    - bandit # Skip in CI (covered by GitHub Actions)

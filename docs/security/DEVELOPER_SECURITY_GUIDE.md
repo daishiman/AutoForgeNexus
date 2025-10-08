@@ -1,9 +1,7 @@
 # 開発者向けセキュリティガイド
 
-**対象**: AutoForgeNexus開発チーム全員
-**最終更新**: 2025年10月8日
-**バージョン**: 1.0
-**必読**: ✅ 必須
+**対象**: AutoForgeNexus開発チーム全員 **最終更新**: 2025年10月8日
+**バージョン**: 1.0 **必読**: ✅ 必須
 
 ---
 
@@ -12,6 +10,7 @@
 このガイドは、AutoForgeNexusプロジェクトにおけるセキュアな開発実践を標準化し、秘密情報漏洩、脆弱性混入、セキュリティインシデントを防止することを目的としています。
 
 **重要な前提**:
+
 - セキュリティは**全員の責任**です
 - **予防**は修正よりも100倍効率的です
 - セキュリティ問題を発見したら**即座に報告**してください
@@ -37,6 +36,7 @@
 以下は**絶対にGitにコミットしてはいけない**情報です：
 
 #### 🔴 高リスク（即座に無効化が必要）
+
 - API キー（OpenAI, Anthropic, Google AI, Mistral, Cohere等）
 - データベース認証情報（Turso Auth Token、Redis Password）
 - OAuth クライアントシークレット
@@ -45,12 +45,14 @@
 - SSH 秘密鍵、GPG秘密鍵
 
 #### 🟡 中リスク（慎重な管理が必要）
+
 - Discord/Slack Webhook URL
 - セッションシークレット
 - 暗号化キー
 - 内部API エンドポイント
 
 #### 🟢 低リスク（公開可能だが注意）
+
 - 開発環境のダミー値
 - `.env.example`のプレースホルダー
 - 公開APIのエンドポイント
@@ -59,12 +61,12 @@
 
 #### ✅ 正しい保存場所
 
-| 環境 | 保存場所 | 例 |
-|------|---------|-----|
-| **ローカル開発** | `.env`, `.env.local`（.gitignore対象） | `OPENAI_API_KEY=sk-proj-xxx` |
-| **CI/CD** | GitHub Secrets | `${{ secrets.OPENAI_API_KEY }}` |
-| **本番環境** | Cloudflare Workers環境変数 | `wrangler secret put OPENAI_API_KEY` |
-| **ステージング** | Cloudflare Workers環境変数 | `wrangler secret put --env staging OPENAI_API_KEY` |
+| 環境             | 保存場所                               | 例                                                 |
+| ---------------- | -------------------------------------- | -------------------------------------------------- |
+| **ローカル開発** | `.env`, `.env.local`（.gitignore対象） | `OPENAI_API_KEY=sk-proj-xxx`                       |
+| **CI/CD**        | GitHub Secrets                         | `${{ secrets.OPENAI_API_KEY }}`                    |
+| **本番環境**     | Cloudflare Workers環境変数             | `wrangler secret put OPENAI_API_KEY`               |
+| **ステージング** | Cloudflare Workers環境変数             | `wrangler secret put --env staging OPENAI_API_KEY` |
 
 #### ❌ 間違った保存場所
 
@@ -134,7 +136,7 @@ gh secret set OPENAI_API_KEY --repo daishiman/AutoForgeNexus
 name: Test
 
 env:
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}  # ✅ 正しい
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} # ✅ 正しい
   # OPENAI_API_KEY: sk-proj-xxx  # ❌ 間違い
 
 jobs:
@@ -178,6 +180,7 @@ trufflehog filesystem . --only-verified
 #### 🚨 即座に実行（5分以内）
 
 1. **秘密情報を無効化**
+
    ```bash
    # 例: Cloudflare API Token削除
    # Cloudflare Dashboard → My Profile → API Tokens → Delete
@@ -198,6 +201,7 @@ trufflehog filesystem . --only-verified
 
 3. **新しい秘密情報を生成**
 4. **GitHub Secrets更新**
+
    ```bash
    gh secret set OPENAI_API_KEY --repo daishiman/AutoForgeNexus
    ```
@@ -210,6 +214,7 @@ trufflehog filesystem . --only-verified
 #### 📋 事後対応（24時間以内）
 
 6. **Git履歴から削除（必要な場合のみ）**
+
    ```bash
    # BFG Repo-Cleanerを使用（推奨）
    brew install bfg
@@ -295,17 +300,17 @@ git commit -m "add new feature"
 
 #### コミットタイプ
 
-| タイプ | 説明 | 例 |
-|--------|------|-----|
-| `feat` | 新機能 | `feat(api): プロンプト評価APIを追加` |
-| `fix` | バグ修正 | `fix(auth): JWT検証エラーを修正` |
-| `docs` | ドキュメント | `docs(readme): セットアップ手順を更新` |
-| `refactor` | リファクタリング | `refactor(domain): Entityクラス再設計` |
-| `test` | テスト追加 | `test(prompt): プロンプト作成テスト追加` |
-| `chore` | ビルド・設定 | `chore(deps): 依存関係を更新` |
-| `perf` | パフォーマンス改善 | `perf(api): キャッシュ戦略最適化` |
-| `ci` | CI/CD | `ci(github): TruffleHogスキャン追加` |
-| `security` | セキュリティ | `security(auth): レート制限を実装` |
+| タイプ     | 説明               | 例                                       |
+| ---------- | ------------------ | ---------------------------------------- |
+| `feat`     | 新機能             | `feat(api): プロンプト評価APIを追加`     |
+| `fix`      | バグ修正           | `fix(auth): JWT検証エラーを修正`         |
+| `docs`     | ドキュメント       | `docs(readme): セットアップ手順を更新`   |
+| `refactor` | リファクタリング   | `refactor(domain): Entityクラス再設計`   |
+| `test`     | テスト追加         | `test(prompt): プロンプト作成テスト追加` |
+| `chore`    | ビルド・設定       | `chore(deps): 依存関係を更新`            |
+| `perf`     | パフォーマンス改善 | `perf(api): キャッシュ戦略最適化`        |
+| `ci`       | CI/CD              | `ci(github): TruffleHogスキャン追加`     |
+| `security` | セキュリティ       | `security(auth): レート制限を実装`       |
 
 ---
 
@@ -390,7 +395,7 @@ const UserProfile = ({ html }: { html: string }) => {
 const apiKey = process.env.NEXT_PUBLIC_API_KEY;
 
 // ❌ 間違った例: ハードコード
-const apiKey = "sk-proj-AbCdEf123456789";  // 絶対にNG！
+const apiKey = 'sk-proj-AbCdEf123456789'; // 絶対にNG！
 ```
 
 ### 3.3 OWASP Top 10 対策
@@ -518,11 +523,11 @@ pnpm outdated
 
 #### カバレッジ目標
 
-| 領域 | 最低カバレッジ | 推奨カバレッジ |
-|------|--------------|--------------|
-| Backend | 80% | 90%+ |
-| Frontend | 75% | 85%+ |
-| E2E | 50% | 70%+ |
+| 領域     | 最低カバレッジ | 推奨カバレッジ |
+| -------- | -------------- | -------------- |
+| Backend  | 80%            | 90%+           |
+| Frontend | 75%            | 85%+           |
+| E2E      | 50%            | 70%+           |
 
 #### テスト実行
 
@@ -554,7 +559,7 @@ on:
     branches: [main, develop]
 
 permissions:
-  contents: read        # 最小権限
+  contents: read # 最小権限
   security-events: write
 
 jobs:
@@ -581,12 +586,12 @@ jobs:
 
 ### 6.1 インシデントの定義
 
-| レベル | 定義 | 対応時間 | 例 |
-|--------|------|---------|-----|
+| レベル       | 定義                             | 対応時間         | 例                     |
+| ------------ | -------------------------------- | ---------------- | ---------------------- |
 | **Critical** | 本番システム停止、大規模情報漏洩 | 即座（15分以内） | API Key漏洩、RCE脆弱性 |
-| **High** | 部分的機能停止、中規模情報漏洩 | 1時間以内 | SQLインジェクション |
-| **Medium** | パフォーマンス低下、軽微な漏洩 | 1日以内 | 脆弱な依存関係 |
-| **Low** | 軽微な問題、予防的対応 | 1週間以内 | コード品質問題 |
+| **High**     | 部分的機能停止、中規模情報漏洩   | 1時間以内        | SQLインジェクション    |
+| **Medium**   | パフォーマンス低下、軽微な漏洩   | 1日以内          | 脆弱な依存関係         |
+| **Low**      | 軽微な問題、予防的対応           | 1週間以内        | コード品質問題         |
 
 ### 6.2 報告手順
 
@@ -685,12 +690,14 @@ gh issue create \
 ## 📚 参考資料
 
 ### 公式ドキュメント
+
 - [OWASP Top 10 2021](https://owasp.org/Top10/)
 - [OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
 - [CWE Top 25](https://cwe.mitre.org/top25/archive/2023/2023_top25_list.html)
 
 ### ツール
+
 - [TruffleHog](https://github.com/trufflesecurity/trufflehog)
 - [Gitleaks](https://github.com/gitleaks/gitleaks)
 - [Bandit](https://bandit.readthedocs.io/)
@@ -698,6 +705,7 @@ gh issue create \
 - [Snyk](https://snyk.io/)
 
 ### 社内ドキュメント
+
 - [セキュリティインシデント対応レポート](./INCIDENT_RESPONSE_REPORT_2025-10-08.md)
 - [秘密情報管理ポリシー](./SECRET_MANAGEMENT_POLICY.md)（作成予定）
 - [インシデント対応プレイブック](./INCIDENT_RESPONSE_PLAYBOOK.md)（作成予定）
@@ -721,13 +729,13 @@ gh issue create \
 
 ## ✍️ ドキュメント管理
 
-| 項目 | 値 |
-|------|-----|
-| 作成日 | 2025年10月8日 |
-| 最終更新 | 2025年10月8日 |
-| バージョン | 1.0 |
-| 次回レビュー | 2025年11月8日 |
-| 承認者 | security-architect Agent |
+| 項目         | 値                       |
+| ------------ | ------------------------ |
+| 作成日       | 2025年10月8日            |
+| 最終更新     | 2025年10月8日            |
+| バージョン   | 1.0                      |
+| 次回レビュー | 2025年11月8日            |
+| 承認者       | security-architect Agent |
 
 ---
 

@@ -98,12 +98,14 @@ monitor.setUserId(user.id);
 ### バックエンド監視
 
 - **Health Endpoints**:
+
   - `/health` - 包括的ヘルスチェック
   - `/health/ready` - Readiness Probe
   - `/health/live` - Liveness Probe
   - `/metrics` - Prometheus メトリクス
 
 - **Dependencies Monitoring**:
+
   - Database (Turso) 接続状態
   - Redis 接続状態
   - LangFuse API 状態
@@ -117,7 +119,8 @@ monitor.setUserId(user.id);
 ### フロントエンド監視
 
 - **Web Vitals**: LCP, FID, CLS, FCP, TTFB, INP
-- **Error Tracking**: JavaScript エラー, Promise rejection, リソース読み込みエラー
+- **Error Tracking**: JavaScript エラー, Promise
+  rejection, リソース読み込みエラー
 - **Performance Tracking**: ナビゲーション・リソースタイミング
 - **User Interactions**: クリック・スクロール・フォーム送信
 
@@ -132,12 +135,12 @@ monitor.setUserId(user.id);
 
 ### SLI/SLO 定義
 
-| メトリクス | SLI | SLO | 時間枠 |
-|-----------|-----|-----|-------|
-| 可用性 | HTTP 成功率 | 99.9% | 30日 |
-| レイテンシ | P95 応答時間 | < 2秒 | 30日 |
-| エラー率 | HTTP エラー率 | < 1% | 30日 |
-| LLM品質 | 品質スコア | > 80% | 7日 |
+| メトリクス | SLI           | SLO   | 時間枠 |
+| ---------- | ------------- | ----- | ------ |
+| 可用性     | HTTP 成功率   | 99.9% | 30日   |
+| レイテンシ | P95 応答時間  | < 2秒 | 30日   |
+| エラー率   | HTTP エラー率 | < 1%  | 30日   |
+| LLM品質    | 品質スコア    | > 80% | 7日    |
 
 ### アラート設定
 
@@ -252,9 +255,9 @@ metrics_collector.record_llm_metrics(
 import { monitor } from '@/lib/monitoring';
 
 monitor.recordCustomEvent('prompt_optimization', {
-    promptId: 'abc123',
-    improvement: 0.15,
-    iterations: 3
+  promptId: 'abc123',
+  improvement: 0.15,
+  iterations: 3,
 });
 ```
 
@@ -264,7 +267,8 @@ monitor.recordCustomEvent('prompt_optimization', {
 
 ### ダッシュボード追加
 
-`monitoring-config.json` の `dashboard_config` セクションを編集してカスタムダッシュボードを追加できます。
+`monitoring-config.json` の `dashboard_config`
+セクションを編集してカスタムダッシュボードを追加できます。
 
 ## 🔧 メンテナンス
 

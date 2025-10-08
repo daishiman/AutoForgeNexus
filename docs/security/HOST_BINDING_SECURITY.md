@@ -2,23 +2,27 @@
 
 ## 概要
 
-Bandit セキュリティスキャン（B104）で検出される `0.0.0.0` バインディングに関するセキュリティガイドラインです。
+Bandit セキュリティスキャン（B104）で検出される `0.0.0.0`
+バインディングに関するセキュリティガイドラインです。
 
 ## リスク分析
 
 ### CWE-605: Multiple Binds to the Same Port
+
 - **CVSS**: 5.3 (Medium)
 - **影響**: すべてのネットワークインターフェースでサービスが公開される
 
 ## 環境別推奨設定
 
 ### 開発環境（local/dev）
+
 ```bash
 HOST=0.0.0.0  # ✅ 許可: ローカル開発で外部からのアクセスが必要
 PORT=8000
 ```
 
 ### 本番環境（production）
+
 ```bash
 # 推奨: リバースプロキシ経由
 HOST=127.0.0.1  # ✅ 推奨: ローカルホストのみ
@@ -30,6 +34,7 @@ PORT=8000
 ### 1. リバースプロキシの使用（推奨）
 
 #### Cloudflare Workers 設定例
+
 ```typescript
 export default {
   async fetch(request: Request) {
@@ -38,8 +43,8 @@ export default {
     backend.hostname = '127.0.0.1';
     backend.port = '8000';
     return fetch(backend);
-  }
-}
+  },
+};
 ```
 
 ### 2. アプリケーション層の保護
@@ -65,6 +70,7 @@ host: str = Field(default="0.0.0.0")  # nosec B104: Controlled by environment
 ```
 
 これにより:
+
 1. 開発環境では 0.0.0.0 を許可
 2. 本番環境では警告を発行
 3. Bandit スキャンはパス（環境制御されているため）

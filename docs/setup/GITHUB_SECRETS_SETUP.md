@@ -1,7 +1,6 @@
 # GitHub Secrets セットアップガイド
 
-**最終更新**: 2025-10-08
-**対象環境**: Development / Staging / Production
+**最終更新**: 2025-10-08 **対象環境**: Development / Staging / Production
 **セキュリティレベル**: Critical
 
 ## 🎯 概要
@@ -9,6 +8,7 @@
 AutoForgeNexusプロジェクトで使用するGitHub Secretsの包括的設定ガイド。
 
 ### 本ガイドの目的
+
 1. **CI/CD実行に必要なシークレット設定**（Phase 3-6）
 2. **SonarCloud品質分析の有効化**（Phase 3+）
 3. **外部サービス認証トークン管理**（Phase 4-5）
@@ -17,23 +17,21 @@ AutoForgeNexusプロジェクトで使用するGitHub Secretsの包括的設定�
 ## 🚨 即座に対応が必要な問題
 
 ### 問題1: SonarCloud認証エラー
+
 ```
 ERROR: Failed to query JRE metadata: . Please check the property sonar.token
 ```
 
-**原因**: `SONAR_TOKEN`未設定
-**影響**: PR品質チェックが失敗、マージブロック
-**優先度**: High
-**対処**: 下記「SonarCloud設定（必須）」セクション参照
+**原因**: `SONAR_TOKEN`未設定 **影響**: PR品質チェックが失敗、マージブロック
+**優先度**: High **対処**: 下記「SonarCloud設定（必須）」セクション参照
 
 ### 問題2: Semantic Pull Request検証エラー
+
 ```
 Error: No release type found in pull request title "  feat: ..."
 ```
 
-**原因**: PRタイトルの先頭空白文字
-**影響**: PR検証失敗
-**優先度**: Medium
+**原因**: PRタイトルの先頭空白文字 **影響**: PR検証失敗 **優先度**: Medium
 **対処**: `.github/workflows/pr-check.yml`更新済み（自動対応）
 
 ## 🔐 セキュリティ原則
@@ -50,8 +48,8 @@ Error: No release type found in pull request title "  feat: ..."
 
 ### Phase 3の段階的セットアップ
 
-Phase 3（バックエンド開発）では、SonarCloudによる品質分析が必須です。
-以下の手順で設定してください：
+Phase
+3（バックエンド開発）では、SonarCloudによる品質分析が必須です。以下の手順で設定してください：
 
 #### ステップ1: SonarCloudアカウント作成（5分）
 
@@ -98,6 +96,7 @@ Phase 3（バックエンド開発）では、SonarCloudによる品質分析が
 ```
 
 **またはGitHub CLIで実施:**
+
 ```bash
 gh secret set SONAR_TOKEN
 # → トークンを貼り付けてEnter
@@ -114,6 +113,7 @@ sonar.projectKey=daishiman_AutoForgeNexus  # ← プロジェクトキー
 ```
 
 **正しい値の確認方法:**
+
 ```bash
 # SonarCloud Dashboard → Project Information
 # Organization Key: ここに表示される値
@@ -131,6 +131,7 @@ sonar.projectKey=daishiman_AutoForgeNexus  # ← プロジェクトキー
 ```
 
 **期待される成功ログ:**
+
 ```
 ✅ SonarCloud Scan
 INFO: Analysis report uploaded successfully
@@ -141,40 +142,40 @@ INFO: ANALYSIS SUCCESSFUL
 
 ### Phase 4以降で必要なシークレット
 
-以下のシークレットはPhase 4（データベース）、Phase 5（フロントエンド）で必要になります。
-Phase 3の段階では設定不要です。
+以下のシークレットはPhase 4（データベース）、Phase
+5（フロントエンド）で必要になります。Phase 3の段階では設定不要です。
 
 ## 📋 全シークレット一覧
 
 ### 🔴 Phase 3必須（バックエンド品質保証）
 
-| シークレット名 | 説明 | 設定手順 |
-|-------------|------|---------|
-| `SONAR_TOKEN` | SonarCloud品質分析認証 | 上記「SonarCloud設定」参照 |
+| シークレット名 | 説明                   | 設定手順                   |
+| -------------- | ---------------------- | -------------------------- |
+| `SONAR_TOKEN`  | SonarCloud品質分析認証 | 上記「SonarCloud設定」参照 |
 
 ### 🟡 Phase 4必須（データベース）
 
-| シークレット名 | 説明 | 取得方法 |
-|-------------|------|---------|
-| `TURSO_AUTH_TOKEN` | Tursoデータベース認証 | `turso db tokens create` |
-| `TURSO_DATABASE_URL` | データベース接続URL | `turso db show [db-name]` |
-| `REDIS_PASSWORD` | Redisキャッシュ認証 | Redis Cloud設定 |
+| シークレット名       | 説明                  | 取得方法                  |
+| -------------------- | --------------------- | ------------------------- |
+| `TURSO_AUTH_TOKEN`   | Tursoデータベース認証 | `turso db tokens create`  |
+| `TURSO_DATABASE_URL` | データベース接続URL   | `turso db show [db-name]` |
+| `REDIS_PASSWORD`     | Redisキャッシュ認証   | Redis Cloud設定           |
 
 ### 🟢 Phase 5必須（フロントエンド認証）
 
-| シークレット名 | 説明 | 取得方法 |
-|-------------|------|---------|
-| `CLERK_SECRET_KEY` | Clerk認証シークレット | Clerk Dashboard |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk公開キー | Clerk Dashboard |
+| シークレット名                      | 説明                  | 取得方法        |
+| ----------------------------------- | --------------------- | --------------- |
+| `CLERK_SECRET_KEY`                  | Clerk認証シークレット | Clerk Dashboard |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk公開キー         | Clerk Dashboard |
 
 ### ⚪ Phase 2-6オプション（機能拡張時）
 
-| シークレット名 | 説明 | 使用目的 |
-|-------------|------|---------|
+| シークレット名         | 説明               | 使用目的              |
+| ---------------------- | ------------------ | --------------------- |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API認証 | Workers/Pagesデプロイ |
-| `LANGFUSE_SECRET_KEY` | LangFuse観測性 | LLM監視強化 |
-| `OPENAI_API_KEY` | OpenAI API | LLM統合テスト |
-| `ANTHROPIC_API_KEY` | Anthropic API | Claude統合 |
+| `LANGFUSE_SECRET_KEY`  | LangFuse観測性     | LLM監視強化           |
+| `OPENAI_API_KEY`       | OpenAI API         | LLM統合テスト         |
+| `ANTHROPIC_API_KEY`    | Anthropic API      | Claude統合            |
 
 ---
 
@@ -346,7 +347,7 @@ gh secret set STAGING_ANTHROPIC_API_KEY -b "sk-ant-xxx" --env staging
 # .github/workflows/cd.yml
 jobs:
   deploy-backend:
-    environment: production  # または staging
+    environment: production # または staging
     steps:
       - name: Deploy to Cloudflare Workers
         env:
@@ -363,6 +364,7 @@ jobs:
 ## 📝 .envファイル管理方針
 
 ### ローカル開発（`.env.local`）
+
 ```bash
 # backend/.env.local - Gitignore対象
 APP_ENV=local
@@ -373,6 +375,7 @@ REDIS_URL=redis://localhost:6379/0
 ```
 
 ### Production（`.env.production`）
+
 ```bash
 # backend/.env.production - テンプレートのみコミット
 APP_ENV=production
@@ -383,6 +386,7 @@ CLERK_SECRET_KEY=${PROD_CLERK_SECRET_KEY}
 ```
 
 ### Staging（`.env.staging`）
+
 ```bash
 # backend/.env.staging - テンプレートのみコミット
 APP_ENV=staging
@@ -406,7 +410,7 @@ gh secret set PROD_CLERK_SECRET_KEY -b "新しい値"
 ```yaml
 permissions:
   contents: read
-  id-token: write  # OIDC認証用のみ
+  id-token: write # OIDC認証用のみ
   # 不要な権限は付与しない
 ```
 
@@ -428,16 +432,19 @@ gh api /repos/{owner}/{repo}/actions/secrets
 ### Secrets漏洩時の対応
 
 1. **即座に無効化**
+
    ```bash
    # 漏洩したSecretを削除
    gh secret delete LEAKED_SECRET_NAME
    ```
 
 2. **新しいキーを生成**
+
    - サービス側で新しいキーを発行
    - GitHub Secretsに新しい値を設定
 
 3. **影響範囲の調査**
+
    - アクセスログ確認
    - 不正使用の検出
 
@@ -450,6 +457,7 @@ gh api /repos/{owner}/{repo}/actions/secrets
 ## 📊 Secrets管理チェックリスト
 
 ### 初期セットアップ
+
 - [ ] すべてのProduction Secretsを登録
 - [ ] すべてのStaging Secretsを登録
 - [ ] Environment Secretsを設定（production/staging）
@@ -457,12 +465,14 @@ gh api /repos/{owner}/{repo}/actions/secrets
 - [ ] `.env.local`を`.gitignore`に追加確認
 
 ### 定期メンテナンス
+
 - [ ] 90日毎にSecretsローテーション
 - [ ] 未使用Secretsの削除
 - [ ] アクセス権限の監査
 - [ ] ワークフロー実行ログの確認
 
 ### デプロイ前
+
 - [ ] 必要なSecretsがすべて設定されているか確認
 - [ ] Environment設定が正しいか確認
 - [ ] ワークフローでのSecretsマッピングが正しいか確認
@@ -478,24 +488,29 @@ gh api /repos/{owner}/{repo}/actions/secrets
 ## 💡 トラブルシューティング
 
 ### Secret未設定エラー
+
 ```
 Error: Secret PROD_TURSO_DATABASE_URL not found
 ```
+
 **対処**: GitHub UIまたは`gh secret set`でSecret登録
 
 ### 環境変数置換失敗
+
 ```
 Error: ${PROD_XXX} が展開されない
 ```
+
 **対処**: ワークフローで`env:`セクションにSecretsマッピング追加
 
 ### 権限エラー
+
 ```
 Error: Resource not accessible by integration
 ```
+
 **対処**: ワークフローの`permissions:`を確認、必要最小限の権限を付与
 
 ---
 
-**重要**: 実際のSecret値は絶対にGitにコミットしないでください。
-このドキュメントはセットアップ手順のみを記載しています。
+**重要**: 実際のSecret値は絶対にGitにコミットしないでください。このドキュメントはセットアップ手順のみを記載しています。

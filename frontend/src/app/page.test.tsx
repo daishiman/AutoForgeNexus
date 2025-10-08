@@ -17,7 +17,7 @@ describe('HomePage', () => {
     render(<HomePage />);
 
     const description = screen.getByText(
-      /高品質なAIプロンプトの作成・最適化・管理を支援する統合プラットフォーム/i
+      /高品質なAIプロンプトの作成・最適化・管理を支援する統合プラットフォーム/i,
     );
 
     expect(description).toBeInTheDocument();

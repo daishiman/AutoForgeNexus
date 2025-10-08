@@ -1,6 +1,6 @@
 ---
 name: design
-description: "システムアーキテクチャ設計と技術的意思決定"
+description: 'システムアーキテクチャ設計と技術的意思決定'
 category: architecture
 complexity: extreme
 agents:

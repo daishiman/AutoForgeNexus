@@ -2,11 +2,13 @@
 
 **レビュー日時**: 2025-10-08  
 **レビュアー**: devops-coordinator Agent  
-**対象ワークフロー**: 
+**対象ワークフロー**:
+
 - `.github/workflows/codeql.yml`
 - `.github/workflows/security.yml`
 
-**レビュー観点**: CI/CDパイプライン整合性、キャッシュ戦略、インフラ設定、運用可能性
+**レビュー観点**:
+CI/CDパイプライン整合性、キャッシュ戦略、インフラ設定、運用可能性
 
 ---
 
@@ -14,13 +16,13 @@
 
 ### 🎯 最終判定: **✅ 本番適用可（条件付き合格）**
 
-| 評価項目 | 判定 | スコア |
-|---------|------|--------|
-| CI/CDパイプライン整合性 | ✅ 合格 | 95/100 |
-| キャッシュ戦略の妥当性 | ⚠️ 要改善 | 75/100 |
-| インフラ設定の正確性 | ✅ 合格 | 100/100 |
-| 運用可能性 | ✅ 合格 | 90/100 |
-| **総合スコア** | **✅ 合格** | **90/100** |
+| 評価項目                | 判定        | スコア     |
+| ----------------------- | ----------- | ---------- |
+| CI/CDパイプライン整合性 | ✅ 合格     | 95/100     |
+| キャッシュ戦略の妥当性  | ⚠️ 要改善   | 75/100     |
+| インフラ設定の正確性    | ✅ 合格     | 100/100    |
+| 運用可能性              | ✅ 合格     | 90/100     |
+| **総合スコア**          | **✅ 合格** | **90/100** |
 
 **推奨アクション**: ⚠️ キャッシュパス不整合の修正後、本番適用可
 
@@ -31,6 +33,7 @@
 ### 1.1 技術スタック準拠性 ✅ 完全準拠
 
 #### 検証項目
+
 - [x] Node.js 22 LTS "Jod" 指定
 - [x] pnpm 9.x 指定
 - [x] `pnpm install --frozen-lockfile` 使用
@@ -40,12 +43,14 @@
 #### 証跡
 
 **CLAUDE.md定義** (技術スタック基準):
+
 ```markdown
 - **Node.js**: 22 LTS "Jod" (ネイティブ TypeScript 対応, WebSocket 内蔵)
 - **パッケージ管理**: pnpm 9.x (Node.js 22 最適化)
 ```
 
 **package.json定義** (実装基準):
+
 ```json
 {
   "engines": {
@@ -60,42 +65,45 @@
 ```
 
 **codeql.yml実装** (今回修正):
+
 ```yaml
 - name: Setup Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: '22'  # ✅ 完全一致
+    node-version: '22' # ✅ 完全一致
 
 - name: Setup pnpm
   uses: pnpm/action-setup@v4
   with:
-    version: 9  # ✅ 完全一致
+    version: 9 # ✅ 完全一致
 
 - name: Install Node.js dependencies
-  working-directory: ./frontend  # ✅ 完全一致
-  run: pnpm install --frozen-lockfile  # ✅ ベストプラクティス
+  working-directory: ./frontend # ✅ 完全一致
+  run: pnpm install --frozen-lockfile # ✅ ベストプラクティス
 ```
 
 **security.yml実装** (今回修正):
+
 ```yaml
 - name: Setup Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: '22'  # ✅ 完全一致
+    node-version: '22' # ✅ 完全一致
 
 - name: Setup pnpm
   uses: pnpm/action-setup@v4
   with:
-    version: 9  # ✅ 完全一致
+    version: 9 # ✅ 完全一致
 
 - name: Install dependencies
-  working-directory: ./frontend  # ✅ 完全一致
-  run: pnpm install --frozen-lockfile  # ✅ ベストプラクティス
+  working-directory: ./frontend # ✅ 完全一致
+  run: pnpm install --frozen-lockfile # ✅ ベストプラクティス
 ```
 
 #### 他ワークフローとの一貫性検証
 
 **frontend-ci.yml** (Phase 5実装基準):
+
 ```yaml
 env:
   NODE_VERSION: '22'
@@ -106,7 +114,7 @@ steps:
     uses: pnpm/action-setup@v4
     with:
       version: ${{ env.PNPM_VERSION }}
-  
+
   - name: 🟢 Setup Node.js
     uses: actions/setup-node@v4
     with:
@@ -116,6 +124,7 @@ steps:
 ```
 
 **integration-ci.yml**:
+
 ```yaml
 env:
   NODE_VERSION: '22'
@@ -135,6 +144,7 @@ env:
 ```
 
 **shared-setup-node.yml** (共有ワークフロー基準):
+
 ```yaml
 inputs:
   node-version:
@@ -153,6 +163,7 @@ inputs:
 ```
 
 #### 評価
+
 ✅ **完全準拠**: 全8ワークフローでNode.js 22、pnpm 9の統一指定を確認  
 ✅ **一貫性**: working-directory、--frozen-lockflagパターンが完全一致  
 ✅ **Phase対応**: 段階的環境構築戦略との整合性を維持
@@ -164,6 +175,7 @@ inputs:
 #### Phase 2完了状態（現在）での適切性
 
 **現在の実装Phase**:
+
 - ✅ Phase 1: Git・基盤環境 (100%完了)
 - ✅ Phase 2: インフラ・監視基盤 (100%完了)
 - 🚧 Phase 3: バックエンド (40%進行中)
@@ -173,25 +185,27 @@ inputs:
 #### CodeQL/Securityワークフローの実行戦略
 
 **codeql.yml**:
+
 ```yaml
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ['main', 'develop']
     paths:
-      - '**/*.py'  # ✅ Phase 3対応（バックエンド）
-      - '**/*.ts'  # ⏭️ Phase 5待機（フロントエンド）
+      - '**/*.py' # ✅ Phase 3対応（バックエンド）
+      - '**/*.ts' # ⏭️ Phase 5待機（フロントエンド）
       - '**/*.tsx'
       - '**/*.js'
       - '**/*.jsx'
   schedule:
-    - cron: '0 17 * * 2'  # 週次スキャン
+    - cron: '0 17 * * 2' # 週次スキャン
 
 strategy:
   matrix:
-    language: [ 'python', 'typescript' ]  # ✅ 両Phase対応
+    language: ['python', 'typescript'] # ✅ 両Phase対応
 ```
 
 **評価**: ✅ **適切な設計**
+
 - Phase 3（Python実装中）: 即座にCodeQL分析開始
 - Phase 5（TypeScript未実装）: ファイル存在時のみ分析実行
 - paths指定により、不要なワークフロー起動を防止
@@ -199,6 +213,7 @@ strategy:
 #### 段階的環境構築対応の実装例（他ワークフロー）
 
 **frontend-ci.yml** (Phase対応の模範実装):
+
 ```yaml
 quality-checks:
   # Phase 3以降で実行（TypeScriptファイル存在時）
@@ -210,6 +225,7 @@ test-suite:
 ```
 
 **integration-ci.yml** (Phase対応の模範実装):
+
 ```yaml
 env:
   CURRENT_PHASE: '3'
@@ -222,11 +238,13 @@ performance-test:
 #### CodeQL/SecurityでのPhase対応
 
 **現状の実装**:
+
 - ❌ **Phase条件分岐なし**: if条件でPhaseチェック未実装
 - ✅ **paths指定による暗黙的制御**: TypeScriptファイル未存在時は自動スキップ
 - ✅ **matrix.language分離**: Python/TypeScriptを個別ジョブで実行
 
 **評価**: ✅ **実用上問題なし**
+
 - paths指定により、Phase 5未実装時はTypeScript分析が自動スキップ
 - 明示的Phase条件追加も可能だが、現状で十分機能
 - CI/CD最適化（52.3%削減）の文脈では、現状設計が妥当
@@ -238,6 +256,7 @@ performance-test:
 #### 2025年9月29日実施のCI/CD最適化実績（Phase 2.5完了）
 
 **最適化概要**:
+
 ```yaml
 削減実績:
   - GitHub Actions使用量: 52.3%削減（3,200分/月 → 1,525分/月）
@@ -246,66 +265,69 @@ performance-test:
 
 実装戦略:
   1. 共有ワークフロー導入:
-     - shared-setup-python.yml
-     - shared-setup-node.yml
-     - shared-build-cache.yml
-  
+    - shared-setup-python.yml
+    - shared-setup-node.yml
+    - shared-build-cache.yml
+
   2. スケジュール頻度最適化:
-     - security-incident.yml: 毎時 → 毎日（96%削減）
-     - metrics.yml: 毎日 → 週次（86%削減）
-  
+    - security-incident.yml: 毎時 → 毎日（96%削減）
+    - metrics.yml: 毎日 → 週次（86%削減）
+
   3. 段階的環境構築対応:
-     - Phase進行に応じた自動ジョブ有効化
-     - 未構築環境のジョブ自動スキップ
+    - Phase進行に応じた自動ジョブ有効化
+    - 未構築環境のジョブ自動スキップ
 ```
 
 #### CodeQL/Securityの最適化適合性
 
 **codeql.yml**:
+
 ```yaml
 schedule:
-  - cron: '0 17 * * 2'  # ✅ 週次実行（火曜午前2時JST）
+  - cron: '0 17 * * 2' # ✅ 週次実行（火曜午前2時JST）
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true  # ✅ 重複実行キャンセル
+  cancel-in-progress: true # ✅ 重複実行キャンセル
 
 strategy:
-  fail-fast: false  # ✅ 並列実行継続（Python失敗時もTypeScript継続）
+  fail-fast: false # ✅ 並列実行継続（Python失敗時もTypeScript継続）
   matrix:
-    language: [ 'python', 'typescript' ]  # ✅ 並列実行
+    language: ['python', 'typescript'] # ✅ 並列実行
 ```
 
 **security.yml**:
+
 ```yaml
 schedule:
-  - cron: '0 18 * * 1'  # ✅ 週次実行（月曜午前3時JST）
+  - cron: '0 18 * * 1' # ✅ 週次実行（月曜午前3時JST）
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true  # ✅ 重複実行キャンセル
+  cancel-in-progress: true # ✅ 重複実行キャンセル
 
 jobs:
   secret-scan:
-    timeout-minutes: 10  # ✅ タイムアウト制限
+    timeout-minutes: 10 # ✅ タイムアウト制限
   python-security:
-    timeout-minutes: 15  # ✅ タイムアウト制限
+    timeout-minutes: 15 # ✅ タイムアウト制限
   js-security:
-    timeout-minutes: 10  # ✅ タイムアウト制限
+    timeout-minutes: 10 # ✅ タイムアウト制限
 ```
 
 #### 最適化原則との整合性チェック
 
-| 最適化原則 | codeql.yml | security.yml | 評価 |
-|-----------|-----------|-------------|------|
-| 共有ワークフロー活用 | ❌ 未使用 | ❌ 未使用 | ⚠️ 改善余地 |
-| 並列実行最大化 | ✅ matrix戦略 | ✅ 並列ジョブ | ✅ 適切 |
-| キャッシュ効率化 | ⚠️ 要改善 | ⚠️ 要改善 | ⚠️ 改善余地 |
-| スケジュール最適化 | ✅ 週次実行 | ✅ 週次実行 | ✅ 適切 |
-| タイムアウト設定 | ✅ 30分 | ✅ 10-15分 | ✅ 適切 |
-| 重複実行防止 | ✅ concurrency | ✅ concurrency | ✅ 適切 |
+| 最適化原則           | codeql.yml     | security.yml   | 評価        |
+| -------------------- | -------------- | -------------- | ----------- |
+| 共有ワークフロー活用 | ❌ 未使用      | ❌ 未使用      | ⚠️ 改善余地 |
+| 並列実行最大化       | ✅ matrix戦略  | ✅ 並列ジョブ  | ✅ 適切     |
+| キャッシュ効率化     | ⚠️ 要改善      | ⚠️ 要改善      | ⚠️ 改善余地 |
+| スケジュール最適化   | ✅ 週次実行    | ✅ 週次実行    | ✅ 適切     |
+| タイムアウト設定     | ✅ 30分        | ✅ 10-15分     | ✅ 適切     |
+| 重複実行防止         | ✅ concurrency | ✅ concurrency | ✅ 適切     |
 
 **評価**: ⚠️ **改善余地あり（優先度: 中）**
+
 - ✅ 基本的な最適化は実装済み
 - ⚠️ 共有ワークフロー未活用（将来的な改善機会）
 - ⚠️ キャッシュパス不整合（次項で詳述）
@@ -319,29 +341,32 @@ jobs:
 #### 問題の詳細
 
 **codeql.yml（今回修正）**:
+
 ```yaml
 - name: Setup pnpm cache
   if: matrix.language == 'typescript'
   uses: actions/cache@v4
   with:
-    path: ~/.local/share/pnpm/store  # ❌ 不整合
+    path: ~/.local/share/pnpm/store # ❌ 不整合
     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
     restore-keys: |
       ${{ runner.os }}-pnpm-store-
 ```
 
 **security.yml（今回修正）**:
+
 ```yaml
 - name: Setup pnpm cache
   uses: actions/cache@v4
   with:
-    path: ~/.local/share/pnpm/store  # ❌ 不整合
+    path: ~/.local/share/pnpm/store # ❌ 不整合
     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
     restore-keys: |
       ${{ runner.os }}-pnpm-store-
 ```
 
 **問題点**:
+
 1. **固定パス使用**: `pnpm store path`で動的取得すべきところを固定パス指定
 2. **プラットフォーム非互換性**: macOS/Linuxでpnpmストアパスが異なる
 3. **共有ワークフロー不整合**: shared-setup-node.ymlと異なる実装パターン
@@ -349,6 +374,7 @@ jobs:
 #### 正しい実装（shared-setup-node.yml基準）
 
 **shared-setup-node.yml** (正しいパターン):
+
 ```yaml
 - name: 📦 pnpmストアディレクトリ取得
   shell: bash
@@ -367,6 +393,7 @@ jobs:
 ```
 
 **frontend-ci.yml** (正しいパターン):
+
 ```yaml
 - name: 🟢 Setup Node.js
   uses: actions/setup-node@v4
@@ -378,13 +405,14 @@ jobs:
 
 #### プラットフォーム別pnpmストアパス
 
-| OS | pnpmストアパス | 固定パス使用時の影響 |
-|---|---|---|
-| Linux | `~/.local/share/pnpm/store` | ✅ 動作（偶然） |
-| macOS | `~/Library/pnpm/store` | ❌ キャッシュミス |
-| Windows | `%LOCALAPPDATA%/pnpm/store` | ❌ キャッシュミス |
+| OS      | pnpmストアパス              | 固定パス使用時の影響 |
+| ------- | --------------------------- | -------------------- |
+| Linux   | `~/.local/share/pnpm/store` | ✅ 動作（偶然）      |
+| macOS   | `~/Library/pnpm/store`      | ❌ キャッシュミス    |
+| Windows | `%LOCALAPPDATA%/pnpm/store` | ❌ キャッシュミス    |
 
 **評価**: ❌ **重大な設計ミス**
+
 - Linuxランナー（ubuntu-latest）では偶然動作
 - macOS/Windowsランナーでは完全にキャッシュ無効化
 - 将来的なランナー変更でCI/CDパフォーマンス劣化リスク
@@ -396,6 +424,7 @@ jobs:
 #### キャッシュキー比較
 
 **codeql.yml/security.yml（今回修正）**:
+
 ```yaml
 key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
 restore-keys: |
@@ -403,6 +432,7 @@ restore-keys: |
 ```
 
 **shared-setup-node.yml（基準）**:
+
 ```yaml
 - name: 🔑 キャッシュキー生成
   run: |
@@ -417,13 +447,13 @@ restore-keys: |
 
 #### 問題点分析
 
-| 項目 | codeql/security | shared-setup-node | 影響 |
-|-----|----------------|-------------------|------|
-| Node.jsバージョン | ❌ 未含有 | ✅ 含有 | バージョン変更時キャッシュ汚染 |
-| pnpmバージョン | ❌ 未含有 | ✅ 含有 | バージョン変更時キャッシュ汚染 |
-| ワークフロー名 | ❌ 未含有 | ✅ 含有 | 複数ワークフロー間でキャッシュ衝突 |
-| ロックファイルハッシュ | ✅ 含有 | ✅ 含有 | ✅ 適切 |
-| OS判別 | ✅ 含有 | ✅ 含有 | ✅ 適切 |
+| 項目                   | codeql/security | shared-setup-node | 影響                               |
+| ---------------------- | --------------- | ----------------- | ---------------------------------- |
+| Node.jsバージョン      | ❌ 未含有       | ✅ 含有           | バージョン変更時キャッシュ汚染     |
+| pnpmバージョン         | ❌ 未含有       | ✅ 含有           | バージョン変更時キャッシュ汚染     |
+| ワークフロー名         | ❌ 未含有       | ✅ 含有           | 複数ワークフロー間でキャッシュ衝突 |
+| ロックファイルハッシュ | ✅ 含有         | ✅ 含有           | ✅ 適切                            |
+| OS判別                 | ✅ 含有         | ✅ 含有           | ✅ 適切                            |
 
 **具体的な衝突シナリオ**:
 
@@ -446,6 +476,7 @@ security.yml:
 ```
 
 **評価**: ⚠️ **準拠不足（設計標準違反）**
+
 - キャッシュキー設計にプロジェクト標準（shared-setup-node.yml）との乖離
 - Node.js/pnpmバージョン変更時の自動キャッシュ無効化不可
 - 複数ワークフロー間でのキャッシュ衝突リスク
@@ -457,6 +488,7 @@ security.yml:
 #### 現在の実装（手動キャッシュ）
 
 **codeql.yml**:
+
 ```yaml
 - name: Setup Node.js
   uses: actions/setup-node@v4
@@ -473,7 +505,7 @@ security.yml:
   run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
 - name: Setup pnpm cache
-  uses: actions/cache@v4  # ❌ 手動キャッシュ実装
+  uses: actions/cache@v4 # ❌ 手動キャッシュ実装
   with:
     path: ~/.local/share/pnpm/store
     key: ...
@@ -482,6 +514,7 @@ security.yml:
 #### 推奨実装（ネイティブキャッシュ）
 
 **frontend-ci.yml/integration-ci.yml** (推奨パターン):
+
 ```yaml
 - name: 📦 Setup pnpm
   uses: pnpm/action-setup@v4
@@ -492,33 +525,35 @@ security.yml:
   uses: actions/setup-node@v4
   with:
     node-version: '22'
-    cache: 'pnpm'  # ✅ ネイティブキャッシュ有効化
+    cache: 'pnpm' # ✅ ネイティブキャッシュ有効化
     cache-dependency-path: './frontend/pnpm-lock.yaml'
 ```
 
 #### メリット比較
 
-| 項目 | 手動キャッシュ | ネイティブキャッシュ | 改善効果 |
-|-----|-------------|-----------------|---------|
-| 実装ステップ数 | 4ステップ | 2ステップ | 50%削減 |
-| キャッシュパス自動検出 | ❌ 手動指定 | ✅ 自動検出 | バグ削減 |
-| OS互換性 | ❌ 固定パス | ✅ 自動対応 | 完全互換 |
-| バージョン管理 | ❌ 手動管理 | ✅ 自動管理 | 保守性向上 |
-| GitHub推奨度 | ❌ 非推奨 | ✅ 公式推奨 | ベストプラクティス |
+| 項目                   | 手動キャッシュ | ネイティブキャッシュ | 改善効果           |
+| ---------------------- | -------------- | -------------------- | ------------------ |
+| 実装ステップ数         | 4ステップ      | 2ステップ            | 50%削減            |
+| キャッシュパス自動検出 | ❌ 手動指定    | ✅ 自動検出          | バグ削減           |
+| OS互換性               | ❌ 固定パス    | ✅ 自動対応          | 完全互換           |
+| バージョン管理         | ❌ 手動管理    | ✅ 自動管理          | 保守性向上         |
+| GitHub推奨度           | ❌ 非推奨      | ✅ 公式推奨          | ベストプラクティス |
 
 **GitHub公式ドキュメンテーション**:
+
 ```yaml
 # https://github.com/actions/setup-node#caching-global-packages-data
 - uses: actions/setup-node@v4
   with:
     node-version: '20'
-    cache: 'pnpm'  # ✅ Recommended approach
+    cache: 'pnpm' # ✅ Recommended approach
 
 # The action will cache the pnpm store based on the lock file
 # Automatically handles OS differences and version changes
 ```
 
 **評価**: ⚠️ **非推奨パターン使用**
+
 - setup-node@v4のネイティブキャッシュ機能を未活用
 - 不要な複雑性とメンテナンスコスト
 - プロジェクト内の他ワークフローと実装パターン不一致
@@ -567,6 +602,7 @@ security.yml:
 ```
 
 **効果**:
+
 - ✅ 実装ステップ数: 4 → 2（50%削減）
 - ✅ OS互換性: 完全自動対応
 - ✅ プロジェクト内統一: frontend-ci.yml等と一致
@@ -598,7 +634,7 @@ codeql.yml:
       node-version: '22'
       pnpm-version: '9'
       working-directory: './frontend'
-  
+
   analyze:
     needs: setup-node
     steps:
@@ -607,13 +643,14 @@ codeql.yml:
 security.yml:
   setup-node:
     uses: ./.github/workflows/shared-setup-node.yml  # 同様
-  
+
   js-security:
     needs: setup-node
     steps: ...
 ```
 
 **効果**:
+
 - ✅ コード重複削減: 3ワークフロー × 4ステップ = 12ステップ → 3呼び出し
 - ✅ 一貫性保証: 単一実装により設定ドリフト防止
 - ✅ メンテナンス性: 1箇所修正で全ワークフロー改善
@@ -627,15 +664,16 @@ security.yml:
 
 #### 検証結果
 
-| ワークフロー | Node.js指定 | pnpm指定 | 評価 |
-|-----------|-----------|---------|------|
-| codeql.yml | `'22'` | `9` | ✅ 完全一致 |
-| security.yml | `'22'` | `9` | ✅ 完全一致 |
-| frontend-ci.yml | `'22'` | `9` | ✅ 完全一致 |
-| integration-ci.yml | `'22'` | `9` | ✅ 完全一致 |
+| ワークフロー          | Node.js指定      | pnpm指定        | 評価        |
+| --------------------- | ---------------- | --------------- | ----------- |
+| codeql.yml            | `'22'`           | `9`             | ✅ 完全一致 |
+| security.yml          | `'22'`           | `9`             | ✅ 完全一致 |
+| frontend-ci.yml       | `'22'`           | `9`             | ✅ 完全一致 |
+| integration-ci.yml    | `'22'`           | `9`             | ✅ 完全一致 |
 | shared-setup-node.yml | `"22"` (default) | `"9"` (default) | ✅ 完全一致 |
 
 **評価**: ✅ **完璧**
+
 - 全ワークフローでバージョン指定の完全統一
 - package.json `engines`/`volta`との整合性
 - CLAUDE.md技術スタック定義との完全一致
@@ -647,21 +685,24 @@ security.yml:
 #### 検証結果
 
 **codeql.yml**:
+
 ```yaml
 - name: Install Node.js dependencies
   if: matrix.language == 'typescript'
-  working-directory: ./frontend  # ✅ 正確
+  working-directory: ./frontend # ✅ 正確
   run: pnpm install --frozen-lockfile
 ```
 
 **security.yml**:
+
 ```yaml
 - name: Install dependencies
-  working-directory: ./frontend  # ✅ 正確
+  working-directory: ./frontend # ✅ 正確
   run: pnpm install --frozen-lockfile
 ```
 
 **プロジェクト構造との整合性**:
+
 ```
 /
 ├── backend/          # Python 3.13/FastAPI
@@ -675,6 +716,7 @@ security.yml:
 ```
 
 **評価**: ✅ **完全正確**
+
 - フロントエンドディレクトリ指定が正確
 - プロジェクト構造との完全一致
 - 他ワークフローとの一貫性
@@ -686,27 +728,29 @@ security.yml:
 #### CodeQL matrix戦略
 
 **codeql.yml**:
+
 ```yaml
 strategy:
   fail-fast: false
   matrix:
-    language: [ 'python', 'typescript' ]
+    language: ['python', 'typescript']
 
 steps:
   - name: Setup Python
-    if: matrix.language == 'python'  # ✅ 条件分岐
+    if: matrix.language == 'python' # ✅ 条件分岐
     uses: actions/setup-python@v4
     with:
       python-version: '3.13'
 
   - name: Setup Node.js
-    if: matrix.language == 'typescript'  # ✅ 条件分岐
+    if: matrix.language == 'typescript' # ✅ 条件分岐
     uses: actions/setup-node@v4
     with:
       node-version: '22'
 ```
 
 **並列実行フロー**:
+
 ```
 CodeQL Workflow Start
 ├── Job: analyze (python)
@@ -725,6 +769,7 @@ CodeQL Workflow Start
 ```
 
 **評価**: ✅ **最適設計**
+
 - matrix戦略による完全並列実行
 - 条件分岐による不要ステップスキップ
 - fail-fast: false で片方失敗時も継続
@@ -734,29 +779,31 @@ CodeQL Workflow Start
 ### 3.4 Securityワークフロー並列実行
 
 **security.yml**:
+
 ```yaml
 jobs:
-  secret-scan:      # Job 1: 並列実行
+  secret-scan: # Job 1: 並列実行
     timeout-minutes: 10
-  
-  python-security:  # Job 2: 並列実行
+
+  python-security: # Job 2: 並列実行
     timeout-minutes: 15
-  
-  js-security:      # Job 3: 並列実行
+
+  js-security: # Job 3: 並列実行
     timeout-minutes: 10
     steps:
       - Setup pnpm ✅
       - Setup Node.js ✅
       - Install dependencies ✅
-  
+
   infrastructure-scan: # Job 4: 並列実行
     timeout-minutes: 10
-  
-  security-summary:    # Job 5: 依存関係あり
+
+  security-summary: # Job 5: 依存関係あり
     needs: [secret-scan, python-security, js-security, infrastructure-scan]
 ```
 
 **並列実行フロー**:
+
 ```
 Security Workflow Start
 ├── secret-scan (10min) ─────┐
@@ -769,6 +816,7 @@ Security Workflow Start
 ```
 
 **評価**: ✅ **高効率設計**
+
 - 4ジョブ完全並列実行
 - js-securityでのpnpm対応により並列実行維持
 - タイムアウト設定による異常時の早期検出
@@ -782,21 +830,23 @@ Security Workflow Start
 #### CodeQL実装
 
 **codeql.yml**:
+
 ```yaml
 - name: Perform CodeQL Analysis
   uses: github/codeql-action/analyze@v3
   with:
-    category: "/language:${{matrix.language}}"
+    category: '/language:${{matrix.language}}'
     upload: true
 
 - name: Notify security issues
-  if: failure()  # ✅ 失敗時のみ実行
+  if: failure() # ✅ 失敗時のみ実行
   run: |
     echo "🚨 CodeQL detected security issues in ${{ matrix.language }}"
     echo "Please check the Security tab for details."
 ```
 
 **評価**: ✅ **適切**
+
 - 失敗時の明確な通知メッセージ
 - GitHub Security tabへの誘導
 - matrix.languageによる言語特定
@@ -806,6 +856,7 @@ Security Workflow Start
 #### Security実装
 
 **security.yml**:
+
 ```yaml
 - name: Run Safety scan
   run: |
@@ -835,6 +886,7 @@ Security Workflow Start
 ```
 
 **評価**: ✅ **非常に適切**
+
 - `|| true`による部分失敗時の継続実行
 - 全スキャン結果の保存（アーティファクト）
 - 包括的なサマリー生成
@@ -873,6 +925,7 @@ gh workflow run codeql.yml --ref feature/autoforge-mvp-complete
 ```
 
 **評価**: ✅ **完全なロールバック可能性**
+
 - Git履歴による完全な変更追跡
 - 単一コミットでの修正範囲（2ファイルのみ）
 - 依存関係なしの独立した変更
@@ -886,6 +939,7 @@ gh workflow run codeql.yml --ref feature/autoforge-mvp-complete
 **利用可能なモニタリング機能**:
 
 1. **ワークフロー実行履歴**:
+
    ```
    https://github.com/daishiman/AutoForgeNexus/actions/workflows/codeql.yml
    - 実行時間トレンド
@@ -894,11 +948,12 @@ gh workflow run codeql.yml --ref feature/autoforge-mvp-complete
    ```
 
 2. **Security タブ統合**:
+
    ```yaml
    # codeql.yml
    permissions:
      security-events: write  # ✅ Security tab書き込み権限
-   
+
    - name: Perform CodeQL Analysis
      uses: github/codeql-action/analyze@v3
      with:
@@ -906,6 +961,7 @@ gh workflow run codeql.yml --ref feature/autoforge-mvp-complete
    ```
 
 3. **アーティファクト保存**:
+
    ```yaml
    # security.yml
    - name: Upload security summary
@@ -913,7 +969,7 @@ gh workflow run codeql.yml --ref feature/autoforge-mvp-complete
      with:
        name: security-summary
        path: security-summary.md
-       retention-days: 30  # ✅ 30日間履歴保存
+       retention-days: 30 # ✅ 30日間履歴保存
    ```
 
 4. **PR統合**:
@@ -930,6 +986,7 @@ gh workflow run codeql.yml --ref feature/autoforge-mvp-complete
    ```
 
 **評価**: ✅ **包括的なモニタリング**
+
 - GitHub標準機能との完全統合
 - Security tabでの一元管理
 - 履歴保存とトレンド分析可能
@@ -941,29 +998,30 @@ gh workflow run codeql.yml --ref feature/autoforge-mvp-complete
 #### 現在の実装（暗黙的Phase対応）
 
 **codeql.yml**:
+
 ```yaml
 on:
   push:
     paths:
-      - '**/*.py'   # Phase 3: 即座に実行
-      - '**/*.ts'   # Phase 5: ファイル存在時のみ
+      - '**/*.py' # Phase 3: 即座に実行
+      - '**/*.ts' # Phase 5: ファイル存在時のみ
       - '**/*.tsx'
       - '**/*.js'
       - '**/*.jsx'
 
 strategy:
   matrix:
-    language: [ 'python', 'typescript' ]
+    language: ['python', 'typescript']
     # TypeScriptファイル未存在時は自動スキップ
 ```
 
 **Phase別動作**:
 
-| Phase | 状態 | CodeQL Python | CodeQL TypeScript |
-|-------|------|--------------|------------------|
-| Phase 1-2 | インフラのみ | ⏭️ スキップ | ⏭️ スキップ |
-| Phase 3 | Backend実装中 | ✅ 実行 | ⏭️ スキップ |
-| Phase 5+ | Frontend実装完了 | ✅ 実行 | ✅ 実行 |
+| Phase     | 状態             | CodeQL Python | CodeQL TypeScript |
+| --------- | ---------------- | ------------- | ----------------- |
+| Phase 1-2 | インフラのみ     | ⏭️ スキップ   | ⏭️ スキップ       |
+| Phase 3   | Backend実装中    | ✅ 実行       | ⏭️ スキップ       |
+| Phase 5+  | Frontend実装完了 | ✅ 実行       | ✅ 実行           |
 
 **将来的な明示的Phase対応（オプション）**:
 
@@ -977,13 +1035,14 @@ analyze:
           phase-required: 3
         - language: 'typescript'
           phase-required: 5
-  
+
   if: |
     (matrix.language == 'python' && vars.CURRENT_PHASE >= 3) ||
     (matrix.language == 'typescript' && vars.CURRENT_PHASE >= 5)
 ```
 
 **評価**: ✅ **適切な設計**
+
 - paths指定による暗黙的Phase対応
 - 追加作業なしで段階的環境構築に対応
 - 明示的Phase制御も容易に追加可能
@@ -997,12 +1056,14 @@ analyze:
 #### 問題1: キャッシュパス固定値問題
 
 **現状**:
+
 ```yaml
 # ❌ codeql.yml/security.yml
-path: ~/.local/share/pnpm/store  # Linux専用固定パス
+path: ~/.local/share/pnpm/store # Linux専用固定パス
 ```
 
 **修正**:
+
 ```yaml
 # ✅ 推奨（ネイティブキャッシュ）
 - name: Setup pnpm
@@ -1029,6 +1090,7 @@ path: ~/.local/share/pnpm/store  # Linux専用固定パス
 #### 改善1: 共有ワークフロー活用
 
 **現状**:
+
 ```yaml
 # codeql.yml、security.yml、frontend-ci.ymlで重複
 - Setup Node.js (4ステップ)
@@ -1036,6 +1098,7 @@ path: ~/.local/share/pnpm/store  # Linux専用固定パス
 ```
 
 **改善**:
+
 ```yaml
 # 共有ワークフロー呼び出し
 setup-node:
@@ -1054,6 +1117,7 @@ setup-node:
 #### 改善2: 明示的Phase条件追加
 
 **現状**:
+
 ```yaml
 # paths指定による暗黙的Phase対応
 paths:
@@ -1061,6 +1125,7 @@ paths:
 ```
 
 **改善**:
+
 ```yaml
 # 明示的Phase条件
 if: |
@@ -1078,14 +1143,14 @@ if: |
 
 #### 判定基準
 
-| 判定項目 | 状態 | 詳細 |
-|---------|------|------|
-| **機能性** | ✅ 合格 | npm→pnpm移行が完全動作 |
-| **一貫性** | ✅ 合格 | 全ワークフローでNode.js 22/pnpm 9統一 |
-| **セキュリティ** | ✅ 合格 | 権限設定・SARIF統合適切 |
-| **パフォーマンス** | ⚠️ 要改善 | キャッシュ最適化余地あり |
-| **保守性** | ✅ 合格 | ロールバック可能、モニタリング完備 |
-| **Phase対応** | ✅ 合格 | 段階的環境構築戦略準拠 |
+| 判定項目           | 状態      | 詳細                                  |
+| ------------------ | --------- | ------------------------------------- |
+| **機能性**         | ✅ 合格   | npm→pnpm移行が完全動作                |
+| **一貫性**         | ✅ 合格   | 全ワークフローでNode.js 22/pnpm 9統一 |
+| **セキュリティ**   | ✅ 合格   | 権限設定・SARIF統合適切               |
+| **パフォーマンス** | ⚠️ 要改善 | キャッシュ最適化余地あり              |
+| **保守性**         | ✅ 合格   | ロールバック可能、モニタリング完備    |
+| **Phase対応**      | ✅ 合格   | 段階的環境構築戦略準拠                |
 
 ---
 
@@ -1094,6 +1159,7 @@ if: |
 **条件**: キャッシュパス問題の修正後
 
 **推奨フロー**:
+
 ```bash
 # Step 1: キャッシュパス修正（5分）
 git checkout -b fix/codeql-security-cache-optimization
@@ -1117,21 +1183,21 @@ gh pr merge --squash --auto
 
 #### 即時効果（キャッシュ最適化後）
 
-| メトリクス | 修正前 | 修正後 | 改善率 |
-|----------|-------|-------|--------|
-| CodeQL実行時間 | 30分 | 25分 | 16%短縮 |
-| Security実行時間 | 15分 | 12分 | 20%短縮 |
-| キャッシュヒット率 | 60% | 85% | 42%向上 |
-| OS互換性 | Linux のみ | 全OS | 完全互換 |
+| メトリクス         | 修正前     | 修正後 | 改善率   |
+| ------------------ | ---------- | ------ | -------- |
+| CodeQL実行時間     | 30分       | 25分   | 16%短縮  |
+| Security実行時間   | 15分       | 12分   | 20%短縮  |
+| キャッシュヒット率 | 60%        | 85%    | 42%向上  |
+| OS互換性           | Linux のみ | 全OS   | 完全互換 |
 
 #### 長期効果（共有ワークフロー活用後）
 
-| メトリクス | 現状 | 改善後 | 効果 |
-|----------|------|-------|------|
-| コード重複行数 | 120行 | 30行 | 75%削減 |
-| メンテナンス箇所 | 3ファイル | 1ファイル | 67%削減 |
-| 設定ドリフトリスク | 高 | 低 | リスク軽減 |
-| CI/CD使用量削減 | 52.3% | 55%+ | 更なる最適化 |
+| メトリクス         | 現状      | 改善後    | 効果         |
+| ------------------ | --------- | --------- | ------------ |
+| コード重複行数     | 120行     | 30行      | 75%削減      |
+| メンテナンス箇所   | 3ファイル | 1ファイル | 67%削減      |
+| 設定ドリフトリスク | 高        | 低        | リスク軽減   |
+| CI/CD使用量削減    | 52.3%     | 55%+      | 更なる最適化 |
 
 ---
 
@@ -1167,6 +1233,7 @@ GitHub Actions Workflow Ecosystem
 ```
 
 **依存関係検証結果**:
+
 - ✅ CodeQL/Securityは独立実行（他ワークフローに影響なし）
 - ✅ 共有ワークフロー活用可能性あり（将来的改善）
 - ✅ Phase進行による段階的有効化に対応
@@ -1178,12 +1245,14 @@ GitHub Actions Workflow Ecosystem
 #### デプロイ頻度（Deployment Frequency）
 
 **影響**: ✅ **維持**
+
 - CodeQL/Securityの週次実行により、本番デプロイ頻度に影響なし
 - PR時のセキュリティチェック強化により、高品質デプロイ維持
 
 #### 変更のリードタイム（Lead Time for Changes）
 
 **影響**: ⚠️ **微増（+2分）**
+
 - CodeQL TypeScript分析追加: PR時+2分
 - 品質向上とのトレードオフで許容範囲
 - キャッシュ最適化で相殺可能
@@ -1191,12 +1260,14 @@ GitHub Actions Workflow Ecosystem
 #### 変更失敗率（Change Failure Rate）
 
 **影響**: ✅ **改善見込み**
+
 - セキュリティスキャン強化による本番障害予防
 - TypeScript静的解析によるバグ早期発見
 
 #### 復旧時間（Time to Restore Service）
 
 **影響**: ✅ **維持**
+
 - Git revertによる即座のロールバック可能性
 - 独立したセキュリティワークフローのため、復旧プロセスに影響なし
 
@@ -1209,22 +1280,24 @@ GitHub Actions Workflow Ecosystem
 #### GitHub Actions使用量への影響
 
 **現在のCI/CD最適化実績** (2025年9月29日):
+
 ```yaml
 最適化前: 3,200分/月
 最適化後: 1,525分/月
-削減率:   52.3%
+削減率: 52.3%
 年間節約: $115.2
 ```
 
 **今回のnpm→pnpm移行の影響**:
 
-| ワークフロー | 実行頻度 | 修正前 | 修正後 | 月間差分 |
-|-----------|---------|-------|-------|---------|
-| codeql.yml | 週次 + PR | 30分/回 | 28分/回 | -8分/月 |
-| security.yml | 週次 | 15分/回 | 13分/回 | -8分/月 |
-| **合計** | - | - | - | **-16分/月** |
+| ワークフロー | 実行頻度  | 修正前  | 修正後  | 月間差分     |
+| ------------ | --------- | ------- | ------- | ------------ |
+| codeql.yml   | 週次 + PR | 30分/回 | 28分/回 | -8分/月      |
+| security.yml | 週次      | 15分/回 | 13分/回 | -8分/月      |
+| **合計**     | -         | -       | -       | **-16分/月** |
 
 **追加コスト削減機会** (共有ワークフロー活用後):
+
 ```yaml
 削減見込み:
   - CodeQL/Security重複ステップ削減: -5分/回
@@ -1246,18 +1319,18 @@ GitHub Actions Workflow Ecosystem
 
 #### OWASP Top 10対策
 
-| OWASP項目 | 対策ワークフロー | 検出手法 |
-|----------|---------------|---------|
-| A01: Broken Access Control | CodeQL | 静的解析 |
-| A02: Cryptographic Failures | CodeQL + Security | シークレット検出 |
-| A03: Injection | CodeQL | SAST |
-| A04: Insecure Design | CodeQL | パターン検出 |
-| A05: Security Misconfiguration | Security (Checkov) | IaCスキャン |
-| A06: Vulnerable Components | Security (Safety, pnpm audit) | SCA |
-| A07: Authentication Failures | CodeQL | 静的解析 |
-| A08: Software and Data Integrity | Security (TruffleHog) | 改竄検出 |
-| A09: Security Logging Monitoring | - | 手動レビュー |
-| A10: Server-Side Request Forgery | CodeQL | 静的解析 |
+| OWASP項目                        | 対策ワークフロー              | 検出手法         |
+| -------------------------------- | ----------------------------- | ---------------- |
+| A01: Broken Access Control       | CodeQL                        | 静的解析         |
+| A02: Cryptographic Failures      | CodeQL + Security             | シークレット検出 |
+| A03: Injection                   | CodeQL                        | SAST             |
+| A04: Insecure Design             | CodeQL                        | パターン検出     |
+| A05: Security Misconfiguration   | Security (Checkov)            | IaCスキャン      |
+| A06: Vulnerable Components       | Security (Safety, pnpm audit) | SCA              |
+| A07: Authentication Failures     | CodeQL                        | 静的解析         |
+| A08: Software and Data Integrity | Security (TruffleHog)         | 改竄検出         |
+| A09: Security Logging Monitoring | -                             | 手動レビュー     |
+| A10: Server-Side Request Forgery | CodeQL                        | 静的解析         |
 
 **カバレッジ**: 9/10項目を自動検出 (90%)
 
@@ -1266,6 +1339,7 @@ GitHub Actions Workflow Ecosystem
 #### GDPR準拠
 
 **個人情報保護対策**:
+
 ```yaml
 # security.yml
 secret-scan:
@@ -1286,6 +1360,7 @@ secret-scan:
 #### セキュリティ監査ログ保存
 
 **retention-days設定**:
+
 ```yaml
 # codeql.yml
 - SARIF結果: GitHub Security tab（無期限保存）
@@ -1310,6 +1385,7 @@ secret-scan:
 ### 短期（〜1週間）🔴
 
 1. **キャッシュ最適化** (優先度: Critical)
+
    - ネイティブキャッシュへの移行
    - 所要時間: 20分
    - 担当: devops-coordinator
@@ -1322,11 +1398,13 @@ secret-scan:
 ### 中期（〜1ヶ月）🟡
 
 1. **共有ワークフロー統合**
+
    - CodeQL/Securityの共有化
    - コード重複75%削減
    - 所要時間: 2時間
 
 2. **監査ログ保存期間延長**
+
    - 30日→90日へ変更
    - GDPR/SOC2準拠強化
    - 所要時間: 10分
@@ -1338,11 +1416,13 @@ secret-scan:
 ### 長期（〜3ヶ月）🟢
 
 1. **SonarCloud統合強化**
+
    - CodeQL + SonarCloud統合
    - 品質ゲート自動化
    - 所要時間: 4時間
 
 2. **セキュリティダッシュボード構築**
+
    - Grafana統合
    - メトリクス可視化
    - 所要時間: 8時間
@@ -1370,6 +1450,7 @@ secret-scan:
 #### 条件（修正必須）
 
 ⚠️ **キャッシュパス固定値問題の修正**
+
 - 修正方法: setup-node@v4ネイティブキャッシュへ移行
 - 所要時間: 20分
 - 優先度: Critical
@@ -1395,15 +1476,15 @@ gh pr merge --squash --auto
 
 ### DevOps視点での総合評価
 
-| 評価軸 | スコア | コメント |
-|-------|--------|---------|
-| **パイプライン整合性** | 95/100 | 全ワークフローとの一貫性確保 |
-| **キャッシュ戦略** | 75/100 | 改善余地あり、ネイティブキャッシュ推奨 |
-| **インフラ設定** | 100/100 | 完璧な技術スタック準拠 |
-| **運用可能性** | 90/100 | ロールバック・モニタリング完備 |
-| **コスト最適化** | 85/100 | CI/CD最適化目標に貢献 |
-| **セキュリティ** | 95/100 | OWASP/GDPR準拠、監査ログ完備 |
-| ****総合スコア**** | **90/100** | **Elite Tierの品質** |
+| 評価軸                 | スコア     | コメント                               |
+| ---------------------- | ---------- | -------------------------------------- |
+| **パイプライン整合性** | 95/100     | 全ワークフローとの一貫性確保           |
+| **キャッシュ戦略**     | 75/100     | 改善余地あり、ネイティブキャッシュ推奨 |
+| **インフラ設定**       | 100/100    | 完璧な技術スタック準拠                 |
+| **運用可能性**         | 90/100     | ロールバック・モニタリング完備         |
+| **コスト最適化**       | 85/100     | CI/CD最適化目標に貢献                  |
+| **セキュリティ**       | 95/100     | OWASP/GDPR準拠、監査ログ完備           |
+| \***\*総合スコア\*\*** | **90/100** | **Elite Tierの品質**                   |
 
 ---
 
@@ -1412,6 +1493,7 @@ gh pr merge --squash --auto
 **本番デプロイ承認**: ✅ **承認（条件付き）**
 
 **承認条件**:
+
 1. キャッシュパス固定値問題の修正（20分）
 2. CI/CD実行結果の検証（30分）
 
@@ -1425,16 +1507,19 @@ gh pr merge --squash --auto
 ## 📚 参考資料
 
 ### GitHub公式ドキュメント
+
 - [actions/setup-node - Caching packages data](https://github.com/actions/setup-node#caching-global-packages-data)
 - [CodeQL Action Documentation](https://github.com/github/codeql-action)
 - [GitHub Actions - Cache](https://github.com/actions/cache)
 
 ### プロジェクト内部文書
+
 - `CLAUDE.md`: 技術スタック定義（2025年9月最新版）
 - `docs/reports/2025-09-29_cicd_optimization_report.md`: CI/CD最適化実績
 - `.github/workflows/shared-setup-node.yml`: 共有ワークフロー基準実装
 
 ### 関連Issue
+
 - Phase 3: バックエンド実装（進行中40%）
 - Phase 5: フロントエンド実装（未着手）
 

@@ -92,17 +92,17 @@ exclude:
 solo_development:
   enabled: true
   features:
-    - self_review: true  # 自分のコードも客観的にレビュー
-    - learning_mode: true  # 改善点を学習機会として詳細説明
-    - best_practices: true  # ベストプラクティス提案
-    - architecture_review: true  # アーキテクチャレビュー
+    - self_review: true # 自分のコードも客観的にレビュー
+    - learning_mode: true # 改善点を学習機会として詳細説明
+    - best_practices: true # ベストプラクティス提案
+    - architecture_review: true # アーキテクチャレビュー
 
 # 統合設定
 integrations:
   github:
     comment_on_pr: true
     status_checks: true
-    auto_merge_on_approval: false  # 安全のため手動マージ
+    auto_merge_on_approval: false # 安全のため手動マージ
 
   vscode:
     inline_suggestions: true

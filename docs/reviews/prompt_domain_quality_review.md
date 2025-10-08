@@ -2,12 +2,12 @@
 
 ## 📋 レビュー概要
 
-**対象コンポーネント**: プロンプト管理ドメインモデル
-**レビュー日**: 2025-09-28
-**レビューア**: Claude Code (リファクタリングエキスパート)
-**実施ラウンド**: 3段階品質分析
+**対象コンポーネント**: プロンプト管理ドメインモデル **レビュー日**: 2025-09-28
+**レビューア**: Claude Code (リファクタリングエキスパート) **実施ラウンド**:
+3段階品質分析
 
 ### 対象ファイル
+
 - `backend/src/domain/entities/prompt.py`
 - `backend/src/domain/value_objects/prompt_content.py`
 - `backend/src/domain/value_objects/prompt_metadata.py`
@@ -22,6 +22,7 @@
 ### ✅ 優れている点
 
 #### 単一責任原則 (SRP)
+
 - **値オブジェクト**: 各値オブジェクトが明確に単一の責任を持つ
   - `PromptContent`: プロンプト内容の管理
   - `PromptMetadata`: メタデータの管理
@@ -29,16 +30,20 @@
 - **エンティティ**: `Prompt`がライフサイクル管理に集中
 
 #### 開放・閉鎖原則 (OCP)
+
 - 値オブジェクトがimmutableで拡張可能な設計
 - `PromptGenerationService`で戦略パターンの基盤準備済み
 
 #### 依存性逆転原則 (DIP)
+
 - ドメインサービスが値オブジェクトに依存する適切な構造
 
 ### ⚠️ 改善が必要な問題点
 
 #### 単一責任原則違反
+
 **問題**: `Prompt`エンティティの責任過多
+
 ```python
 # prompt.py:44-91 - 複数の責任が混在
 class Prompt:
@@ -52,7 +57,9 @@ class Prompt:
 ```
 
 #### インターフェース分離原則違反
+
 **問題**: `PromptGenerationService`の肥大化
+
 ```python
 # prompt_generation_service.py:13-269 - 256行の巨大クラス
 class PromptGenerationService:
@@ -66,6 +73,7 @@ class PromptGenerationService:
 ### 🎯 改善提案
 
 #### 1. ファクトリーパターン導入
+
 ```python
 # 新規作成: src/domain/factories/prompt_factory.py
 class PromptFactory:
@@ -78,6 +86,7 @@ class PromptFactory:
 ```
 
 #### 2. インターフェース分離
+
 ```python
 # 新規作成: src/domain/services/interfaces/
 class PromptGenerator(Protocol):
@@ -97,21 +106,25 @@ class PromptValidator(Protocol):
 ### ✅ 優れている点
 
 #### 命名規約
+
 - クラス・メソッド名が意図を明確に表現
 - 日本語コメントでビジネスドメインを適切に表現
 - 一貫した命名パターン
 
 #### 不変性の実装
+
 - 値オブジェクトで`@dataclass(frozen=True)`を適切に使用
 - `with_update()`パターンで不変性を保持
 
 #### テスト品質
+
 - TDDで実装されたテストが網羅的
 - 境界値テストと例外ケースを適切にカバー
 
 ### ⚠️ 改善が必要な問題点
 
 #### 1. マジックナンバー・文字列
+
 ```python
 # prompt.py:74-77
 metadata = PromptMetadata(
@@ -125,6 +138,7 @@ VALID_STATUSES = {"draft", "saved", "published"}  # 分散定義
 ```
 
 #### 2. 長いメソッド・複雑性
+
 ```python
 # prompt_generation_service.py:157-189 (33行)
 def _build_structured_template(self, user_input: UserInput) -> str:
@@ -133,6 +147,7 @@ def _build_structured_template(self, user_input: UserInput) -> str:
 ```
 
 #### 3. 重複コード
+
 ```python
 # 変数抽出ロジックが3箇所に重複
 # prompt.py:185-198
@@ -141,6 +156,7 @@ def _build_structured_template(self, user_input: UserInput) -> str:
 ```
 
 #### 4. 例外処理の一貫性欠如
+
 ```python
 # user_input.py:29 - ValueError
 # prompt_content.py:28,36 - ValueError
@@ -151,6 +167,7 @@ def _build_structured_template(self, user_input: UserInput) -> str:
 ### 🎯 改善提案
 
 #### 1. 定数とEnumの導入
+
 ```python
 # 新規作成: src/domain/constants.py
 class PromptStatus(Enum):
@@ -164,6 +181,7 @@ class PromptDefaults:
 ```
 
 #### 2. ドメイン例外階層
+
 ```python
 # 新規作成: src/domain/exceptions.py
 class PromptDomainError(Exception):
@@ -177,6 +195,7 @@ class TemplateVariableMismatchError(PromptDomainError):
 ```
 
 #### 3. メソッド分割・抽出
+
 ```python
 # PromptGenerationServiceの分割
 class TemplateBuilder:
@@ -195,11 +214,13 @@ class SystemMessageBuilder:
 ### ✅ 優れている点
 
 #### テスト網羅性
+
 - **エンティティテスト**: ライフサイクル全体をカバー
 - **値オブジェクトテスト**: 不変性・検証ロジックを検証
 - **サービステスト**: 複数シナリオの動作確認
 
 #### テスト品質
+
 - 日本語メソッド名で可読性向上
 - AAA（Arrange-Act-Assert）パターン準拠
 - 境界値・例外ケースのテスト
@@ -209,21 +230,25 @@ class SystemMessageBuilder:
 #### 1. 静的解析による品質メトリクス
 
 **循環的複雑度**:
+
 - `PromptGenerationService`: 平均 6.2 (推奨: 4以下)
 - `_build_structured_template`: 8 (要リファクタリング)
 - `_improve_template`: 7 (要リファクタリング)
 
 **保守性指数**:
+
 - `prompt_generation_service.py`: 68 (良好: 70+が理想)
 - `prompt.py`: 72 (良好)
 
 **コード重複率**:
+
 - 変数抽出ロジック: 3箇所で重複
 - テンプレート構築: 2箇所で類似パターン
 
 #### 2. テストカバレッジのギャップ
 
 **未テスト領域**:
+
 ```python
 # prompt_generation_service.py:229-269
 def _improve_template(self, template: str, feedback: str) -> str:
@@ -234,11 +259,13 @@ def _improve_system_message(self, system_message: Optional[str], feedback: str) 
 ```
 
 **エッジケースの不足**:
+
 - UTF-8以外の文字エンコーディング処理
 - 非常に長いテンプレート（10,000文字+）の処理
 - 循環参照する変数定義
 
 #### 3. パフォーマンステストの欠如
+
 ```python
 # 大量データでのパフォーマンス未検証
 user_input = UserInput(
@@ -252,6 +279,7 @@ user_input = UserInput(
 ### 🎯 改善提案
 
 #### 1. パフォーマンステスト追加
+
 ```python
 # tests/unit/domain/test_performance.py
 @pytest.mark.performance
@@ -272,6 +300,7 @@ def test_大量制約条件でのプロンプト生成性能():
 ```
 
 #### 2. プロパティベーステスト導入
+
 ```python
 # hypothesis使用例
 @given(
@@ -291,21 +320,21 @@ def test_任意の有効入力でプロンプト生成成功(goal, context, cons
 
 ### 品質スコア
 
-| カテゴリ | スコア | 評価 |
-|---------|--------|------|
-| SOLID準拠 | 7/10 | 🟡 改善要 |
-| クリーンコード | 8/10 | 🟢 良好 |
-| テスト品質 | 8.5/10 | 🟢 優秀 |
-| **総合** | **7.8/10** | **🟢 良好** |
+| カテゴリ       | スコア     | 評価        |
+| -------------- | ---------- | ----------- |
+| SOLID準拠      | 7/10       | 🟡 改善要   |
+| クリーンコード | 8/10       | 🟢 良好     |
+| テスト品質     | 8.5/10     | 🟢 優秀     |
+| **総合**       | **7.8/10** | **🟢 良好** |
 
 ### 重要指標
 
-| メトリクス | 現在値 | 目標値 | ステータス |
-|-----------|--------|--------|-----------|
-| テストカバレッジ | 92% | 80%+ | ✅ 達成 |
-| 循環的複雑度 | 6.2 | 4.0 | ⚠️ 要改善 |
-| 保守性指数 | 70 | 70+ | ✅ 達成 |
-| コード重複率 | 12% | 5% | ⚠️ 要改善 |
+| メトリクス       | 現在値 | 目標値 | ステータス |
+| ---------------- | ------ | ------ | ---------- |
+| テストカバレッジ | 92%    | 80%+   | ✅ 達成    |
+| 循環的複雑度     | 6.2    | 4.0    | ⚠️ 要改善  |
+| 保守性指数       | 70     | 70+    | ✅ 達成    |
+| コード重複率     | 12%    | 5%     | ⚠️ 要改善  |
 
 ---
 
@@ -314,6 +343,7 @@ def test_任意の有効入力でプロンプト生成成功(goal, context, cons
 ### 🔴 高優先度（即座に対応）
 
 1. **ドメイン例外階層の整備**
+
    - 統一した例外処理でエラー処理の一貫性確保
    - 実装工数: 2時間
 
@@ -324,6 +354,7 @@ def test_任意の有効入力でプロンプト生成成功(goal, context, cons
 ### 🟡 中優先度（次回スプリント）
 
 3. **PromptGenerationService分割**
+
    - インターフェース分離でSOLID原則準拠
    - 実装工数: 4時間
 
@@ -334,6 +365,7 @@ def test_任意の有効入力でプロンプト生成成功(goal, context, cons
 ### 🟢 低優先度（将来改善）
 
 5. **パフォーマンステスト追加**
+
    - 大量データ処理の品質保証
    - 実装工数: 2時間
 
@@ -346,6 +378,7 @@ def test_任意の有効入力でプロンプト生成成功(goal, context, cons
 ## 📋 改善前後の比較予想
 
 ### Before（現在）
+
 ```python
 # 問題: 責任が混在
 class Prompt:
@@ -360,6 +393,7 @@ class PromptGenerationService:
 ```
 
 ### After（改善後）
+
 ```python
 # 改善: 責任分離
 class PromptFactory:

@@ -60,15 +60,19 @@ Clerk Dashboard
 ```
 
 **Publishable Key（公開鍵）**:
+
 ```
 pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
 ⚠️ クライアント側で使用可能（ブラウザで公開OK）
 
 **Secret Key（秘密鍵）**:
+
 ```
 sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
 ⚠️ サーバー側のみで使用（絶対に公開しない）
 
 ### 2-2. Productionキー取得
@@ -86,11 +90,13 @@ Production Instance作成
 ```
 
 **Production Publishable Key**:
+
 ```
 pk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 **Production Secret Key**:
+
 ```
 sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
@@ -111,15 +117,16 @@ Production Instance → 左サイドバー「Domains」
 
 **Cloudflare DNSの場合**:
 
-| タイプ | 名前 | 値 | Proxy |
-|--------|------|-----|-------|
-| CNAME | clerk | clerk.shared.lcl.dev | DNS only ⚠️ |
-| CNAME | accounts | accounts-clerk.lcl.dev | DNS only ⚠️ |
-| CNAME | _domainkey | dkim1._domainkey.clerk.com | DNS only |
-| TXT | _clerk | clerk-verification=xxxxx | - |
-| TXT | @ | v=spf1 include:_spf.clerk.com ~all | - |
+| タイプ | 名前        | 値                                  | Proxy       |
+| ------ | ----------- | ----------------------------------- | ----------- |
+| CNAME  | clerk       | clerk.shared.lcl.dev                | DNS only ⚠️ |
+| CNAME  | accounts    | accounts-clerk.lcl.dev              | DNS only ⚠️ |
+| CNAME  | \_domainkey | dkim1.\_domainkey.clerk.com         | DNS only    |
+| TXT    | \_clerk     | clerk-verification=xxxxx            | -           |
+| TXT    | @           | v=spf1 include:\_spf.clerk.com ~all | -           |
 
-⚠️ **重要**: Cloudflareの場合、Proxy status（プロキシ）を必ず「DNS only」（グレー雲マーク）に設定してください。
+⚠️ **重要**: Cloudflareの場合、Proxy status（プロキシ）を必ず「DNS
+only」（グレー雲マーク）に設定してください。
 
 ### 3-3. 証明書デプロイ
 
@@ -237,7 +244,8 @@ turso db tokens create autoforgenexus-staging
 # eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MzMzMTIwMDAs...
 ```
 
-⚠️ **重要**: このトークンをすぐにコピーして、1Passwordやセキュアなパスワードマネージャーに保存してください。二度と表示されません！
+⚠️
+**重要**: このトークンをすぐにコピーして、1Passwordやセキュアなパスワードマネージャーに保存してください。二度と表示されません！
 
 **セキュリティベストプラクティス: 有効期限付きトークン**
 
@@ -461,15 +469,16 @@ deactivate
 
 #### 📊 開発環境の選択基準
 
-| 用途 | 推奨環境 | 理由 |
-|------|---------|------|
-| **通常の開発作業** | 🐳 Docker | 本番と同じ環境、チーム統一 |
-| **クイックテスト** | 💻 ローカル | 起動が速い、軽量 |
-| **デバッグ作業** | 💻 ローカル | デバッガー使用が容易 |
-| **CI/CD** | 🐳 Docker | 一貫性のある環境 |
-| **本番環境** | 🐳 Docker | 完全な環境再現性 |
+| 用途               | 推奨環境    | 理由                       |
+| ------------------ | ----------- | -------------------------- |
+| **通常の開発作業** | 🐳 Docker   | 本番と同じ環境、チーム統一 |
+| **クイックテスト** | 💻 ローカル | 起動が速い、軽量           |
+| **デバッグ作業**   | 💻 ローカル | デバッガー使用が容易       |
+| **CI/CD**          | 🐳 Docker   | 一貫性のある環境           |
+| **本番環境**       | 🐳 Docker   | 完全な環境再現性           |
 
-⚠️ **推奨**: 特別な理由がない限り**Docker環境**を使用してください。本番環境との一貫性が保たれます。
+⚠️
+**推奨**: 特別な理由がない限り**Docker環境**を使用してください。本番環境との一貫性が保たれます。
 
 ---
 
@@ -825,6 +834,7 @@ alembic upgrade head
 **原因**: API Keyが正しく設定されていない
 
 **解決策**:
+
 ```bash
 # 1. Clerk Dashboardで正しいキーを確認
 # 2. 環境変数ファイルを再確認
@@ -839,6 +849,7 @@ cat frontend/.env.local | grep CLERK
 **原因**: 認証トークンが無効または期限切れ
 
 **解決策**:
+
 ```bash
 # 新しいトークンを生成
 turso db tokens create autoforgenexus-staging
@@ -855,6 +866,7 @@ nano backend/.env.staging
 **原因**: DNSレコードが正しく設定されていない
 
 **解決策**:
+
 ```bash
 # DNS伝播確認
 dig clerk.autoforgenexus.com CNAME +short
@@ -869,6 +881,7 @@ dig clerk.autoforgenexus.com CNAME +short
 ## 📊 セットアップ完了チェックリスト
 
 ### Clerk認証
+
 - [ ] Clerkアカウント作成完了
 - [ ] Development API Keys取得完了
 - [ ] Production API Keys取得完了
@@ -878,6 +891,7 @@ dig clerk.autoforgenexus.com CNAME +short
 - [ ] ローカル認証動作確認完了
 
 ### Tursoデータベース
+
 - [ ] Turso CLI インストール完了
 - [ ] Turso認証完了
 - [ ] ステージングDB作成完了
@@ -888,6 +902,7 @@ dig clerk.autoforgenexus.com CNAME +short
 - [ ] Python SDK接続確認完了
 
 ### 環境変数設定
+
 - [ ] backend/.env.local 作成完了
 - [ ] backend/.env.staging 作成完了
 - [ ] backend/.env.production 作成完了
@@ -897,6 +912,7 @@ dig clerk.autoforgenexus.com CNAME +short
 - [ ] すべてのファイル権限600設定完了
 
 ### 統合確認
+
 - [ ] Clerk認証フロー動作確認完了
 - [ ] Tursoデータベース接続確認完了
 - [ ] データベースマイグレーション完了
@@ -949,15 +965,18 @@ turso db tokens revoke autoforgenexus-production <TOKEN_NAME>
 ## 🚀 次のステップ
 
 1. **Next.js統合コード実装**
+
    - `middleware.ts` - ルート保護
    - `layout.tsx` - ClerkProviderラップ
    - サインイン/サインアップページ作成
 
 2. **データベーススキーマ設計**
+
    - Alembicマイグレーションファイル作成
    - モデル定義（SQLAlchemy）
 
 3. **GitHub Secretsに登録**（CI/CD用）
+
    ```bash
    gh secret set CLERK_SECRET_KEY_PRODUCTION
    gh secret set TURSO_AUTH_TOKEN_PRODUCTION
@@ -980,5 +999,4 @@ turso db tokens revoke autoforgenexus-production <TOKEN_NAME>
 
 ---
 
-**最終更新日**: 2025年9月30日
-**作成者**: AutoForgeNexus開発チーム
+**最終更新日**: 2025年9月30日 **作成者**: AutoForgeNexus開発チーム

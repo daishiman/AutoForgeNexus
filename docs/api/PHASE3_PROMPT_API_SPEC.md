@@ -15,11 +15,13 @@ Phase 3では認証なしの開発環境で、プロンプト管理機能のみ�
 ## 🎯 実装対象API エンドポイント
 
 ### Base URL
+
 ```
 開発環境: http://localhost:8000/api/v1
 ```
 
 ### 1. プロンプト作成
+
 ```http
 POST /api/v1/prompts
 Content-Type: application/json
@@ -51,6 +53,7 @@ Content-Type: application/json
 ```
 
 **レスポンス:**
+
 ```json
 {
   "id": "prompt_01JBQR8X9M3KTDZP9QS8V5N2WH",
@@ -59,12 +62,14 @@ Content-Type: application/json
   "description": "ECサイト用の商品説明文を生成するプロンプト",
   "tags": ["ecommerce", "product", "marketing"],
   "category": "marketing",
-  "parameters": { /* パラメータ定義 */ },
+  "parameters": {
+    /* パラメータ定義 */
+  },
   "version": 1,
   "status": "active",
   "created_at": "2025-09-28T10:30:00Z",
   "updated_at": "2025-09-28T10:30:00Z",
-  "created_by": null,  // 認証なしのためnull
+  "created_by": null, // 認証なしのためnull
   "metadata": {
     "word_count": 45,
     "parameter_count": 3,
@@ -74,11 +79,13 @@ Content-Type: application/json
 ```
 
 ### 2. プロンプト取得
+
 ```http
 GET /api/v1/prompts/{prompt_id}
 ```
 
 **レスポンス:**
+
 ```json
 {
   "id": "prompt_01JBQR8X9M3KTDZP9QS8V5N2WH",
@@ -87,7 +94,9 @@ GET /api/v1/prompts/{prompt_id}
   "description": "ECサイト用の商品説明文を生成するプロンプト",
   "tags": ["ecommerce", "product", "marketing"],
   "category": "marketing",
-  "parameters": { /* パラメータ定義 */ },
+  "parameters": {
+    /* パラメータ定義 */
+  },
   "version": 1,
   "status": "active",
   "created_at": "2025-09-28T10:30:00Z",
@@ -102,6 +111,7 @@ GET /api/v1/prompts/{prompt_id}
 ```
 
 ### 3. プロンプト更新
+
 ```http
 PUT /api/v1/prompts/{prompt_id}
 Content-Type: application/json
@@ -138,6 +148,7 @@ Content-Type: application/json
 ```
 
 **レスポンス:**
+
 ```json
 {
   "id": "prompt_01JBQR8X9M3KTDZP9QS8V5N2WH",
@@ -146,8 +157,10 @@ Content-Type: application/json
   "description": "ECサイト用の商品説明文を生成するプロンプト（顧客ターゲティング機能追加）",
   "tags": ["ecommerce", "product", "marketing", "targeting"],
   "category": "marketing",
-  "parameters": { /* 更新されたパラメータ定義 */ },
-  "version": 2,  // バージョンが自動的にインクリメント
+  "parameters": {
+    /* 更新されたパラメータ定義 */
+  },
+  "version": 2, // バージョンが自動的にインクリメント
   "status": "active",
   "created_at": "2025-09-28T10:30:00Z",
   "updated_at": "2025-09-28T11:15:00Z",
@@ -161,11 +174,13 @@ Content-Type: application/json
 ```
 
 ### 4. プロンプト一覧取得
+
 ```http
 GET /api/v1/prompts?limit=10&offset=0&category=marketing&status=active
 ```
 
 **クエリパラメータ:**
+
 - `limit`: 取得件数（デフォルト: 20、最大: 100）
 - `offset`: オフセット（デフォルト: 0）
 - `category`: カテゴリフィルター（オプション）
@@ -174,6 +189,7 @@ GET /api/v1/prompts?limit=10&offset=0&category=marketing&status=active
 - `search`: タイトル・説明文での部分一致検索
 
 **レスポンス:**
+
 ```json
 {
   "prompts": [
@@ -202,11 +218,13 @@ GET /api/v1/prompts?limit=10&offset=0&category=marketing&status=active
 ```
 
 ### 5. プロンプト削除
+
 ```http
 DELETE /api/v1/prompts/{prompt_id}
 ```
 
 **レスポンス:**
+
 ```json
 {
   "message": "プロンプトが正常に削除されました",
@@ -216,11 +234,13 @@ DELETE /api/v1/prompts/{prompt_id}
 ```
 
 ### 6. バージョン履歴取得
+
 ```http
 GET /api/v1/prompts/{prompt_id}/versions
 ```
 
 **レスポンス:**
+
 ```json
 {
   "prompt_id": "prompt_01JBQR8X9M3KTDZP9QS8V5N2WH",
@@ -249,6 +269,7 @@ GET /api/v1/prompts/{prompt_id}/versions
 ```
 
 ### 7. プロンプト改善提案（最小限LLM統合）
+
 ```http
 POST /api/v1/prompts/{prompt_id}/improve
 Content-Type: application/json
@@ -261,6 +282,7 @@ Content-Type: application/json
 ```
 
 **レスポンス:**
+
 ```json
 {
   "original_prompt": {
@@ -291,21 +313,22 @@ Content-Type: application/json
 ## 📊 データモデル
 
 ### Prompt Entity
+
 ```typescript
 interface Prompt {
-  id: string;                    // ULID形式
-  title: string;                 // プロンプトタイトル
-  content: string;               // プロンプト本文
-  description?: string;          // 説明文
-  tags: string[];               // タグ配列
-  category: string;             // カテゴリ
+  id: string; // ULID形式
+  title: string; // プロンプトタイトル
+  content: string; // プロンプト本文
+  description?: string; // 説明文
+  tags: string[]; // タグ配列
+  category: string; // カテゴリ
   parameters: ParameterDefinition; // パラメータ定義
-  version: number;              // バージョン番号
-  status: PromptStatus;         // ステータス
-  created_at: string;           // 作成日時（ISO 8601）
-  updated_at: string;           // 更新日時（ISO 8601）
-  created_by: string | null;    // 作成者ID（Phase 3ではnull）
-  metadata: PromptMetadata;     // メタデータ
+  version: number; // バージョン番号
+  status: PromptStatus; // ステータス
+  created_at: string; // 作成日時（ISO 8601）
+  updated_at: string; // 更新日時（ISO 8601）
+  created_by: string | null; // 作成者ID（Phase 3ではnull）
+  metadata: PromptMetadata; // メタデータ
 }
 
 interface ParameterDefinition {
@@ -321,17 +344,18 @@ interface ParameterDefinition {
 type PromptStatus = 'active' | 'draft' | 'archived';
 
 interface PromptMetadata {
-  word_count: number;           // 文字数
-  parameter_count: number;      // パラメータ数
-  estimated_tokens: number;     // 推定トークン数
-  last_used_at?: string;       // 最終使用日時
-  usage_count?: number;        // 使用回数
+  word_count: number; // 文字数
+  parameter_count: number; // パラメータ数
+  estimated_tokens: number; // 推定トークン数
+  last_used_at?: string; // 最終使用日時
+  usage_count?: number; // 使用回数
 }
 ```
 
 ## 🔧 エラーハンドリング
 
 ### エラーレスポンス形式
+
 ```json
 {
   "error": {
@@ -346,6 +370,7 @@ interface PromptMetadata {
 ```
 
 ### エラーコード一覧
+
 - `PROMPT_NOT_FOUND` (404): プロンプトが見つからない
 - `INVALID_PROMPT_DATA` (400): プロンプトデータが無効
 - `PROMPT_TITLE_REQUIRED` (400): タイトルが必須
@@ -359,6 +384,7 @@ interface PromptMetadata {
 ## 🚀 Phase 3実装範囲まとめ
 
 ### ✅ 実装対象
+
 - プロンプトCRUD操作
 - バージョニング機能
 - 基本的な検索・フィルタリング
@@ -366,6 +392,7 @@ interface PromptMetadata {
 - 最小限の改善提案機能（LangChain使用）
 
 ### 🚧 実装除外（将来実装）
+
 - **認証・認可** → Issue #40
 - **詳細な評価機能** → Issue #41
 - **高度なLLM統合** → Issue #42
@@ -375,6 +402,7 @@ interface PromptMetadata {
 ## 📝 開発ガイドライン
 
 ### API設計原則
+
 1. **RESTful設計**: HTTP動詞とステータスコードの適切な使用
 2. **一貫性**: レスポンス形式とエラーハンドリングの統一
 3. **バージョニング**: APIバージョンをURLパスに含める
@@ -382,6 +410,7 @@ interface PromptMetadata {
 5. **フィルタリング**: 柔軟な検索・絞り込み機能
 
 ### セキュリティ考慮事項（認証なし環境）
+
 1. **入力検証**: すべての入力データの検証
 2. **SQLインジェクション対策**: パラメータ化クエリの使用
 3. **XSS対策**: 出力時のエスケープ処理
@@ -389,6 +418,7 @@ interface PromptMetadata {
 5. **CORS設定**: 開発環境用の適切なCORS設定
 
 ## 🔗 関連ドキュメント
+
 - [Phase 3 バックエンド環境構築ガイド](../setup/PHASE3_BACKEND_ENVIRONMENT_SETUP.md)
 - [保留機能Issueリスト](../issues/PHASE3_DEFERRED_FEATURES.md)
 - [プロジェクトCLAUDE.md](../../CLAUDE.md)

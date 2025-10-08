@@ -70,3 +70,12 @@ site/
 package-lock.json
 pnpm-lock.yaml
 poetry.lock
+
+# Security: Certificates & Keys
+*.pem
+*.key
+*.p12
+*.pfx
+.auth/
+secrets/
+credentials/

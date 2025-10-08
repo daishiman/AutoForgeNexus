@@ -1,6 +1,6 @@
 ---
 name: git
-description: "包括的なGit操作とバージョン管理戦略の統括"
+description: '包括的なGit操作とバージョン管理戦略の統括'
 category: development
 complexity: medium
 agents:
@@ -151,11 +151,13 @@ Key behaviors:
 ### GitHub Actions統合の効率化
 
 **最適化成果:**
+
 - **GitHub Actions使用量**: 52.3%削減達成
 - **共有ワークフロー**: 3つの再利用可能ワークフローで重複削除
 - **自動トリガー**: Git操作に連動した効率的なCI/CD実行
 
 **このコマンドでのCI/CD活用:**
+
 ```bash
 # PRマージ時の自動化
 /ai:development:git merge --auto-merge
@@ -171,6 +173,7 @@ Key behaviors:
 ```
 
 **コスト削減のポイント:**
+
 - マトリクステストの最適化
 - キャッシュ活用による実行時間短縮
 - 不要なジョブのスキップ条件設定

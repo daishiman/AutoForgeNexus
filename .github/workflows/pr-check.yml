@@ -60,15 +60,15 @@ jobs:
         uses: codelytv/pr-size-labeler@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          xs_label: 'size/xs'
-          xs_max_size: '10'
-          s_label: 'size/s'
-          s_max_size: '100'
-          m_label: 'size/m'
-          m_max_size: '500'
-          l_label: 'size/l'
-          l_max_size: '1000'
-          xl_label: 'size/xl'
+          xs_label: "size/xs"
+          xs_max_size: "10"
+          s_label: "size/s"
+          s_max_size: "100"
+          m_label: "size/m"
+          m_max_size: "500"
+          l_label: "size/l"
+          l_max_size: "1000"
+          xl_label: "size/xl"
 
       - name: 🏷️ Auto-label PR
         uses: actions/labeler@v5
@@ -233,12 +233,12 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: 📊 Generate coverage comment
         uses: py-cov-action/python-coverage-comment-action@v3

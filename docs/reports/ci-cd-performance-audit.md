@@ -1,32 +1,35 @@
 # CI/CD Performance Audit Report
+
 **AutoForgeNexus - パフォーマンス監査**
 
-**監査日**: 2025-10-08
-**対象**: node_modulesアーティファクト削除によるCI/CD最適化
-**監査者**: Performance Engineer (Claude Code)
+**監査日**: 2025-10-08 **対象**:
+node_modulesアーティファクト削除によるCI/CD最適化 **監査者**: Performance
+Engineer (Claude Code)
 
 ---
 
 ## Executive Summary
 
 ### 最適化概要
+
 **Before**: node_modulesアーティファクト経由 (171,098ファイル予測, 2GB)
 **After**: pnpm cache (500MB) + GitHub Actions cache
 
 ### パフォーマンス改善予測
 
-| メトリクス | Before | After | 改善率 |
-|-----------|--------|-------|--------|
-| **アップロード時間** | 180-300秒 | 0秒 | **100%削減** |
-| **ダウンロード時間** | 60-120秒 | 15-30秒 | **75%削減** |
-| **ストレージ使用量** | 2GB/ビルド | 500MB/ビルド | **75%削減** |
-| **総CI実行時間** | 8-12分 | 3-5分 | **58-62%削減** |
-| **キャッシュヒット率** | N/A | 85-95% | **新規** |
+| メトリクス             | Before     | After        | 改善率         |
+| ---------------------- | ---------- | ------------ | -------------- |
+| **アップロード時間**   | 180-300秒  | 0秒          | **100%削減**   |
+| **ダウンロード時間**   | 60-120秒   | 15-30秒      | **75%削減**    |
+| **ストレージ使用量**   | 2GB/ビルド | 500MB/ビルド | **75%削減**    |
+| **総CI実行時間**       | 8-12分     | 3-5分        | **58-62%削減** |
+| **キャッシュヒット率** | N/A        | 85-95%       | **新規**       |
 
 ### 品質目標達成状況
-✅ **CI/CD 5分以内要件**: 予測3-5分 → **達成**
-✅ **GitHub Actions使用量削減**: 予測52.3% → 60%+ → **超過達成**
-✅ **EMFILE エラー解消**: アーティファクト削除 → **解決済**
+
+✅ **CI/CD 5分以内要件**: 予測3-5分 → **達成** ✅ **GitHub
+Actions使用量削減**: 予測52.3% → 60%+ → **超過達成** ✅
+**EMFILE エラー解消**: アーティファクト削除 → **解決済**
 
 ---
 
@@ -35,6 +38,7 @@
 ### 1.1 実測データ
 
 #### 現在のnode_modules構成（ローカル実測値）
+
 ```
 サイズ: 624MB
 ファイル数: 40,036ファイル
@@ -42,11 +46,13 @@
 ```
 
 **重要**: 実測値は予測（171,098ファイル、2GB）より大幅に小さい理由：
+
 - Next.js 15.5.4 Turbopackによる依存関係最適化
 - pnpm 9.xのシンボリックリンク方式
 - 開発依存関係の一部未インストール
 
 #### CI環境での予測値（フルインストール）
+
 ```
 サイズ: 800MB-1.2GB（Playwright含む）
 ファイル数: 50,000-70,000ファイル
@@ -55,28 +61,29 @@
 
 ### 1.2 アーティファクト操作時間（Before）
 
-| フェーズ | 時間 | 備考 |
-|---------|------|------|
-| **アップロード** | 180-300秒 | 50,000ファイル@3,600ファイル/秒 |
-| **圧縮** | 30-60秒 | gzip圧縮（800MB → 400MB） |
-| **ダウンロード** | 60-120秒 | 400MB@3-7MB/秒 |
-| **解凍** | 20-40秒 | 解凍+ファイル復元 |
-| **合計** | **290-520秒** | **4.8-8.7分** |
+| フェーズ         | 時間          | 備考                            |
+| ---------------- | ------------- | ------------------------------- |
+| **アップロード** | 180-300秒     | 50,000ファイル@3,600ファイル/秒 |
+| **圧縮**         | 30-60秒       | gzip圧縮（800MB → 400MB）       |
+| **ダウンロード** | 60-120秒      | 400MB@3-7MB/秒                  |
+| **解凍**         | 20-40秒       | 解凍+ファイル復元               |
+| **合計**         | **290-520秒** | **4.8-8.7分**                   |
 
 ### 1.3 pnpm cache操作時間（After）
 
-| フェーズ | 時間 | 備考 |
-|---------|------|------|
-| **キャッシュ保存** | 0秒 | GitHub Actions cacheが自動処理 |
-| **キャッシュ復元（ヒット）** | 15-30秒 | pnpm store（500MB） |
-| **pnpm install（ヒット）** | 10-20秒 | シンボリックリンク作成のみ |
-| **合計（ヒット）** | **25-50秒** | **0.4-0.8分** |
-| **pnpm install（ミス）** | 120-180秒 | フルインストール |
-| **合計（ミス）** | **120-180秒** | **2-3分** |
+| フェーズ                     | 時間          | 備考                           |
+| ---------------------------- | ------------- | ------------------------------ |
+| **キャッシュ保存**           | 0秒           | GitHub Actions cacheが自動処理 |
+| **キャッシュ復元（ヒット）** | 15-30秒       | pnpm store（500MB）            |
+| **pnpm install（ヒット）**   | 10-20秒       | シンボリックリンク作成のみ     |
+| **合計（ヒット）**           | **25-50秒**   | **0.4-0.8分**                  |
+| **pnpm install（ミス）**     | 120-180秒     | フルインストール               |
+| **合計（ミス）**             | **120-180秒** | **2-3分**                      |
 
 ### 1.4 時間短縮効果
 
 #### キャッシュヒット時（85-95%のケース）
+
 ```
 Before: 290-520秒
 After:  25-50秒
@@ -85,6 +92,7 @@ After:  25-50秒
 ```
 
 #### キャッシュミス時（5-15%のケース）
+
 ```
 Before: 290-520秒
 After:  120-180秒
@@ -93,6 +101,7 @@ After:  120-180秒
 ```
 
 #### 平均（90%ヒット率想定）
+
 ```
 平均時間短縮: (0.9 × 267) + (0.1 × 225) = 262.8秒 ≈ 4.4分
 平均改善率: 89%
@@ -105,6 +114,7 @@ After:  120-180秒
 ### 2.1 ストレージ使用量
 
 #### Before（アーティファクト方式）
+
 ```
 アーティファクトサイズ: 400MB（圧縮後）
 保持期間: 7日
@@ -114,6 +124,7 @@ After:  120-180秒
 ```
 
 #### After（pnpm cache方式）
+
 ```
 キャッシュサイズ: 500MB（pnpm store）
 保持期間: 7日（GitHub Actions cacheポリシー）
@@ -123,6 +134,7 @@ After:  120-180秒
 ```
 
 #### ストレージ削減効果
+
 ```
 削減量: 60GB - 0.5GB = 59.5GB
 削減率: 99.2%
@@ -131,6 +143,7 @@ After:  120-180秒
 ### 2.2 ネットワーク転送量
 
 #### Before
+
 ```
 アップロード: 400MB/ビルド
 ダウンロード: 400MB/ジョブ（平均2ジョブ/ビルド）
@@ -138,6 +151,7 @@ After:  120-180秒
 ```
 
 #### After
+
 ```
 キャッシュ保存: 500MB（初回のみ）
 キャッシュ復元: 500MB/ビルド（ヒット時）
@@ -146,6 +160,7 @@ After:  120-180秒
 ```
 
 #### 転送量削減効果
+
 ```
 削減量: 180GB - 8GB = 172GB
 削減率: 95.6%
@@ -154,6 +169,7 @@ After:  120-180秒
 ### 2.3 CPU/メモリ使用量
 
 #### Before（アーティファクト圧縮/解凍）
+
 ```
 CPU使用率: 80-100%（gzip圧縮）
 メモリ使用量: 1.5-2GB（ファイルバッファリング）
@@ -161,6 +177,7 @@ CPU使用率: 80-100%（gzip圧縮）
 ```
 
 #### After（pnpm install）
+
 ```
 CPU使用率: 30-50%（シンボリックリンク作成）
 メモリ使用量: 200-400MB（pnpm操作）
@@ -168,6 +185,7 @@ CPU使用率: 30-50%（シンボリックリンク作成）
 ```
 
 #### リソース削減効果
+
 ```
 CPU削減: 50-75%
 メモリ削減: 73-87%
@@ -180,6 +198,7 @@ CPU削減: 50-75%
 ### 3.1 CI/CD 5分以内要件
 
 #### 現在の実行時間構成（Before）
+
 ```
 1. setup-node: 5-7分
    - node_modulesアーティファクトアップロード: 3-5分
@@ -193,6 +212,7 @@ CPU削減: 50-75%
 ```
 
 #### 最適化後の予測時間（After）
+
 ```
 1. setup-node: 1-2分 ✅
    - pnpm cache復元: 0.5-1分
@@ -206,6 +226,7 @@ CPU削減: 50-75%
 ```
 
 #### 5分以内目標達成戦略
+
 ```
 現状: 4-6分（並列実行）
 目標: 5分以内
@@ -220,6 +241,7 @@ CPU削減: 50-75%
 ### 3.2 GitHub Actions使用量削減
 
 #### 月間使用量削減予測
+
 ```
 Before: 730分/月（無料枠36.5%）
 After: 290-350分/月（無料枠14.5-17.5%）
@@ -228,6 +250,7 @@ After: 290-350分/月（無料枠14.5-17.5%）
 ```
 
 #### 年間コスト影響（Pro tier: $4/月想定）
+
 ```
 Before: 無料枠内（追加コストなし）
 After: 無料枠内（追加コストなし）
@@ -238,6 +261,7 @@ After: 無料枠内（追加コストなし）
 ### 3.3 EMFILEエラー解消
 
 #### エラー原因
+
 ```
 問題: actions/upload-artifact@v4が171,098ファイルを処理しようとして
       システムファイルディスクリプタ上限（1024-4096）を超過
@@ -246,6 +270,7 @@ After: 無料枠内（追加コストなし）
 ```
 
 #### 解決策
+
 ```
 対策: node_modulesアーティファクトアップロードを完全削除
 効果: アーティファクト操作なし → ファイルディスクリプタ使用量95%削減
@@ -259,6 +284,7 @@ After: 無料枠内（追加コストなし）
 ### 4.1 さらなる高速化の可能性
 
 #### 4.1.1 テスト並列実行（Priority: High）
+
 ```
 現状: Playwright E2Eテスト単一実行
 問題: テスト実行時間2-3分（ボトルネック）
@@ -276,6 +302,7 @@ playwright test --shard=3/3 &
 ```
 
 #### 4.1.2 Docker layer caching（Priority: Medium）
+
 ```
 現状: docker-compose build毎回フルビルド
 問題: ビルド時間3-4分
@@ -292,6 +319,7 @@ docker buildx build \
 ```
 
 #### 4.1.3 選択的テスト実行（Priority: Low）
+
 ```
 現状: 全テスト実行
 問題: 無関係な変更でもフルテスト
@@ -307,6 +335,7 @@ pnpm test:changed --since=HEAD~1
 ```
 
 #### 4.1.4 CI実行戦略最適化（Priority: High）
+
 ```
 現状: すべてのPR/pushでフルCI実行
 問題: Draft PR、typo修正でもフルテスト
@@ -326,6 +355,7 @@ if: |
 ### 4.2 キャッシュ戦略の改善点
 
 #### 4.2.1 多段階キャッシュ戦略（Priority: High）
+
 ```
 現状: pnpm-lock.yamlハッシュベース単一キャッシュ
 問題: package.json変更で全キャッシュミス
@@ -344,6 +374,7 @@ restore-keys:
 ```
 
 #### 4.2.2 Playwright browser cache（Priority: Medium）
+
 ```
 現状: Playwright browserを毎回インストール
 問題: chromiumダウンロード100-200MB
@@ -363,6 +394,7 @@ restore-keys:
 ```
 
 #### 4.2.3 pnpm store warming（Priority: Low）
+
 ```
 現状: cron jobなしでキャッシュ受動的管理
 問題: 7日間未使用でキャッシュ削除
@@ -381,6 +413,7 @@ on:
 ### 4.3 組み合わせ最適化（最大効果）
 
 #### Phase 1: 即座に実装可能（1-2時間）
+
 ```
 1. Playwright sharding（3並列）
 2. CI実行戦略最適化（条件付き実行）
@@ -393,6 +426,7 @@ on:
 ```
 
 #### Phase 2: 中期実装（1週間）
+
 ```
 4. Docker layer caching
 5. Playwright browser cache
@@ -405,6 +439,7 @@ on:
 ```
 
 #### Phase 3: 長期戦略（1ヶ月）
+
 ```
 7. E2Eテストパターン最適化
 8. モニタリングダッシュボード構築
@@ -422,6 +457,7 @@ on:
 ### 5.1 メトリクス計測方法
 
 #### 5.1.1 ビルド時間測定
+
 ```yaml
 - name: ⏱️ Measure cache restore time
   run: |
@@ -434,6 +470,7 @@ on:
 ```
 
 #### 5.1.2 キャッシュヒット率追跡
+
 ```yaml
 - name: 📊 Track cache hit rate
   run: |
@@ -445,6 +482,7 @@ on:
 ```
 
 #### 5.1.3 リソース使用量モニタリング
+
 ```bash
 # CI/CD実行後のレポート自動生成
 gh api /repos/daishiman/AutoForgeNexus/actions/runs \
@@ -459,6 +497,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 5.2 A/Bテスト戦略
 
 #### 実装アプローチ
+
 ```
 1. 現状ベースライン測定（1週間）
    - 平均CI時間
@@ -479,6 +518,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 5.3 成功基準
 
 #### 必須要件（MUST）
+
 ```
 ✅ CI実行時間: 5分以内（90%のケース）
 ✅ EMFILEエラー: 0件/月
@@ -487,6 +527,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### 目標要件（SHOULD）
+
 ```
 🎯 CI実行時間: 3分以内（75%のケース）
 🎯 月間使用量: 180分/月以下（無料枠9%）
@@ -495,6 +536,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### 推奨要件（NICE TO HAVE）
+
 ```
 💡 自動パフォーマンス回帰検出
 💡 CI/CDダッシュボード可視化
@@ -508,6 +550,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 6.1 技術的リスク
 
 #### リスク1: キャッシュ汚染
+
 ```
 リスク: 不正なキャッシュによるビルド失敗
 確率: 低（5-10%）
@@ -521,6 +564,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### リスク2: GitHub Actions cache制限
+
 ```
 リスク: 10GB制限到達でキャッシュ削除
 確率: 低（現在500MB使用予定）
@@ -533,6 +577,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### リスク3: pnpm store破損
+
 ```
 リスク: ネットワーク断でstore破損
 確率: 低（1-2%）
@@ -547,6 +592,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 6.2 運用リスク
 
 #### リスク4: 開発者体験への影響
+
 ```
 リスク: ローカル開発との差異
 確率: 低
@@ -559,6 +605,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### リスク5: 移行期の並行運用
+
 ```
 リスク: 新旧ワークフロー混在
 確率: 中（移行期間中）
@@ -577,6 +624,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 7.1 即座に実施（Priority: Critical）
 
 #### ✅ 完了済み
+
 ```
 1. node_modulesアーティファクト削除
    - shared-setup-node.yml修正完了
@@ -585,6 +633,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### 🚧 実施中
+
 ```
 2. パフォーマンス監査レポート作成
    - 本ドキュメント作成完了
@@ -654,6 +703,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 8.1 主要成果
 
 #### ✅ 達成済み
+
 ```
 1. EMFILEエラー完全解消
    - node_modulesアーティファクト削除
@@ -669,6 +719,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### 🎯 予測効果
+
 ```
 4. CI実行時間58-62%削減
    - 8-12分 → 3-5分
@@ -686,6 +737,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 8.2 さらなる最適化余地
 
 #### Phase 1実装（1週間）で達成可能
+
 ```
 - CI時間: 3-5分 → 2.5-3.5分
 - 5分以内目標: 100%達成
@@ -694,6 +746,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### Phase 2実装（1ヶ月）で達成可能
+
 ```
 - CI時間: 2.5-3.5分 → 1.5-2.5分
 - 月間使用量: 180分 → 120分
@@ -704,6 +757,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ### 8.3 最終評価
 
 #### パフォーマンス目標達成度
+
 ```
 ✅ CI/CD 5分以内要件: 80-120%達成（要追加最適化）
 ✅ GitHub Actions使用量削減: 52-60%削減（超過達成）
@@ -712,6 +766,7 @@ gh api /repos/daishiman/AutoForgeNexus/actions/runs \
 ```
 
 #### 推奨次ステップ
+
 ```
 Priority 1: Playwright sharding（2時間）
 Priority 2: 多段階キャッシュ戦略（1時間）
@@ -727,6 +782,7 @@ Priority 4: メトリクス計測実装（3時間）
 ## Appendix A: 測定データ
 
 ### A.1 ローカル環境実測値
+
 ```
 OS: macOS 14.x (Darwin 24.6.0)
 Node.js: 22.20.0
@@ -739,6 +795,7 @@ pnpm store: /Users/dm/Library/pnpm/store/v10
 ```
 
 ### A.2 package.json依存関係
+
 ```
 dependencies: 13パッケージ
 devDependencies: 27パッケージ
@@ -747,6 +804,7 @@ devDependencies: 27パッケージ
 ```
 
 ### A.3 CI/CD実行環境
+
 ```
 Runner: ubuntu-latest
 CPU: 2コア
@@ -757,6 +815,7 @@ CPU: 2コア
 ```
 
 ### A.4 GitHub Actions制限
+
 ```
 無料枠: 2,000分/月
 ストレージ無料枠: 500MB
@@ -804,7 +863,9 @@ e2e-test:
     path: |
       ${{ env.STORE_PATH }}
       ${{ inputs.working-directory }}/node_modules
-    key: node-${{ inputs.node-version }}-pnpm-${{ inputs.pnpm-version }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+    key:
+      node-${{ inputs.node-version }}-pnpm-${{ inputs.pnpm-version }}-${{
+      runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
     restore-keys: |
       node-${{ inputs.node-version }}-pnpm-${{ inputs.pnpm-version }}-${{ runner.os }}-${{ hashFiles('**/package.json') }}
       node-${{ inputs.node-version }}-pnpm-${{ inputs.pnpm-version }}-${{ runner.os }}-
@@ -870,6 +931,5 @@ jobs:
 
 ---
 
-**監査完了日**: 2025-10-08
-**次回レビュー予定**: 2025-10-15（Phase 1実装後）
+**監査完了日**: 2025-10-08 **次回レビュー予定**: 2025-10-15（Phase 1実装後）
 **担当**: Performance Engineer (Claude Code)

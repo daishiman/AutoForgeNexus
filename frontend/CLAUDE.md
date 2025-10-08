@@ -86,21 +86,19 @@ function Button({ ref, ...props }) {
 
 /* より滑らかなグラデーション */
 .gradient {
-  background: linear-gradient(
-    in oklch,
-    oklch(90% 0.1 100),
-    oklch(50% 0.2 250)
-  );
+  background: linear-gradient(in oklch, oklch(90% 0.1 100), oklch(50% 0.2 250));
 }
 ```
 
 ## 📁 主要ファイル説明
 
 ### src/app/api/health/route.ts
+
 - **役割**: ヘルスチェックエンドポイント
 - **機能**: システム状態、依存関係チェック、Web Vitals
 
 ### src/lib/monitoring/index.ts
+
 - **役割**: クライアント側監視
 - **機能**:
   - Web Vitals測定（LCP、FID、CLS）
@@ -109,6 +107,7 @@ function Button({ ref, ...props }) {
   - パフォーマンスメトリクス
 
 ### src/middleware/observability.ts
+
 - **役割**: エッジミドルウェア監視
 - **機能**:
   - リクエスト追跡
@@ -117,6 +116,7 @@ function Button({ ref, ...props }) {
   - 相関ID生成
 
 ### src/lib/auth/clerk-config.ts
+
 - **役割**: 認証設定
 - **機能**:
   - OAuth 2.0プロバイダー設定
@@ -178,7 +178,7 @@ export default async function PromptList() {
   const prompts = await fetchPrompts();
   return (
     <div className="grid gap-4">
-      {prompts.map(prompt => (
+      {prompts.map((prompt) => (
         <PromptCard key={prompt.id} prompt={prompt} />
       ))}
     </div>
@@ -186,7 +186,7 @@ export default async function PromptList() {
 }
 
 // ✅ Client Component（インタラクティブ）
-'use client';
+('use client');
 
 export function PromptEditor({ initialPrompt }) {
   const [prompt, setPrompt] = useState(initialPrompt);
@@ -196,7 +196,7 @@ export function PromptEditor({ initialPrompt }) {
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        className="w-full min-h-[200px]"
+        className="min-h-[200px] w-full"
       />
     </form>
   );
@@ -234,23 +234,13 @@ export default function Error({
 
 ```tsx
 // ✅ 動的インポート
-const HeavyComponent = dynamic(
-  () => import('@/components/HeavyComponent'),
-  {
-    loading: () => <Skeleton />,
-    ssr: false
-  }
-);
+const HeavyComponent = dynamic(() => import('@/components/HeavyComponent'), {
+  loading: () => <Skeleton />,
+  ssr: false,
+});
 
 // ✅ 画像最適化
-<Image
-  src="/hero.jpg"
-  alt="Hero"
-  width={1920}
-  height={1080}
-  priority
-  placeholder="blur"
-/>
+<Image src="/hero.jpg" alt="Hero" width={1920} height={1080} priority placeholder="blur" />;
 ```
 
 ## 📊 品質基準
@@ -298,7 +288,7 @@ export async function middleware(request: NextRequest) {
 ## 🚨 注意事項
 
 1. **Server/Client境界**: 'use client'ディレクティブを適切に使用
-2. **環境変数**: NEXT_PUBLIC_プレフィックスに注意
+2. **環境変数**: NEXT*PUBLIC*プレフィックスに注意
 3. **エッジ互換性**: Node.js APIを使用しない
 4. **静的生成**: 可能な限りSSGを活用
 5. **画像最適化**: next/imageを必ず使用
@@ -313,9 +303,11 @@ export async function middleware(request: NextRequest) {
 ## 📊 現在の実装状況（2025年9月30日更新）
 
 ### Phase 5: フロントエンド実装（未着手 - 0%）
+
 ※Phase 3（バックエンド - 45%完了）、Phase 4（データベース）完了後に実装開始予定
 
 #### 📋 実装予定項目
+
 - Next.js 15.5.4 + React 19.0.0環境構築
 - Tailwind CSS 4.0.0（OKLCH色空間）設定
 - shadcn/ui 3.3.1コンポーネント統合（React 19対応版）
@@ -326,18 +318,20 @@ export async function middleware(request: NextRequest) {
 - Cloudflare Pages最適化（Edge Functions、静的生成）
 
 ### Phase 3バックエンド進捗との連携
+
 - ✅ バックエンド構造改善完了（Task 3.1）- API契約明確化
 - 🚧 Clerk認証統合準備（フロントエンド/バックエンド共通）
 - 📋 プロンプトドメインモデル確定後、UIコンポーネント実装開始
 
 ### CI/CD最適化の成果（Phase 2完了）
+
 - ✅ GitHub Actions使用量: 730分/月（無料枠36.5%）
 - ✅ 共有ワークフロー実装で52.3%のコスト削減達成
 - ✅ フロントエンド用CI/CD設定準備済み（integration-ci.yml）
 - ✅ セキュリティスキャン統合（CodeQL、TruffleHog）
 
 ### セキュリティ改善項目（Critical対応必須）
-- 🚨 CSPヘッダー強化（script-src 'unsafe-eval' 削減）
-- 🚨 環境変数管理（NEXT_PUBLIC_プレフィックス適切使用）
-- ⚠️ エッジミドルウェアセキュリティヘッダー実装
 
+- 🚨 CSPヘッダー強化（script-src 'unsafe-eval' 削減）
+- 🚨 環境変数管理（NEXT*PUBLIC*プレフィックス適切使用）
+- ⚠️ エッジミドルウェアセキュリティヘッダー実装

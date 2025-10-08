@@ -1,9 +1,9 @@
 # Dockerセキュリティ包括的レビュー
 
-**レビュー実施日**: 2025年10月8日
-**レビュー担当**: Security Architect Agent
+**レビュー実施日**: 2025年10月8日 **レビュー担当**: Security Architect Agent
 **対象システム**: AutoForgeNexus Backend (Python 3.13 / FastAPI)
 **対象ファイル**:
+
 - `/backend/Dockerfile`
 - `/backend/.dockerignore`
 - `/.github/workflows/backend-ci.yml` (Docker関連部分)
@@ -16,14 +16,14 @@
 
 ### 主要な発見事項
 
-| カテゴリ | 現状評価 | 重要度 | 推奨アクション |
-|---------|---------|--------|--------------|
-| コンテナエスケープ対策 | ❌ 未実装 | CRITICAL | seccomp/AppArmorプロファイル必須 |
-| 最小特権原則 | ⚠️ 部分的 | HIGH | read-only rootfs、capabilities制限 |
-| イメージ脆弱性管理 | ❌ 未実装 | CRITICAL | Trivy自動スキャン、SBoM生成 |
-| シークレット管理 | ⚠️ 部分的 | HIGH | BuildKitシークレット、multi-stage改善 |
-| ゼロトラストアーキテクチャ | ❌ 未対応 | HIGH | ネットワークポリシー、mTLS導入 |
-| CIS Benchmark準拠 | 38% | HIGH | 15項目の未準拠対応必須 |
+| カテゴリ                   | 現状評価  | 重要度   | 推奨アクション                        |
+| -------------------------- | --------- | -------- | ------------------------------------- |
+| コンテナエスケープ対策     | ❌ 未実装 | CRITICAL | seccomp/AppArmorプロファイル必須      |
+| 最小特権原則               | ⚠️ 部分的 | HIGH     | read-only rootfs、capabilities制限    |
+| イメージ脆弱性管理         | ❌ 未実装 | CRITICAL | Trivy自動スキャン、SBoM生成           |
+| シークレット管理           | ⚠️ 部分的 | HIGH     | BuildKitシークレット、multi-stage改善 |
+| ゼロトラストアーキテクチャ | ❌ 未対応 | HIGH     | ネットワークポリシー、mTLS導入        |
+| CIS Benchmark準拠          | 38%       | HIGH     | 15項目の未準拠対応必須                |
 
 ### 検出された重大な脆弱性（CVSS 7.0+）
 
@@ -38,15 +38,18 @@
 ### ✅ 準拠項目（15/40 = 37.5%）
 
 #### 4.1 イメージとビルド
+
 - ✅ **4.1.1**: Multi-stage buildの使用（builder/runtime分離）
 - ✅ **4.1.2**: .dockerignoreファイルの存在と適切性
 - ✅ **4.1.3**: 開発ファイルの除外（tests/, .env, .git）
 
 #### 5.1 コンテナランタイム
+
 - ✅ **5.1.1**: 非rootユーザーでの実行（appuser UID 1000）
 - ✅ **5.1.2**: ヘルスチェックの実装
 
 #### 4.6 セキュアなベースイメージ
+
 - ✅ **4.6.1**: 公式Pythonイメージの使用（python:3.13-slim）
 - ✅ **4.6.2**: 最小限のディストリビューション（slim variant）
 
@@ -55,6 +58,7 @@
 #### 🚨 CRITICAL（即座対応必須）
 
 **4.7 イメージ脆弱性スキャン**
+
 - ❌ **4.7.1**: ビルド時の自動脆弱性スキャン未実装
 - ❌ **4.7.2**: イメージ署名と検証の欠如
 - ❌ **4.7.3**: Software Bill of Materials (SBoM) 未生成
@@ -62,6 +66,7 @@
 - **CVSS**: 9.3 (Critical)
 
 **5.2 コンテナエスケープ対策**
+
 - ❌ **5.2.1**: seccompプロファイルの未適用
 - ❌ **5.2.2**: AppArmorプロファイルの未適用
 - ❌ **5.2.3**: SELinuxラベルの未設定
@@ -69,6 +74,7 @@
 - **CVSS**: 9.3 (Critical)
 
 **5.3 リソース制限**
+
 - ❌ **5.3.1**: メモリ制限の未設定
 - ❌ **5.3.2**: CPU制限の未設定
 - ❌ **5.3.3**: PIDs制限の未設定
@@ -78,12 +84,14 @@
 #### ⚠️ HIGH（早期対応推奨）
 
 **5.4 Capabilities制限**
+
 - ❌ **5.4.1**: 不要なLinux capabilitiesのdrop未実施
 - ❌ **5.4.2**: CAP_SYS_ADMIN等の危険な権限付与リスク
 - **影響**: 権限昇格攻撃
 - **CVSS**: 8.1 (High)
 
 **5.5 ネットワークセキュリティ**
+
 - ❌ **5.5.1**: ネットワークポリシーの未定義
 - ❌ **5.5.2**: 不要なポートの公開リスク
 - ❌ **5.5.3**: TLS/mTLS強制の欠如
@@ -91,6 +99,7 @@
 - **CVSS**: 7.5 (High)
 
 **5.6 読み取り専用ファイルシステム**
+
 - ❌ **5.6.1**: read-only rootfsの未適用
 - ❌ **5.6.2**: tmpfs mountポイントの未定義
 - **影響**: マルウェア永続化、改竄リスク
@@ -99,12 +108,14 @@
 #### 📋 MEDIUM（計画的改善）
 
 **4.8 シークレット管理**
+
 - ⚠️ **4.8.1**: BuildKitシークレット未使用（ENV変数リスク）
 - ⚠️ **4.8.2**: multi-stage buildでのシークレット漏洩可能性
 - **影響**: ビルド履歴からの秘密情報漏洩
 - **CVSS**: 6.5 (Medium)
 
 **5.7 ログとモニタリング**
+
 - ❌ **5.7.1**: ログドライバーの明示的設定なし
 - ❌ **5.7.2**: 監査ログの未実装
 - **影響**: インシデント検知の遅延
@@ -142,6 +153,7 @@ HEALTHCHECK --interval=30s --timeout=5s \  # ✅ ヘルスチェック実装
 #### ❌ 重大なセキュリティギャップ
 
 **1. イメージ署名と検証の欠如（CVSS 8.5）**
+
 ```dockerfile
 # 現状: ベースイメージの検証なし
 FROM python:3.13-slim AS builder
@@ -153,6 +165,7 @@ FROM python:3.13-slim AS builder
 ```
 
 **改善案:**
+
 ```dockerfile
 # Docker Content Trust有効化 + SHAピン留め
 FROM python:3.13-slim@sha256:abc123... AS builder
@@ -163,6 +176,7 @@ FROM cgr.dev/chainguard/python:3.13
 ```
 
 **2. seccomp/AppArmor未適用（CVSS 9.3）**
+
 ```dockerfile
 # 現状: Dockerfileにセキュリティプロファイル指定なし
 
@@ -184,6 +198,7 @@ services:
 ```
 
 **3. read-only rootfs未適用（CVSS 7.0）**
+
 ```dockerfile
 # 現状: ファイルシステムへの書き込みが可能
 
@@ -202,6 +217,7 @@ services:
 ```
 
 **4. リソース制限未設定（CVSS 7.5）**
+
 ```dockerfile
 # 現状: メモリ・CPU制限なし
 
@@ -225,6 +241,7 @@ services:
 ```
 
 **5. ネットワークセグメンテーション欠如（CVSS 7.5）**
+
 ```dockerfile
 # 現状: デフォルトネットワークへの接続
 
@@ -249,6 +266,7 @@ services:
 ```
 
 **6. ヘルスチェックのセキュリティ脆弱性（CVSS 5.5）**
+
 ```dockerfile
 # 現状: curlを含むイメージサイズ増加
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
@@ -436,6 +454,7 @@ data/           # ✅ データディレクトリ除外
 #### ⚠️ 潜在的なセキュリティリスク
 
 **1. シークレット検知の不完全性（CVSS 6.5）**
+
 ```
 # 現状: .env*のみカバー
 .env*
@@ -448,6 +467,7 @@ data/           # ✅ データディレクトリ除外
 ```
 
 **改善案:**
+
 ```dockerignore
 # 環境変数・設定ファイル
 .env*
@@ -496,6 +516,7 @@ trivy-report.json
 ```
 
 **2. 過度な除外によるビルド失敗リスク（CVSS 3.5）**
+
 ```dockerignore
 # 現状: 全てのREADME除外後に例外指定
 *.md
@@ -507,6 +528,7 @@ trivy-report.json
 ```
 
 **改善案:**
+
 ```dockerignore
 # より明示的な除外パターン
 docs/*.md
@@ -526,13 +548,13 @@ CHANGELOG.md
 ```yaml
 # 良い実装例
 steps:
-  - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # ✅ SHAピン留め
+  - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ✅ SHAピン留め
     with:
-      persist-credentials: false  # ✅ Git認証情報の残留防止
+      persist-credentials: false # ✅ Git認証情報の残留防止
 
-  - uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db  # ✅ SHAピン留め
+  - uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # ✅ SHAピン留め
 
-permissions:  # ✅ 最小権限の原則適用
+permissions: # ✅ 最小権限の原則適用
   contents: read
   statuses: write
 ```
@@ -540,6 +562,7 @@ permissions:  # ✅ 最小権限の原則適用
 #### ❌ 重大なセキュリティギャップ
 
 **1. Dockerイメージ脆弱性スキャン未実装（CVSS 8.8）**
+
 ```yaml
 # 現状: ビルドのみ実施、脆弱性チェックなし
 docker-build:
@@ -552,6 +575,7 @@ docker-build:
 ```
 
 **改善案:**
+
 ```yaml
 docker-build-and-scan:
   name: 🐳 Docker Build & Security Scan
@@ -559,7 +583,7 @@ docker-build-and-scan:
 
   permissions:
     contents: read
-    security-events: write  # CodeQL/Trivyアップロード用
+    security-events: write # CodeQL/Trivyアップロード用
 
   steps:
     - name: Checkout
@@ -576,11 +600,11 @@ docker-build-and-scan:
         context: ./backend
         file: ./backend/Dockerfile
         push: false
-        load: true  # ローカルスキャン用
+        load: true # ローカルスキャン用
         tags: autoforgenexus-backend:${{ github.sha }}
         cache-from: type=gha,scope=backend
         cache-to: type=gha,scope=backend,mode=max
-        platforms: linux/amd64  # 脆弱性スキャン用に単一プラットフォーム
+        platforms: linux/amd64 # 脆弱性スキャン用に単一プラットフォーム
 
     # Trivyによる包括的スキャン
     - name: Run Trivy vulnerability scanner
@@ -590,7 +614,7 @@ docker-build-and-scan:
         format: 'sarif'
         output: 'trivy-results.sarif'
         severity: 'CRITICAL,HIGH,MEDIUM'
-        exit-code: '1'  # CRITICAL/HIGHで失敗
+        exit-code: '1' # CRITICAL/HIGHで失敗
         timeout: '10m'
 
     - name: Upload Trivy results to GitHub Security
@@ -622,10 +646,11 @@ docker-build-and-scan:
       with:
         image: autoforgenexus-backend:${{ github.sha }}
         args: --severity-threshold=high --fail-on=upgradable
-      continue-on-error: true  # Trivyが主、Snyckは補助
+      continue-on-error: true # Trivyが主、Snyckは補助
 ```
 
 **2. Docker Content Trust未有効化（CVSS 7.5）**
+
 ```yaml
 # 現状: イメージ署名なし
 docker-build:
@@ -637,6 +662,7 @@ docker-build:
 ```
 
 **改善案:**
+
 ```yaml
 docker-build-and-sign:
   steps:
@@ -666,8 +692,8 @@ docker-build-and-sign:
         tags: |
           ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
           ghcr.io/${{ github.repository }}/backend:latest
-        provenance: true  # BuildKitプロベナンス生成
-        sbom: true  # SBoM自動生成
+        provenance: true # BuildKitプロベナンス生成
+        sbom: true # SBoM自動生成
 
     # Cosignでイメージ署名（本番デプロイ時のみ）
     - name: Sign container image
@@ -680,6 +706,7 @@ docker-build-and-sign:
 ```
 
 **3. シークレットスキャンの欠如（CVSS 8.1）**
+
 ```yaml
 # 現状: Dockerイメージ内のシークレット検知なし
 
@@ -690,6 +717,7 @@ docker-build-and-sign:
 ```
 
 **改善案:**
+
 ```yaml
 docker-secret-scan:
   name: 🔐 Docker Secret Scan
@@ -698,7 +726,7 @@ docker-secret-scan:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-        fetch-depth: 0  # 全履歴取得（Git秘密検知用）
+        fetch-depth: 0 # 全履歴取得（Git秘密検知用）
 
     # Dockerイメージ内シークレットスキャン
     - name: Scan Docker image for secrets
@@ -731,13 +759,13 @@ docker-secret-scan:
 
 ### 現状のギャップ分析
 
-| ゼロトラスト原則 | 現状実装 | ギャップ | 推奨対策 |
-|----------------|---------|---------|---------|
-| **最小特権アクセス** | ⚠️ 部分的 | capabilities未制限 | CAP_DROPで全削除 |
-| **常時検証** | ❌ 未実装 | mTLS未導入 | Istio/Linkerdでサービスメッシュ |
-| **侵害前提の設計** | ❌ 未実装 | read-only rootfs未適用 | tmpfs mount + immutable層 |
-| **マイクロセグメンテーション** | ❌ 未実装 | ネットワークポリシー未定義 | Kubernetes NetworkPolicy |
-| **ログ・監視** | ⚠️ 部分的 | 監査ログ不十分 | Falco/Tetragon導入 |
+| ゼロトラスト原則               | 現状実装  | ギャップ                   | 推奨対策                        |
+| ------------------------------ | --------- | -------------------------- | ------------------------------- |
+| **最小特権アクセス**           | ⚠️ 部分的 | capabilities未制限         | CAP_DROPで全削除                |
+| **常時検証**                   | ❌ 未実装 | mTLS未導入                 | Istio/Linkerdでサービスメッシュ |
+| **侵害前提の設計**             | ❌ 未実装 | read-only rootfs未適用     | tmpfs mount + immutable層       |
+| **マイクロセグメンテーション** | ❌ 未実装 | ネットワークポリシー未定義 | Kubernetes NetworkPolicy        |
+| **ログ・監視**                 | ⚠️ 部分的 | 監査ログ不十分             | Falco/Tetragon導入              |
 
 ### 推奨されるゼロトラストDocker設定
 
@@ -750,11 +778,11 @@ services:
     image: autoforgenexus-backend:latest
 
     # 最小特権設定
-    user: "1000:1000"
+    user: '1000:1000'
     cap_drop:
       - ALL
     cap_add:
-      - NET_BIND_SERVICE  # port 8000のみ
+      - NET_BIND_SERVICE # port 8000のみ
     security_opt:
       - no-new-privileges:true
       - seccomp:./security/seccomp-profile.json
@@ -779,14 +807,14 @@ services:
 
     # ネットワークセグメンテーション
     networks:
-      - backend-internal  # DB/Redis専用
-      - backend-api       # 外部API専用
+      - backend-internal # DB/Redis専用
+      - backend-api # 外部API専用
     ports:
-      - "127.0.0.1:8000:8000"  # ループバックのみバインド
+      - '127.0.0.1:8000:8000' # ループバックのみバインド
 
     # ヘルスチェック
     healthcheck:
-      test: ["CMD", "python", "/app/healthcheck.py"]
+      test: ['CMD', 'python', '/app/healthcheck.py']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -803,16 +831,16 @@ services:
 
     # ログドライバー（集中ログ）
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=backend,env=production"
+        max-size: '10m'
+        max-file: '3'
+        labels: 'service=backend,env=production'
 
 networks:
   backend-internal:
     driver: bridge
-    internal: true  # 外部通信遮断
+    internal: true # 外部通信遮断
     ipam:
       config:
         - subnet: 172.20.0.0/24
@@ -839,8 +867,7 @@ secrets:
 
 #### Task 4.1: Trivyスキャン統合（優先度: 最高）
 
-**目的**: CVE検出と自動修復
-**実装工数**: 4時間
+**目的**: CVE検出と自動修復 **実装工数**: 4時間
 
 ```yaml
 # .github/workflows/docker-security-scan.yml（新規作成）
@@ -854,7 +881,7 @@ on:
   push:
     branches: [main, develop]
   schedule:
-    - cron: '0 2 * * *'  # 毎日深夜2時にスキャン
+    - cron: '0 2 * * *' # 毎日深夜2時にスキャン
 
 jobs:
   trivy-scan:
@@ -891,8 +918,7 @@ jobs:
 
 #### Task 4.2: seccompプロファイル適用
 
-**目的**: syscall制限でコンテナエスケープ防止
-**実装工数**: 6時間
+**目的**: syscall制限でコンテナエスケープ防止 **実装工数**: 6時間
 
 ```json
 // backend/security/seccomp-profile.json（新規作成）
@@ -912,34 +938,139 @@ jobs:
   "syscalls": [
     {
       "names": [
-        "accept4", "access", "arch_prctl", "bind", "brk",
-        "chdir", "chmod", "chown", "clock_gettime", "clone",
-        "close", "connect", "dup", "dup2", "epoll_create1",
-        "epoll_ctl", "epoll_wait", "eventfd2", "execve",
-        "exit", "exit_group", "faccessat", "fchdir", "fchmod",
-        "fchmodat", "fchown", "fchownat", "fcntl", "fdatasync",
-        "flock", "fstat", "fstatfs", "fsync", "ftruncate",
-        "futex", "getcwd", "getdents64", "getegid", "geteuid",
-        "getgid", "getpid", "getppid", "getrandom", "getrlimit",
-        "getsockname", "getsockopt", "gettid", "gettimeofday",
-        "getuid", "ioctl", "kill", "listen", "lseek", "lstat",
-        "madvise", "memfd_create", "mkdir", "mkdirat", "mmap",
-        "mprotect", "mremap", "munmap", "nanosleep", "newfstatat",
-        "open", "openat", "pipe", "pipe2", "poll", "ppoll",
-        "prctl", "pread64", "prlimit64", "pselect6", "pwrite64",
-        "read", "readlink", "readlinkat", "readv", "recvfrom",
-        "recvmsg", "rename", "renameat", "rmdir", "rt_sigaction",
-        "rt_sigprocmask", "rt_sigreturn", "sched_getaffinity",
-        "sched_yield", "select", "sendfile", "sendmsg", "sendto",
-        "set_robust_list", "set_tid_address", "setgid", "setgroups",
-        "setitimer", "setpgid", "setresgid", "setresuid", "setsid",
-        "setsockopt", "setuid", "shutdown", "sigaltstack", "socket",
-        "socketpair", "stat", "statfs", "symlink", "symlinkat",
-        "sync", "sysinfo", "tgkill", "time", "timer_create",
-        "timer_delete", "timer_settime", "timerfd_create",
-        "timerfd_settime", "truncate", "umask", "uname", "unlink",
-        "unlinkat", "utime", "utimensat", "utimes", "wait4",
-        "waitid", "write", "writev"
+        "accept4",
+        "access",
+        "arch_prctl",
+        "bind",
+        "brk",
+        "chdir",
+        "chmod",
+        "chown",
+        "clock_gettime",
+        "clone",
+        "close",
+        "connect",
+        "dup",
+        "dup2",
+        "epoll_create1",
+        "epoll_ctl",
+        "epoll_wait",
+        "eventfd2",
+        "execve",
+        "exit",
+        "exit_group",
+        "faccessat",
+        "fchdir",
+        "fchmod",
+        "fchmodat",
+        "fchown",
+        "fchownat",
+        "fcntl",
+        "fdatasync",
+        "flock",
+        "fstat",
+        "fstatfs",
+        "fsync",
+        "ftruncate",
+        "futex",
+        "getcwd",
+        "getdents64",
+        "getegid",
+        "geteuid",
+        "getgid",
+        "getpid",
+        "getppid",
+        "getrandom",
+        "getrlimit",
+        "getsockname",
+        "getsockopt",
+        "gettid",
+        "gettimeofday",
+        "getuid",
+        "ioctl",
+        "kill",
+        "listen",
+        "lseek",
+        "lstat",
+        "madvise",
+        "memfd_create",
+        "mkdir",
+        "mkdirat",
+        "mmap",
+        "mprotect",
+        "mremap",
+        "munmap",
+        "nanosleep",
+        "newfstatat",
+        "open",
+        "openat",
+        "pipe",
+        "pipe2",
+        "poll",
+        "ppoll",
+        "prctl",
+        "pread64",
+        "prlimit64",
+        "pselect6",
+        "pwrite64",
+        "read",
+        "readlink",
+        "readlinkat",
+        "readv",
+        "recvfrom",
+        "recvmsg",
+        "rename",
+        "renameat",
+        "rmdir",
+        "rt_sigaction",
+        "rt_sigprocmask",
+        "rt_sigreturn",
+        "sched_getaffinity",
+        "sched_yield",
+        "select",
+        "sendfile",
+        "sendmsg",
+        "sendto",
+        "set_robust_list",
+        "set_tid_address",
+        "setgid",
+        "setgroups",
+        "setitimer",
+        "setpgid",
+        "setresgid",
+        "setresuid",
+        "setsid",
+        "setsockopt",
+        "setuid",
+        "shutdown",
+        "sigaltstack",
+        "socket",
+        "socketpair",
+        "stat",
+        "statfs",
+        "symlink",
+        "symlinkat",
+        "sync",
+        "sysinfo",
+        "tgkill",
+        "time",
+        "timer_create",
+        "timer_delete",
+        "timer_settime",
+        "timerfd_create",
+        "timerfd_settime",
+        "truncate",
+        "umask",
+        "uname",
+        "unlink",
+        "unlinkat",
+        "utime",
+        "utimensat",
+        "utimes",
+        "wait4",
+        "waitid",
+        "write",
+        "writev"
       ],
       "action": "SCMP_ACT_ALLOW"
     }
@@ -953,14 +1084,13 @@ services:
   backend:
     security_opt:
       - seccomp:./backend/security/seccomp-profile.json
-      - apparmor:unconfined  # AppArmorプロファイルは次フェーズ
+      - apparmor:unconfined # AppArmorプロファイルは次フェーズ
       - no-new-privileges:true
 ```
 
 #### Task 4.3: イメージ署名（Cosign）
 
-**目的**: サプライチェーン攻撃防御
-**実装工数**: 8時間
+**目的**: サプライチェーン攻撃防御 **実装工数**: 8時間
 
 ```yaml
 # .github/workflows/docker-sign.yml（新規作成）
@@ -978,7 +1108,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write  # Cosign keyless署名用
+      id-token: write # Cosign keyless署名用
 
     steps:
       - uses: actions/checkout@v4
@@ -1052,8 +1182,8 @@ services:
     cap_drop:
       - ALL
     cap_add:
-      - NET_BIND_SERVICE  # port 8000バインドのみ許可
-      - CHOWN             # chownコマンド許可（最小限）
+      - NET_BIND_SERVICE # port 8000バインドのみ許可
+      - CHOWN # chownコマンド許可（最小限）
 ```
 
 #### Task 4.6: ネットワークポリシー定義
@@ -1216,21 +1346,21 @@ scrape_configs:
 
 ### GDPR準拠（データ保護）
 
-| 要件 | Docker実装 | 状態 |
-|------|-----------|------|
-| データ暗号化（at-rest） | ボリューム暗号化（LUKS） | ⚠️ 未実装 |
-| データ暗号化（in-transit） | TLS 1.3強制 | ⚠️ 未実装 |
-| アクセスログ | 監査ログ（Falco） | ❌ 未実装 |
-| データ削除 | ボリューム完全削除 | ✅ 可能 |
+| 要件                       | Docker実装               | 状態      |
+| -------------------------- | ------------------------ | --------- |
+| データ暗号化（at-rest）    | ボリューム暗号化（LUKS） | ⚠️ 未実装 |
+| データ暗号化（in-transit） | TLS 1.3強制              | ⚠️ 未実装 |
+| アクセスログ               | 監査ログ（Falco）        | ❌ 未実装 |
+| データ削除                 | ボリューム完全削除       | ✅ 可能   |
 
 ### SOC 2準拠（セキュリティ統制）
 
-| 統制 | Docker実装 | 証跡 |
-|------|-----------|------|
-| CC6.1 論理アクセス | seccomp/AppArmor | 設定ファイル |
-| CC6.6 脆弱性管理 | Trivyスキャン | SARIF結果 |
+| 統制               | Docker実装       | 証跡             |
+| ------------------ | ---------------- | ---------------- |
+| CC6.1 論理アクセス | seccomp/AppArmor | 設定ファイル     |
+| CC6.6 脆弱性管理   | Trivyスキャン    | SARIF結果        |
 | CC6.7 システム監視 | Falco/Prometheus | ログ・メトリクス |
-| CC7.2 変更管理 | Cosign署名 | 署名証明書 |
+| CC7.2 変更管理     | Cosign署名       | 署名証明書       |
 
 ---
 
@@ -1298,13 +1428,13 @@ echo "Forensics completed: ${FORENSICS_DIR}"
 
 ### セキュリティ成熟度の現状と目標
 
-| レベル | 現状 | 3ヶ月後目標 | 6ヶ月後目標 |
-|-------|------|-----------|-----------|
-| **基礎セキュリティ** | 60% | 85% | 95% |
-| **脆弱性管理** | 20% | 90% | 95% |
-| **コンテナエスケープ対策** | 10% | 80% | 95% |
-| **ゼロトラスト準拠** | 15% | 60% | 85% |
-| **コンプライアンス** | 40% | 75% | 90% |
+| レベル                     | 現状 | 3ヶ月後目標 | 6ヶ月後目標 |
+| -------------------------- | ---- | ----------- | ----------- |
+| **基礎セキュリティ**       | 60%  | 85%         | 95%         |
+| **脆弱性管理**             | 20%  | 90%         | 95%         |
+| **コンテナエスケープ対策** | 10%  | 80%         | 95%         |
+| **ゼロトラスト準拠**       | 15%  | 60%         | 85%         |
+| **コンプライアンス**       | 40%  | 75%         | 90%         |
 
 ### 実装優先度マトリクス
 
@@ -1328,10 +1458,12 @@ echo "Forensics completed: ${FORENSICS_DIR}"
 ### 推奨される次のステップ
 
 1. **即座実施（今週中）**:
+
    - Trivyスキャン統合（4時間）
    - .dockerignoreのシークレットパターン強化（1時間）
 
 2. **1週間以内**:
+
    - seccompプロファイル適用（6時間）
    - Cosignイメージ署名（8時間）
    - SBoM自動生成（4時間）
@@ -1372,6 +1504,5 @@ echo "Forensics completed: ${FORENSICS_DIR}"
 
 ---
 
-**レビュー実施者**: Security Architect Agent (Alex Stamos ペルソナ)
-**承認者**: [承認待ち]
-**次回レビュー予定**: 2025年11月8日
+**レビュー実施者**: Security Architect Agent (Alex Stamos ペルソナ) **承認者**:
+[承認待ち] **次回レビュー予定**: 2025年11月8日

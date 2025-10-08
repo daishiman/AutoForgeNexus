@@ -27,6 +27,7 @@ backend/
 ```
 
 **問題点:**
+
 - 関連するコードが複数ディレクトリに分散
 - 新機能追加時に影響範囲が広がる
 - テストと実装の対応関係が不明瞭
@@ -81,10 +82,12 @@ backend/
 ## 移行のメリット
 
 ### 1. 高い凝集性
+
 - **Before**: 3ファイル変更で3ディレクトリを横断
 - **After**: 1つのprompt/ディレクトリ内で完結
 
 ### 2. 変更容易性
+
 ```python
 # 例: プロンプト機能の変更
 # Before: 影響範囲が広い
@@ -99,6 +102,7 @@ modified: src/domain/prompt/services/prompt_generation_service.py
 ```
 
 ### 3. 新機能追加の容易さ
+
 ```python
 # 評価機能を追加する場合
 # After: 独立したディレクトリとして追加
@@ -115,6 +119,7 @@ domain/
 ### Phase 1: 準備 ✅ 完了
 
 ### Phase 2: ディレクトリ作成とファイル移動 ✅ 完了
+
 ```bash
 # ディレクトリ構造作成
 mkdir -p backend/src/domain/prompt/{entities,value_objects,services,repositories}
@@ -133,6 +138,7 @@ mv backend/tests/unit/domain/test_prompt_generation_service.py backend/tests/uni
 ```
 
 ### Phase 3: import文の修正 ✅ 完了
+
 ```python
 # Before
 from backend.src.domain.entities.prompt import Prompt
@@ -143,7 +149,8 @@ from backend.src.domain.prompt.entities.prompt import Prompt
 from backend.src.domain.prompt.value_objects.prompt_content import PromptContent
 ```
 
-### Phase 4: __init__.py整備 ✅ 完了
+### Phase 4: **init**.py整備 ✅ 完了
+
 ```python
 # backend/src/domain/prompt/__init__.py
 """
@@ -165,6 +172,7 @@ __all__ = [
 ```
 
 ### Phase 5: テスト実行と確認 ✅ 完了
+
 ```bash
 # テスト実行
 python -m pytest backend/tests/unit/domain/prompt/ -v
@@ -178,10 +186,12 @@ python -m pytest backend/tests/unit/domain/prompt/ --cov=backend/src/domain/prom
 ### なぜ今なのか？
 
 1. **コードベースが小規模**
+
    - 現在: 7ファイル（移行コスト最小）
    - Phase 3後: 50+ ファイル（移行困難）
 
 2. **破壊的変更の影響が最小**
+
    - まだAPIやUIとの統合なし
    - 他チームへの影響なし
 
@@ -191,11 +201,11 @@ python -m pytest backend/tests/unit/domain/prompt/ --cov=backend/src/domain/prom
 
 ## リスクと対策
 
-| リスク | 影響度 | 対策 |
-|--------|--------|------|
-| import文の見落とし | 低 | pytestで検出可能 |
-| Gitコンフリクト | 中 | 専用ブランチで作業 |
-| CI/CDの破損 | 低 | テスト実行で検証 |
+| リスク             | 影響度 | 対策               |
+| ------------------ | ------ | ------------------ |
+| import文の見落とし | 低     | pytestで検出可能   |
+| Gitコンフリクト    | 中     | 専用ブランチで作業 |
+| CI/CDの破損        | 低     | テスト実行で検証   |
 
 ## 実施結果
 
@@ -208,6 +218,7 @@ python -m pytest backend/tests/unit/domain/prompt/ --cov=backend/src/domain/prom
 **結果**: 機能ベース集約パターンへの移行が成功しました。
 
 理由:
+
 1. 移行コストが最小（2-3時間で完了）
 2. 将来の開発効率が大幅向上（20-30%）
 3. 保守性とテスタビリティの改善

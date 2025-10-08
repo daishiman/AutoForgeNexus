@@ -1,7 +1,9 @@
 # Phase 5 フロントエンド - クリティカル修正実施ガイド
 
 ## 📋 概要
-Phase 5フロントエンド実装で発見された問題の修正手順を、各専門エージェントが最適化した形で文書化します。
+
+Phase
+5フロントエンド実装で発見された問題の修正手順を、各専門エージェントが最適化した形で文書化します。
 
 ---
 
@@ -12,6 +14,7 @@ Phase 5フロントエンド実装で発見された問題の修正手順を、�
 #### 担当: DevOps Coordinator + Frontend Architect
 
 ##### 事前確認
+
 ```bash
 # 現在のNode.jsバージョン確認
 node --version  # 現在: v20.19.0
@@ -24,6 +27,7 @@ cd frontend && pnpm ls
 ```
 
 ##### 実行手順
+
 ```bash
 # Step 1: 実行中のプロセスを停止
 # すべての開発サーバーを停止（Ctrl+C）
@@ -47,6 +51,7 @@ pnpm dev --turbo
 ```
 
 ##### 検証項目
+
 - [ ] Node.js 22.12.0がインストールされている
 - [ ] pnpm 9.15.9が使用されている
 - [ ] 開発サーバーが警告なしで起動する
@@ -59,6 +64,7 @@ pnpm dev --turbo
 #### 担当: Frontend Architect + Performance Optimizer
 
 ##### 問題分析
+
 ```
 エラー: Module not found: '../lightningcss.darwin-arm64.node'
 原因: Tailwind CSS 4.0依存関係とM1 Macネイティブバイナリの不整合
@@ -67,6 +73,7 @@ pnpm dev --turbo
 ##### 解決手順
 
 ###### オプション1: lightningcssの再ビルド（推奨）
+
 ```bash
 cd frontend
 
@@ -93,6 +100,7 @@ pnpm dev --turbo
 ```
 
 ###### オプション2: Tailwind CSS 3.x環境の完全セットアップ
+
 ```bash
 # Step 1: Tailwind CSS 3.xクリーンインストール
 pnpm remove tailwindcss @tailwindcss/postcss
@@ -106,6 +114,7 @@ npx tailwindcss init -p
 ```
 
 ##### 検証項目
+
 - [ ] lightningcssエラーが解消されている
 - [ ] CSSのビルドが成功する
 - [ ] スタイルが正常に適用される
@@ -117,6 +126,7 @@ npx tailwindcss init -p
 #### 担当: Quality Engineer + Test Automation Engineer
 
 ##### 修正手順
+
 ```bash
 cd frontend
 
@@ -165,6 +175,7 @@ pnpm type-check
 ```
 
 ##### 検証項目
+
 - [ ] 型エラーが0件になっている
 - [ ] IDEで型補完が機能する
 - [ ] ビルドが成功する
@@ -178,6 +189,7 @@ pnpm type-check
 #### 担当: DevOps Coordinator + Observability Engineer
 
 ##### Dockerfile.dev作成
+
 ```dockerfile
 # frontend/Dockerfile.dev
 FROM node:22-alpine AS base
@@ -205,6 +217,7 @@ CMD ["pnpm", "dev", "--turbo"]
 ```
 
 ##### docker-compose追加
+
 ```yaml
 # docker-compose.dev.yml に追加
 services:
@@ -213,7 +226,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     ports:
-      - "3001:3001"
+      - '3001:3001'
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -228,6 +241,7 @@ services:
 ```
 
 ##### 実行手順
+
 ```bash
 # ビルドと起動
 docker-compose -f docker-compose.dev.yml up -d frontend
@@ -245,6 +259,7 @@ docker-compose -f docker-compose.dev.yml logs -f frontend
 ##### 実装手順
 
 ###### Step 1: Web Vitals設定
+
 ```typescript
 // src/lib/monitoring/web-vitals.ts
 import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals';
@@ -294,6 +309,7 @@ export function reportWebVitals() {
 ```
 
 ###### Step 2: アプリケーションへの統合
+
 ```typescript
 // src/app/layout.tsx に追加
 import { reportWebVitals } from '@/lib/monitoring/web-vitals';
@@ -304,6 +320,7 @@ if (typeof window !== 'undefined') {
 ```
 
 ###### Step 3: APIエンドポイント作成
+
 ```typescript
 // src/app/api/analytics/route.ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -362,6 +379,7 @@ npm pkg set scripts.prepare="husky install"
 ```
 
 ##### コミット前チェック項目
+
 ```bash
 # .husky/pre-commit
 #!/bin/sh
@@ -386,6 +404,7 @@ pnpm test:unit --passWithNoTests
 #### 担当: DevOps Coordinator + Test Automation Engineer
 
 ##### GitHub Actions設定
+
 ```yaml
 # .github/workflows/frontend-ci.yml
 name: Frontend CI
@@ -452,31 +471,34 @@ jobs:
 
 ## 📊 実装優先順位マトリクス
 
-| タスク | 緊急度 | 重要度 | 工数 | 担当エージェント |
-|-------|--------|--------|------|------------------|
-| Node.js 22アップグレード | 高 | 高 | 1h | DevOps + Frontend |
-| lightningcss修正 | 高 | 高 | 2h | Frontend + Performance |
-| 型定義修正 | 中 | 高 | 1h | Quality + Test |
-| Docker環境 | 中 | 高 | 3h | DevOps + Observability |
-| Web Vitals | 中 | 高 | 2h | Performance + Observability |
-| Git Hooks | 低 | 高 | 1h | Quality + Security |
-| CI/CD | 低 | 高 | 4h | DevOps + Test |
+| タスク                   | 緊急度 | 重要度 | 工数 | 担当エージェント            |
+| ------------------------ | ------ | ------ | ---- | --------------------------- |
+| Node.js 22アップグレード | 高     | 高     | 1h   | DevOps + Frontend           |
+| lightningcss修正         | 高     | 高     | 2h   | Frontend + Performance      |
+| 型定義修正               | 中     | 高     | 1h   | Quality + Test              |
+| Docker環境               | 中     | 高     | 3h   | DevOps + Observability      |
+| Web Vitals               | 中     | 高     | 2h   | Performance + Observability |
+| Git Hooks                | 低     | 高     | 1h   | Quality + Security          |
+| CI/CD                    | 低     | 高     | 4h   | DevOps + Test               |
 
 ---
 
 ## ✅ 成功基準
 
 ### 即座対応項目の完了条件
+
 - Node.js 22で警告なしで動作
 - CSS関連エラーゼロ
 - TypeScript型エラーゼロ
 
 ### 短期対応項目の完了条件
+
 - Dockerコンテナで動作確認
 - Web Vitalsデータ収集開始
 - コミット時の自動チェック動作
 
 ### 中期対応項目の完了条件
+
 - PRごとの自動テスト実行
 - ビルド成功率100%
 - E2Eテストカバレッジ50%以上
@@ -492,6 +514,5 @@ jobs:
 
 ---
 
-**文書作成者**: 全専門エージェント協働
-**作成日時**: 2025-09-29 07:00 JST
+**文書作成者**: 全専門エージェント協働 **作成日時**: 2025-09-29 07:00 JST
 **次回レビュー**: 実装完了後

@@ -1,22 +1,24 @@
 # AutoForgeNexus Backend Architecture Guide
 
-このファイルは、バックエンド実装時の Claude Code (claude.ai/code) へのガイダンスを提供します。
+このファイルは、バックエンド実装時の Claude Code
+(claude.ai/code) へのガイダンスを提供します。
 
 ## 🎯 このバックエンドが実現すること
 
 ### システムの目的
+
 **「誰でも高品質なAIプロンプトを作成・最適化できる」を実現するバックエンド**
 
 ### 主要な要件と技術選定理由
 
-| 要件 | 選定技術 | 理由 |
-|------|---------|------|
-| **高速レスポンス** | FastAPI + Redis | 非同期処理とキャッシングでP95 < 200ms実現 |
-| **100+ LLM対応** | LiteLLM | 統一APIで全プロバイダー対応、コスト最適化 |
-| **並列評価** | Redis Streams + CQRS | イベント駆動で10並列以上の評価を実現 |
-| **バージョン管理** | Event Sourcing | Git-likeな履歴管理と改善追跡 |
-| **品質保証** | DDD + Clean Architecture | ビジネスロジックの整合性とテスタビリティ |
-| **スケーラビリティ** | マイクロサービス対応設計 | 将来の分離を想定した疎結合 |
+| 要件                 | 選定技術                 | 理由                                      |
+| -------------------- | ------------------------ | ----------------------------------------- |
+| **高速レスポンス**   | FastAPI + Redis          | 非同期処理とキャッシングでP95 < 200ms実現 |
+| **100+ LLM対応**     | LiteLLM                  | 統一APIで全プロバイダー対応、コスト最適化 |
+| **並列評価**         | Redis Streams + CQRS     | イベント駆動で10並列以上の評価を実現      |
+| **バージョン管理**   | Event Sourcing           | Git-likeな履歴管理と改善追跡              |
+| **品質保証**         | DDD + Clean Architecture | ビジネスロジックの整合性とテスタビリティ  |
+| **スケーラビリティ** | マイクロサービス対応設計 | 将来の分離を想定した疎結合                |
 
 ## 🏗️ アーキテクチャ概要
 
@@ -25,16 +27,16 @@
 ```
 1. Prompt Engineering Context（プロンプト設計）
    - プロンプトの作成、最適化、バージョン管理
-   
+
 2. Evaluation Context（評価）
    - テスト実行、メトリクス分析、レポート生成
-   
+
 3. LLM Integration Context（AI連携）
    - 100+プロバイダー統合、リクエスト処理、コスト管理
-   
+
 4. User Interaction Context（ユーザー操作）
    - 人間-AI対話、フィードバック、協働作業
-   
+
 5. Data Management Context（データ管理）
    - プロンプト/履歴/テストケース永続化
 ```
@@ -104,17 +106,21 @@ backend/
 ### 1. ドメイン層実装方針
 
 **エンティティ設計**
+
 - 各エンティティは自身のビジネスルールを保持
 - 集約ルートを通じてのみ外部からアクセス
 - 不変条件は必ずエンティティ内で保証
 
 **値オブジェクト設計**
+
 - immutable（不変）として実装
 - 自己検証ロジックを内包
 - IDは全て値オブジェクトとして実装
 
 **集約境界の厳守（機能ベース）**
-- **prompt/**: プロンプト管理機能（Prompt, PromptContent, PromptMetadata, UserInput）
+
+- **prompt/**: プロンプト管理機能（Prompt, PromptContent, PromptMetadata,
+  UserInput）
 - **evaluation/**: 評価機能（Evaluation, TestResult, Metrics）
 - **llm_integration/**: LLM統合（Provider, Request, Response, Cost）
 - **user_interaction/**: ユーザー操作（Session, Feedback, History）
@@ -125,16 +131,19 @@ backend/
 ### 2. アプリケーション層実装方針
 
 **CQRS実装ルール**
+
 - コマンド側：データ変更、イベント発行、トランザクション保証
 - クエリ側：読み取り専用、キャッシュ活用、DTO返却
 - コマンドとクエリのモデルは完全分離
 
 **ユースケース設計**
+
 - 1ユースケース = 1つのビジネス操作
 - 依存性注入でリポジトリとサービスを受け取る
 - 必ずドメインイベントを発行
 
 **アプリケーションサービス設計**
+
 - 複数ユースケースの調整役
 - ワークフローの管理
 - 外部サービスとの統合調整
@@ -142,18 +151,21 @@ backend/
 ### 3. インフラストラクチャ層実装方針
 
 **リポジトリ実装**
+
 - インターフェース定義はドメイン層
 - 実装はインフラ層（Turso/Redis）
 - ORMはSQLAlchemy 2.0を使用
 - 生SQLは原則禁止
 
 **LLM統合方針**
+
 - LiteLLMで100+プロバイダー統合
 - フォールバック戦略の実装必須
 - コスト最適化ルーティング
 - レスポンスキャッシング
 
 **イベント駆動実装**
+
 - Redis Streamsでイベントバス実装
 - at-least-once配信保証
 - イベントソーシングでの履歴記録
@@ -201,6 +213,7 @@ alembic upgrade head
 ## 📝 実装手順（これ通りに実装する）
 
 ### Step 1: プロジェクト初期化
+
 ```bash
 cd backend
 python3.13 -m venv venv
@@ -209,12 +222,15 @@ pip install -e .[dev]
 ```
 
 ### Step 2: ディレクトリ構造作成
+
 上記の `📁 ディレクトリ構造` の通りにフォルダを作成
 
 ### Step 3: Phase別実装
 
 #### Phase 1: 基盤構築（Week 1-2）
+
 **実装順序：**
+
 1. ドメインモデル定義 → `src/domain/prompt/` 配下（機能ベース）
 2. リポジトリインターフェース → `src/domain/prompt/repositories/`
 3. Turso接続設定 → `src/infrastructure/shared/database/`
@@ -222,30 +238,37 @@ pip install -e .[dev]
 5. Clerk認証ミドルウェア → `src/presentation/api/shared/middleware.py`
 
 **完了基準：**
+
 - [ ] プロンプトの作成・取得・更新・削除が可能
 - [ ] 認証付きAPIエンドポイントが動作
 - [ ] 単体テストカバレッジ > 80%
 
 #### Phase 2: コア機能（Week 3-4）
+
 **実装順序：**
+
 1. CreatePromptUseCase → `src/application/prompt/commands/create_prompt.py`
 2. LiteLLM統合 → `src/infrastructure/llm_integration/providers/litellm/`
 3. 基本評価機能 → `src/application/evaluation/commands/`
 4. レポート生成 → `src/application/evaluation/services/`
 
 **完了基準：**
+
 - [ ] プロンプト作成から評価まで一連のフロー完成
 - [ ] OpenAI/Anthropic経由でプロンプト実行可能
 - [ ] 評価結果のレポート生成
 
 #### Phase 3: 高度な機能（Week 5-6）
+
 **実装順序：**
+
 1. CQRSパターン適用 → 各機能のcommands/queries分離
 2. Redis Streamsイベントバス → `src/application/shared/events/`
 3. 並列評価実行 → `src/application/evaluation/services/`
 4. バージョニング機能 → `src/domain/prompt/entities/`
 
 **完了基準：**
+
 - [ ] 10並列以上の評価実行
 - [ ] イベント駆動での非同期処理
 - [ ] Git-likeなバージョン管理
@@ -253,12 +276,14 @@ pip install -e .[dev]
 ## 🚨 重要な注意事項
 
 ### やってはいけないこと ❌
+
 1. ドメインロジックをコントローラーに書かない
 2. 集約境界を越えた直接参照をしない
 3. 同期的な重い処理（必ずイベント駆動で）
 4. 生のSQLクエリ（SQLAlchemy ORM使用）
 
 ### 必須事項 ✅
+
 1. すべてのAPIにOpenAPI仕様を記述
 2. エラーは構造化して返却
 3. ログは構造化ログ形式
@@ -277,6 +302,7 @@ pip install -e .[dev]
 ### Phase 3: バックエンド実装進捗（45%完了）
 
 #### ✅ 完了項目（Task 3.1完了）
+
 - ✅ Python 3.13 + FastAPI 0.116.1環境構築
 - ✅ DDD + Clean Architecture構造（機能ベース集約パターン全面適用）
 - ✅ Domain層構造改善（prompt/評価/LLM/ユーザー操作/ワークフロー集約）
@@ -290,31 +316,35 @@ pip install -e .[dev]
 - ✅ ドメインモデル基底クラス（BaseEntity, BaseValue, BaseRepository）
 
 #### 🚧 実装中（Task 3.2-3.7予定）
+
 - プロンプト管理コア機能（Prompt/PromptContent/PromptMetadataエンティティ）
 - Clerk認証システム統合
 - Turso/libSQL接続実装
 - 基本CRUD API実装
 
 #### 📋 未実装（MVP必須）
+
 - LiteLLM統合（100+プロバイダー対応）
 - Redis Streamsイベントバス実装
 - 並列評価実行システム
 - バージョン管理機能（Event Sourcing）
 
 ### 構造改善の成果（Task 3.1）
+
 - **機能ベース集約パターン採用**: 変更範囲の局所化、マイクロサービス化への道筋
 - **CQRS全面適用**: 読み書き分離による性能最適化準備完了
 - **無限ループ解消**: src/application/src/applicationなど重複構造を削除
 - **テストカバレッジ基盤**: domain/prompt配下のテスト構造完成
 
 ### CI/CD最適化の成果（Phase 2完了）
+
 - ✅ GitHub Actions使用量: 730分/月（無料枠36.5%）
 - ✅ 共有ワークフロー実装で52.3%のコスト削減達成
 - ✅ セキュリティ強化: CodeQL、TruffleHog統合済み
 - ✅ セキュリティスコア: 78/100（2025年9月29日評価）
 
 ### セキュリティ改善項目（Critical対応必須）
+
 - 🚨 CVE-2024-SECRETS-01: GitHub Actions シークレット漏洩リスク（CVSS 9.1）
 - 🚨 CVE-2024-SECRETS-02: Git Hooks 秘密検知の回避可能性（CVSS 8.8）
 - ⚠️ アクション権限の最小化（write-all → 必要最小限）
-

@@ -7,12 +7,14 @@
 ## 🎯 ロールバック概要
 
 ### 適用ケース
+
 - クリーンアップスクリプト実行後にCI/CDが失敗
 - 新しいトークンが正常に動作しない
 - 環境ファイル削除により開発環境が起動しない
 - GitHub Secretsの設定ミス
 
 ### 前提条件
+
 - バックアップディレクトリ（`backup-secrets-*`）が存在すること
 - Git履歴は改変されていないこと（Git履歴クリーンアップは未実施）
 
@@ -23,6 +25,7 @@
 ### Phase 1: 影響範囲の特定
 
 #### 1.1 エラー内容の確認
+
 ```bash
 # CI/CDログ確認
 gh run list --limit 5
@@ -38,6 +41,7 @@ echo $DISCORD_WEBHOOK_URL
 ```
 
 #### 1.2 バックアップディレクトリの確認
+
 ```bash
 # バックアップ一覧表示
 ls -la backup-secrets-*
@@ -54,6 +58,7 @@ grep -o "^[A-Z_]*=" backup-secrets-*/backend/.env.local
 ### Phase 2: 環境ファイルの復元
 
 #### 2.1 単一ファイルの復元
+
 ```bash
 # 特定ファイルのみ復元
 BACKUP_DIR=$(ls -td backup-secrets-* | head -1)
@@ -68,6 +73,7 @@ head -n 5 backend/.env.local  # 先頭5行のみ表示
 ```
 
 #### 2.2 全環境ファイルの一括復元
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -115,6 +121,7 @@ echo "🎉 環境ファイルの復元完了"
 ### Phase 3: GitHub Secretsのロールバック
 
 #### 3.1 既存Secretsの確認
+
 ```bash
 # 現在のSecrets一覧
 gh secret list
@@ -125,6 +132,7 @@ gh secret remove CLOUDFLARE_API_TOKEN
 ```
 
 #### 3.2 旧トークンの再設定
+
 ```bash
 # バックアップから旧トークンを取得（手動でコピー）
 cat backup-secrets-*/backend/.env.local | grep DISCORD_WEBHOOK_URL
@@ -144,6 +152,7 @@ gh secret set CLOUDFLARE_API_TOKEN_STAGING --env staging --body "<旧token>"
 ### Phase 4: Cloudflare Workers Secretsの復元
 
 #### 4.1 現在のSecrets確認
+
 ```bash
 # Cloudflare Workers Secrets一覧
 cd infrastructure/cloudflare/workers
@@ -155,6 +164,7 @@ wrangler secret delete DISCORD_WEBHOOK_URL
 ```
 
 #### 4.2 旧Secretsの再設定
+
 ```bash
 # 旧トークンをCloudflare Workersに再設定
 wrangler secret put CLOUDFLARE_API_TOKEN
@@ -169,6 +179,7 @@ wrangler secret put DISCORD_WEBHOOK_URL
 ### Phase 5: CI/CDパイプラインの復旧
 
 #### 5.1 ワークフロー変更のrevert
+
 ```bash
 # 最近のコミットを確認
 git log --oneline -10
@@ -182,6 +193,7 @@ git push origin <branch_name>
 ```
 
 #### 5.2 ワークフロー手動トリガー
+
 ```bash
 # CI/CDワークフロー再実行
 gh workflow run ci.yml --ref <branch_name>
@@ -196,6 +208,7 @@ gh run watch
 ### Phase 6: pre-commit フックの無効化
 
 #### 6.1 TruffleHogフック削除
+
 ```bash
 # .pre-commit-config.yamlの編集
 # TruffleHog関連のフックをコメントアウト
@@ -213,6 +226,7 @@ pre-commit uninstall
 ```
 
 #### 6.2 pre-commit再インストール（オプション）
+
 ```bash
 # TruffleHogなしで再インストール
 pre-commit install
@@ -226,6 +240,7 @@ pre-commit run --all-files
 ### Phase 7: 検証
 
 #### 7.1 ローカル開発環境の起動確認
+
 ```bash
 # バックエンド起動
 cd backend
@@ -242,6 +257,7 @@ curl http://localhost:3000
 ```
 
 #### 7.2 CI/CDパイプライン確認
+
 ```bash
 # 最新ワークフロー実行状況
 gh run list --limit 5
@@ -254,6 +270,7 @@ gh run view <run_id> --log
 ```
 
 #### 7.3 環境変数の検証
+
 ```bash
 # GitHub Secretsが正しく設定されているか確認
 gh secret list
@@ -270,6 +287,7 @@ grep -o "^[A-Z_]*=" backend/.env.local
 ## 🚨 ロールバック後の対応
 
 ### 完了確認チェックリスト
+
 - [ ] ローカル開発環境が正常起動
 - [ ] CI/CDパイプラインが成功
 - [ ] GitHub Secrets設定完了
@@ -277,12 +295,15 @@ grep -o "^[A-Z_]*=" backend/.env.local
 - [ ] 環境ファイルが復元されている
 
 ### 次のステップ
+
 1. **根本原因の分析**
+
    - なぜロールバックが必要だったのか
    - どの手順で問題が発生したか
    - ドキュメントの不備はないか
 
 2. **対策の見直し**
+
    - 対応計画の修正
    - スクリプトのデバッグ
    - 段階的アプローチの再検討
@@ -297,33 +318,34 @@ grep -o "^[A-Z_]*=" backend/.env.local
 ## 📝 ロールバックログ
 
 ### テンプレート
+
 ```markdown
 ## ロールバック実施記録
 
-**実施日時**: 2025-10-XX XX:XX
-**実施者**: [名前]
-**ロールバック理由**: [理由を詳細に記述]
+**実施日時**: 2025-10-XX XX:XX **実施者**: [名前] **ロールバック理由**:
+[理由を詳細に記述]
 
 **影響範囲**:
+
 - [ ] ローカル開発環境
 - [ ] CI/CDパイプライン
 - [ ] GitHub Secrets
 - [ ] Cloudflare Workers
 
 **実施手順**:
+
 1. Phase X: [実施内容]
 2. Phase Y: [実施内容]
 
 **復旧結果**:
+
 - [ ] ローカル環境正常化
 - [ ] CI/CD成功
 - [ ] 機能動作確認完了
 
-**根本原因**:
-[問題の根本原因を記述]
+**根本原因**: [問題の根本原因を記述]
 
-**再発防止策**:
-[今後の対策を記述]
+**再発防止策**: [今後の対策を記述]
 
 **関連Issue**: #XXX
 ```
@@ -341,18 +363,18 @@ grep -o "^[A-Z_]*=" backend/.env.local
 ## 📞 エスカレーション
 
 ### 連絡先
+
 - **セキュリティ担当**: [担当者名・連絡先]
 - **DevOps担当**: [担当者名・連絡先]
 - **テックリード**: [担当者名・連絡先]
 
 ### エスカレーション基準
+
 - **CRITICAL**: 本番環境が停止・動作不能
 - **HIGH**: 開発環境が全員影響・CI/CD完全停止
 - **MEDIUM**: 一部環境のみ影響・復旧手順が不明
 
 ---
 
-**作成日**: 2025年10月8日
-**最終更新**: 2025年10月8日
-**責任者**: version-control-specialist Agent
-**ステータス**: 準備完了
+**作成日**: 2025年10月8日 **最終更新**: 2025年10月8日 **責任者**:
+version-control-specialist Agent **ステータス**: 準備完了

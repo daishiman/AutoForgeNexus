@@ -1,12 +1,14 @@
 # Application層ディレクトリ構造改善 実装レポート
 
 ## 📋 概要
+
 - **タスク番号**: Task 3.1.4
 - **実装日**: 2025-09-28
 - **担当エージェント**: refactoring-expert
 - **目的**: application層の機能ベース集約パターン適用とCQRS完全実装
 
 ## 🎯 改善背景
+
 - **問題点1**: 技術的分類（commands/, queries/）と機能分類の混在
 - **問題点2**: src/application/src/applicationの無限ループ構造
 - **問題点3**: domain層との構造不整合
@@ -14,12 +16,14 @@
 ## ✅ 実装内容
 
 ### 1. 無限ループ構造の解決
+
 - **問題**: `src/application/src/application`という重複パス
 - **解決**: 不正なディレクトリを削除、正しい構造に修正
 
 ### 2. 機能ベース集約構造の適用
 
 #### Before（混在構造）
+
 ```
 application/
 ├── commands/        # 技術的分類
@@ -31,6 +35,7 @@ application/
 ```
 
 #### After（機能ベース集約）
+
 ```
 application/
 ├── prompt/                # プロンプト管理機能
@@ -70,11 +75,14 @@ application/
 ## 📊 成果物
 
 ### 更新ファイル
+
 1. `/docs/architecture/backend_directory_structure.md`
+
    - application層構造の詳細更新
    - shared配下の構造追記
 
 2. `/backend/CLAUDE.md`
+
    - 新ディレクトリ構造反映
    - CQRSパターン説明更新
 
@@ -83,11 +91,13 @@ application/
    - 完了マーク追加
 
 ### 物理ディレクトリ構造
+
 - 27個のディレクトリを正しく配置
 - 技術的分類ディレクトリを削除
 - shared配下を5つのサブディレクトリで整理
 
 ## 🎯 達成基準
+
 - [x] 無限ループ構造の解決
 - [x] 機能ベース集約の完全適用
 - [x] CQRSパターンの明確な分離
@@ -97,11 +107,13 @@ application/
 ## 📈 改善効果
 
 ### 定量的効果
+
 - **ディレクトリ深度**: 適切な3-4階層に統一
 - **機能独立性**: 100%（各機能が完全に独立）
 - **構造整合性**: domain層と完全一致
 
 ### 定性的効果
+
 - **理解容易性**: 機能単位での把握が容易
 - **変更影響**: 機能内で完結
 - **テスタビリティ**: ユースケースごとのテストが明確
@@ -110,6 +122,7 @@ application/
 ## 🔄 構造の一貫性
 
 ### レイヤー間の整合性
+
 ```
 domain/prompt/        ←→ application/prompt/        ←→ infrastructure/prompt/
       ↓                        ↓                              ↓
@@ -117,6 +130,7 @@ domain/prompt/        ←→ application/prompt/        ←→ infrastructure/pr
 ```
 
 ### CQRS実装の一貫性
+
 - 全機能でcommands/queries/servicesの3層構造
 - shared配下で基底クラスを共有
 - イベントバスによる疎結合
@@ -124,11 +138,13 @@ domain/prompt/        ←→ application/prompt/        ←→ infrastructure/pr
 ## 📝 今後の推奨事項
 
 1. **新機能追加時のルール**
+
    - 必ず機能ディレクトリを作成
    - commands/queries/servicesを配置
    - shared/の基底クラスを継承
 
 2. **テスト構造の整合**
+
    ```
    tests/unit/application/[機能]/
    ├── commands/
@@ -144,11 +160,13 @@ domain/prompt/        ←→ application/prompt/        ←→ infrastructure/pr
 ## 🚨 注意事項
 
 ### パス管理
+
 - 作業ディレクトリの確認必須
 - 相対パスの使用を避ける
 - pwdでの位置確認を習慣化
 
 ### 構造の維持
+
 - 技術的分類への後戻り禁止
 - 機能横断的な配置禁止
 - shared/への過度な依存を避ける
@@ -162,6 +180,4 @@ domain/prompt/        ←→ application/prompt/        ←→ infrastructure/pr
 
 ---
 
-**作成日**: 2025-09-28
-**作成者**: Claude Code (Opus 4.1)
-**承認**: Pending
+**作成日**: 2025-09-28 **作成者**: Claude Code (Opus 4.1) **承認**: Pending

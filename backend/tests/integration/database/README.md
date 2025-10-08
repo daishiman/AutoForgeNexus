@@ -18,22 +18,27 @@ pytest tests/integration/database/ --cov=src/infrastructure --cov-report=html
 ## 📋 テストカテゴリ
 
 ### 1. データベース接続テスト
+
 ```bash
 pytest tests/integration/database/test_database_connection.py::TestDatabaseConnection -v
 ```
+
 - ローカル/本番環境の接続URL取得
 - エンジン・セッション作成
 - シングルトンパターン検証
 
 ### 2. テーブル存在確認テスト
+
 ```bash
 pytest tests/integration/database/test_database_connection.py::TestTableExistence -v
 ```
+
 - テーブル作成確認
 - カラム構造検証
 - インデックス確認
 
 ### 3. CRUD操作テスト
+
 ```bash
 # プロンプトCRUD
 pytest tests/integration/database/test_database_connection.py::TestPromptCRUD -v
@@ -46,22 +51,27 @@ pytest tests/integration/database/test_database_connection.py::TestTestResultCRU
 ```
 
 ### 4. DDD境界テスト
+
 ```bash
 pytest tests/integration/database/test_database_connection.py::TestDDDBoundaries -v
 ```
+
 - 集約間のID参照
 - 集約内relationship
 
 ### 5. パフォーマンステスト
+
 ```bash
 pytest tests/integration/database/test_database_connection.py::TestDatabasePerformance -v
 ```
+
 - バルクインサート（100件 < 1秒）
 - インデックス付きクエリ（< 0.1秒）
 
 ## 🔧 環境設定
 
 ### 必須環境変数
+
 ```bash
 # テスト用（自動設定）
 export APP_ENV=local
@@ -69,7 +79,9 @@ export DATABASE_URL=sqlite:///./test_autoforge.db
 ```
 
 ### Redis接続テスト（オプション）
+
 Redis実行中の場合のみ：
+
 ```bash
 # Redisを起動
 redis-server --daemonize yes
@@ -95,14 +107,17 @@ pytest tests/integration/database/test_database_connection.py::TestRedisConnecti
 ## 🐛 トラブルシューティング
 
 ### エラー: `AttributeError: 'Settings' object has no attribute 'DEBUG'`
-**原因**: 設定ファイルでは`debug`（小文字）を使用
-**解決**: `turso_connection.py`で`self.settings.debug`を使用
+
+**原因**: 設定ファイルでは`debug`（小文字）を使用 **解決**:
+`turso_connection.py`で`self.settings.debug`を使用
 
 ### エラー: `ArgumentError: delete-orphan cascade`
-**原因**: 自己参照関係での不適切なcascade設定
-**解決**: `cascade="all, delete"`に変更（`delete-orphan`削除）
+
+**原因**: 自己参照関係での不適切なcascade設定 **解決**:
+`cascade="all, delete"`に変更（`delete-orphan`削除）
 
 ### エラー: 外部キー制約が機能しない
+
 **原因**: SQLiteではデフォルトでFK制約が無効
 **解決**: テストフィクスチャで`PRAGMA foreign_keys=ON`実行済み
 
@@ -119,6 +134,7 @@ find . -name "test_*.db" -delete
 ## 🎯 DDD原則の確認
 
 ### ✅ 正しい実装例
+
 ```python
 # 集約間アクセスはIDで参照
 prompt_id = evaluation.prompt_id
@@ -129,6 +145,7 @@ test_results = evaluation.test_results
 ```
 
 ### ❌ 誤った実装例
+
 ```python
 # 集約境界を越えるrelationship（使用禁止）
 prompt = evaluation.prompt  # <- NG

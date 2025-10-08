@@ -7,6 +7,7 @@
 **原則**: 関連する機能を1つのディレクトリ内に集約し、高い凝集性と低い結合性を実現
 
 **メリット**:
+
 - 機能追加・変更が局所的に完結
 - 新メンバーが理解しやすい
 - テストと実装の対応関係が明確
@@ -261,6 +262,7 @@ backend/
 ### 1. 機能単位の集約
 
 各機能（prompt、evaluation、llm_integration等）は独立したモジュールとして：
+
 - entities、value_objects、services、repositoriesを内包
 - 機能固有の例外を定義
 - 外部への依存は最小限に
@@ -275,6 +277,7 @@ backend/
 ### 3. CQRS原則
 
 Application層でCommand（書き込み）とQuery（読み取り）を分離：
+
 - commands/: データ変更操作
 - queries/: データ取得操作
 - services/: 複雑なワークフロー
@@ -325,23 +328,29 @@ mkdir -p tests/e2e/{scenarios,fixtures}
 ## ファイル命名規約
 
 ### エンティティ
+
 - `{entity_name}.py` (例: prompt.py, evaluation_result.py)
 
 ### 値オブジェクト
+
 - `{value_object_name}.py` (例: prompt_content.py, score.py)
 
 ### サービス
+
 - `{service_name}_service.py` (例: prompt_generation_service.py)
 
 ### リポジトリ
+
 - インターフェース: `{entity}_repository.py`
 - 実装: `{technology}_{entity}_repository.py` (例: turso_prompt_repository.py)
 
 ### ユースケース
+
 - コマンド: `{action}_{entity}.py` (例: create_prompt.py)
 - クエリ: `{query_type}_{entity}.py` (例: get_prompt.py)
 
 ### API
+
 - `router.py`: ルート定義
 - `schemas.py`: Pydanticスキーマ
 - `dependencies.py`: 依存性注入

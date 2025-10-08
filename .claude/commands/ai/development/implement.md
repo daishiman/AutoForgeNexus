@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "TDD駆動による機能実装とマルチドメイン開発"
+description: 'TDD駆動による機能実装とマルチドメイン開発'
 category: development
 complexity: extreme
 agents:

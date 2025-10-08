@@ -25,16 +25,16 @@ AutoForgeNexus バックエンドのデータベース実装がTurso/libSQL本�
 
 ## 📊 レビュー結果サマリー
 
-| カテゴリ | 評価 | 重大度 | 備考 |
-|---------|------|--------|------|
-| **テーブル設計** | 🟢 良好 | - | DDD準拠、適切な正規化 |
-| **インデックス戦略** | 🟡 要改善 | 中 | 複合インデックス最適化余地あり |
-| **外部キー制約** | 🟢 良好 | - | CASCADE設定適切 |
-| **データ型選択** | 🟢 良好 | - | Turso/libSQL互換 |
-| **命名規約** | 🟢 良好 | - | 一貫性あり |
-| **マイグレーション** | 🟢 良好 | - | Alembic設定完備 |
-| **接続管理** | 🟡 要改善 | 中 | プール設定最適化余地あり |
-| **トランザクション** | 🟡 要実装 | 高 | 明示的な管理が不足 |
+| カテゴリ             | 評価      | 重大度 | 備考                           |
+| -------------------- | --------- | ------ | ------------------------------ |
+| **テーブル設計**     | 🟢 良好   | -      | DDD準拠、適切な正規化          |
+| **インデックス戦略** | 🟡 要改善 | 中     | 複合インデックス最適化余地あり |
+| **外部キー制約**     | 🟢 良好   | -      | CASCADE設定適切                |
+| **データ型選択**     | 🟢 良好   | -      | Turso/libSQL互換               |
+| **命名規約**         | 🟢 良好   | -      | 一貫性あり                     |
+| **マイグレーション** | 🟢 良好   | -      | Alembic設定完備                |
+| **接続管理**         | 🟡 要改善 | 中     | プール設定最適化余地あり       |
+| **トランザクション** | 🟡 要実装 | 高     | 明示的な管理が不足             |
 
 **総合評価**: 🟢 **本番デプロイ可能（改善推奨事項あり）**
 
@@ -57,16 +57,17 @@ infrastructure/
     └── base.py             # Base, Mixins
 ```
 
-**評価**: DDD原則に完全準拠。集約境界が明確で、将来のマイクロサービス分離を想定した設計。
+**評価**:
+DDD原則に完全準拠。集約境界が明確で、将来のマイクロサービス分離を想定した設計。
 
 #### 1.2 適切な正規化レベル
 
-| テーブル | 正規化 | 評価 |
-|---------|--------|------|
-| `prompts` | 3NF | ✅ 重複排除、参照整合性維持 |
-| `prompt_templates` | 3NF | ✅ 独立性確保 |
-| `evaluations` | 3NF | ✅ トランザクション依存性適切 |
-| `test_results` | 3NF | ✅ 集約内エンティティとして適切 |
+| テーブル           | 正規化 | 評価                            |
+| ------------------ | ------ | ------------------------------- |
+| `prompts`          | 3NF    | ✅ 重複排除、参照整合性維持     |
+| `prompt_templates` | 3NF    | ✅ 独立性確保                   |
+| `evaluations`      | 3NF    | ✅ トランザクション依存性適切   |
+| `test_results`     | 3NF    | ✅ 集約内エンティティとして適切 |
 
 #### 1.3 論理削除（Soft Delete）実装
 
@@ -83,6 +84,7 @@ Index("idx_prompts_deleted_at", "deleted_at")
 ```
 
 **評価**:
+
 - ✅ ユーザー作成コンテンツの論理削除は適切
 - ✅ 監査要件（GDPR等）に対応可能
 - ✅ インデックス設定で削除済み除外クエリ最適化
@@ -92,6 +94,7 @@ Index("idx_prompts_deleted_at", "deleted_at")
 #### 1.1 バージョン管理の複雑性
 
 **現状**:
+
 ```python
 # prompts テーブル
 version: Mapped[int] = mapped_column(Integer, default=1)
@@ -102,10 +105,12 @@ parent_id: Mapped[str | None] = mapped_column(
 ```
 
 **懸念点**:
+
 - 自己参照外部キーの深いネスト時のパフォーマンス
 - バージョンツリー取得時のN+1問題
 
 **推奨改善策**:
+
 ```python
 # 将来的に専用バージョン履歴テーブル検討
 class PromptVersionModel(Base, TimestampMixin):
@@ -133,30 +138,30 @@ class PromptVersionModel(Base, TimestampMixin):
 
 #### 2.1 prompts テーブル（5個）
 
-| インデックス名 | カラム | 用途 | 評価 |
-|--------------|--------|------|------|
-| `idx_prompts_user_id` | user_id | ユーザー別一覧 | ✅ 適切 |
-| `idx_prompts_status` | status | ステータスフィルタ | ✅ 適切 |
-| `idx_prompts_created_at` | created_at | 時系列ソート | ✅ 適切 |
-| `idx_prompts_parent_id` | parent_id | バージョン履歴 | ✅ 適切 |
-| `idx_prompts_deleted_at` | deleted_at | 論理削除除外 | ✅ 適切 |
+| インデックス名           | カラム     | 用途               | 評価    |
+| ------------------------ | ---------- | ------------------ | ------- |
+| `idx_prompts_user_id`    | user_id    | ユーザー別一覧     | ✅ 適切 |
+| `idx_prompts_status`     | status     | ステータスフィルタ | ✅ 適切 |
+| `idx_prompts_created_at` | created_at | 時系列ソート       | ✅ 適切 |
+| `idx_prompts_parent_id`  | parent_id  | バージョン履歴     | ✅ 適切 |
+| `idx_prompts_deleted_at` | deleted_at | 論理削除除外       | ✅ 適切 |
 
 #### 2.2 evaluations テーブル（4個）
 
-| インデックス名 | カラム | 用途 | 評価 |
-|--------------|--------|------|------|
-| `idx_evaluations_prompt_id` | prompt_id | プロンプト別評価 | ✅ 適切 |
-| `idx_evaluations_status` | status | 実行状態フィルタ | ✅ 適切 |
-| `idx_evaluations_created_at` | created_at | 時系列ソート | ✅ 適切 |
+| インデックス名                   | カラム          | 用途               | 評価        |
+| -------------------------------- | --------------- | ------------------ | ----------- |
+| `idx_evaluations_prompt_id`      | prompt_id       | プロンプト別評価   | ✅ 適切     |
+| `idx_evaluations_status`         | status          | 実行状態フィルタ   | ✅ 適切     |
+| `idx_evaluations_created_at`     | created_at      | 時系列ソート       | ✅ 適切     |
 | `idx_evaluations_provider_model` | provider, model | プロバイダー別集計 | ✅ 複合適切 |
 
 #### 2.3 test_results テーブル（3個）
 
-| インデックス名 | カラム | 用途 | 評価 |
-|--------------|--------|------|------|
-| `idx_test_results_evaluation_id` | evaluation_id | 評価別結果 | ✅ 適切 |
-| `idx_test_results_passed` | passed | 合否フィルタ | ✅ 適切 |
-| `idx_test_results_score` | score | スコア範囲検索 | ✅ 適切 |
+| インデックス名                   | カラム        | 用途           | 評価    |
+| -------------------------------- | ------------- | -------------- | ------- |
+| `idx_test_results_evaluation_id` | evaluation_id | 評価別結果     | ✅ 適切 |
+| `idx_test_results_passed`        | passed        | 合否フィルタ   | ✅ 適切 |
+| `idx_test_results_score`         | score         | スコア範囲検索 | ✅ 適切 |
 
 ### ⚠️ 最適化推奨事項
 
@@ -176,6 +181,7 @@ Index("idx_test_results_eval_score", "evaluation_id", "score")
 ```
 
 **根拠**:
+
 ```sql
 -- よくあるクエリパターン1: ユーザー別アクティブプロンプト
 SELECT * FROM prompts
@@ -195,6 +201,7 @@ WHERE evaluation_id = ? AND passed = TRUE;
 ```
 
 **期待効果**:
+
 - クエリ実行時間: 50-70%削減
 - 並行ユーザー対応: 10,000+ユーザー時のスループット2倍化
 
@@ -207,7 +214,8 @@ Index("idx_prompts_list_covering",
       postgresql_include=["id", "title", "created_at", "updated_at"])
 ```
 
-**注意**: libSQLはPostgreSQL互換だが、`INCLUDE`句サポート要確認。未サポートの場合は通常の複合インデックスで代用。
+**注意**:
+libSQLはPostgreSQL互換だが、`INCLUDE`句サポート要確認。未サポートの場合は通常の複合インデックスで代用。
 
 #### 2.3 部分インデックス（Partial Index）活用
 
@@ -222,6 +230,7 @@ Index("idx_evaluations_running", "prompt_id",
 ```
 
 **期待効果**:
+
 - インデックスサイズ: 30-40%削減
 - 書き込みパフォーマンス: 10-15%向上
 
@@ -240,6 +249,7 @@ async def scheduled_vacuum():
 ```
 
 **推奨スケジュール**:
+
 - **VACUUM**: 月次（データサイズ20GB未満）
 - **ANALYZE**: 週次（統計情報更新）
 - **REINDEX**: 四半期（インデックス断片化解消）
@@ -355,15 +365,15 @@ class PromptModel(Base):
 
 ### ✅ Turso/libSQL互換性
 
-| データ型 | 使用箇所 | Turso互換性 | 評価 |
-|---------|---------|-----------|------|
-| `String(36)` | ID（UUID） | ✅ TEXT | 適切 |
-| `String(255)` | タイトル等 | ✅ TEXT | 適切 |
-| `Text` | コンテンツ | ✅ TEXT | 適切 |
-| `Integer` | カウンタ | ✅ INTEGER | 適切 |
-| `Float` | スコア | ✅ REAL | 適切 |
-| `Boolean` | フラグ | ✅ INTEGER (0/1) | 適切 |
-| `JSON` | メタデータ | ✅ JSON | 適切 |
+| データ型                  | 使用箇所       | Turso互換性       | 評価 |
+| ------------------------- | -------------- | ----------------- | ---- |
+| `String(36)`              | ID（UUID）     | ✅ TEXT           | 適切 |
+| `String(255)`             | タイトル等     | ✅ TEXT           | 適切 |
+| `Text`                    | コンテンツ     | ✅ TEXT           | 適切 |
+| `Integer`                 | カウンタ       | ✅ INTEGER        | 適切 |
+| `Float`                   | スコア         | ✅ REAL           | 適切 |
+| `Boolean`                 | フラグ         | ✅ INTEGER (0/1)  | 適切 |
+| `JSON`                    | メタデータ     | ✅ JSON           | 適切 |
 | `DateTime(timezone=True)` | タイムスタンプ | ✅ TEXT (ISO8601) | 適切 |
 
 **総合評価**: ✅ libSQL完全互換、型変換不要
@@ -373,6 +383,7 @@ class PromptModel(Base):
 #### 4.1 JSON型の使用最適化
 
 **現状**:
+
 ```python
 # 大きなJSON保存（検索不可）
 tags: Mapped[dict[str, Any] | None] = mapped_column(JSON)
@@ -380,6 +391,7 @@ meta_data: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 ```
 
 **推奨改善策（Phase 4検討）**:
+
 ```python
 # よく検索するタグは専用テーブル化
 class PromptTagModel(Base):
@@ -402,6 +414,7 @@ class PromptTagModel(Base):
 **現状**: `String(36)` = 36バイト/ID
 
 **最適化案**（Phase 5検討）:
+
 ```python
 # libSQL Vector Extension活用時に検討
 # BINARY(16)相当の実装でストレージ55%削減
@@ -424,6 +437,7 @@ class BinaryUUID(TypeDecorator):
 ```
 
 **期待効果**:
+
 - ストレージ削減: 55% (36→16バイト)
 - インデックスサイズ削減: 40%
 - メモリ使用量削減: 30%
@@ -558,6 +572,7 @@ class TursoConnection:
 #### 6.1 Embedded Replicas戦略
 
 **推奨設定**:
+
 ```python
 class TursoConnection:
     def get_engine(self):
@@ -589,6 +604,7 @@ class TursoConnection:
 ```
 
 **期待効果**（BP#1）:
+
 - 読み取りレイテンシ: 40ms未満達成
 - 書き込みスループット: 3,000 req/s
 - エッジロケーション最適化: 自動
@@ -647,6 +663,7 @@ def get_optimal_connection():
 #### 7.1 明示的トランザクション管理不足
 
 **現状**: 暗黙的トランザクションのみ
+
 ```python
 # 現在の実装（依存性注入のみ）
 def get_db_session() -> Session:
@@ -658,11 +675,13 @@ def get_db_session() -> Session:
 ```
 
 **問題点**:
+
 - ❌ ロールバック処理が明示的でない
 - ❌ 複数操作のアトミック性保証なし
 - ❌ デッドロック検出・回避なし
 
 **推奨改善策**:
+
 ```python
 from contextlib import asynccontextmanager
 
@@ -838,6 +857,7 @@ class DatabaseLoadTest(HttpUser):
 ```
 
 **目標メトリクス**:
+
 - **P95レイテンシ**: < 200ms
 - **スループット**: 10,000 req/s
 - **同時接続数**: 10,000+
@@ -873,16 +893,16 @@ class DatabaseLoadTest(HttpUser):
 
 ### 本番デプロイ準備状況
 
-| 項目 | スコア | 備考 |
-|------|--------|------|
-| **テーブル設計** | 95/100 | DDD準拠、適切な正規化 |
-| **インデックス** | 80/100 | 基本実装完了、最適化余地あり |
-| **外部キー** | 90/100 | CASCADE設定適切 |
-| **データ型** | 100/100 | Turso完全互換 |
-| **マイグレーション** | 95/100 | Alembic完璧、テスト追加推奨 |
-| **接続管理** | 75/100 | 基本実装、プール最適化必要 |
-| **トランザクション** | 60/100 | 明示的管理不足 |
-| **セキュリティ** | 85/100 | 基本対策完了、監査ログ追加推奨 |
+| 項目                 | スコア  | 備考                           |
+| -------------------- | ------- | ------------------------------ |
+| **テーブル設計**     | 95/100  | DDD準拠、適切な正規化          |
+| **インデックス**     | 80/100  | 基本実装完了、最適化余地あり   |
+| **外部キー**         | 90/100  | CASCADE設定適切                |
+| **データ型**         | 100/100 | Turso完全互換                  |
+| **マイグレーション** | 95/100  | Alembic完璧、テスト追加推奨    |
+| **接続管理**         | 75/100  | 基本実装、プール最適化必要     |
+| **トランザクション** | 60/100  | 明示的管理不足                 |
+| **セキュリティ**     | 85/100  | 基本対策完了、監査ログ追加推奨 |
 
 **総合スコア**: **85/100** 🟢
 
@@ -935,5 +955,4 @@ class DatabaseLoadTest(HttpUser):
 
 ---
 
-**レビュー完了日**: 2025-10-01
-**次回レビュー予定**: Phase 4完了時（2週間後）
+**レビュー完了日**: 2025-10-01 **次回レビュー予定**: Phase 4完了時（2週間後）

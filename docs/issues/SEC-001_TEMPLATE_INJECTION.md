@@ -11,22 +11,26 @@
 ## 📊 現状評価
 
 ### 影響範囲
+
 - **ファイル**: `backend/src/domain/prompt/value_objects/prompt_content.py`
 - **影響**: プロンプト変数展開機能全体
 - **リスク**: 任意コード実行、システム侵害
 
 ### CVSSスコア
+
 - **CVSS 3.1**: 4.9 (Medium)
 - **ベクトル**: CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:N/I:H/A:N
 - **深刻度**: Medium（特権ユーザー限定）
 
 ### 発見元
+
 - セキュリティエージェント包括レビュー（2025-10-08）
 - レポート: `docs/reviews/SECURITY_REVIEW_BACKEND_CORE_20251008.md`
 
 ### 脆弱性詳細
 
 #### 現在の実装（問題）
+
 ```python
 # backend/src/domain/prompt/value_objects/prompt_content.py
 def format(self, **variables: Any) -> str:
@@ -35,6 +39,7 @@ def format(self, **variables: Any) -> str:
 ```
 
 #### 攻撃シナリオ
+
 ```python
 # 悪意のあるテンプレート
 malicious_template = "{__import__('os').system('rm -rf /')}"
@@ -45,6 +50,7 @@ content.format()  # システム破壊
 ## ✅ 対応項目
 
 ### Phase 1: 即時修正（3時間）
+
 - [x] 脆弱性分析完了
 - [ ] `string.Template`への移行実装
 - [ ] ユニットテスト作成（攻撃シナリオカバレッジ）
@@ -52,12 +58,14 @@ content.format()  # システム破壊
 - [ ] コードレビュー
 
 ### Phase 2: 検証（1時間）
+
 - [ ] 既存テストケース実行
 - [ ] セキュリティスキャン（Bandit）
 - [ ] 統合テスト実行
 - [ ] ドキュメント更新
 
 ### Phase 3: デプロイ（30分）
+
 - [ ] プルリクエスト作成
 - [ ] セキュリティレビュー承認
 - [ ] マージ・デプロイ
@@ -65,21 +73,25 @@ content.format()  # システム破壊
 ## 🎯 成功基準
 
 ### 機能要件
+
 - ✅ 変数展開機能が正常動作
 - ✅ 既存テストケース全パス
 - ✅ 後方互換性維持
 
 ### セキュリティ要件
+
 - ✅ 任意コード実行不可
 - ✅ Banditスキャンクリーン
 - ✅ セキュリティテスト100%パス
 
 ### パフォーマンス要件
+
 - ✅ 変数展開速度が現状と同等（<1ms）
 
 ## 🔧 推奨修正実装
 
 ### 修正案
+
 ```python
 from string import Template
 from typing import Any, Dict
@@ -108,6 +120,7 @@ class PromptContent:
 ```
 
 ### テストケース
+
 ```python
 # tests/unit/domain/prompt/value_objects/test_prompt_content_security.py
 import pytest
@@ -154,10 +167,12 @@ class TestPromptContentSecurity:
 ## 📚 関連リソース
 
 ### レポート
+
 - セキュリティレビュー: `docs/reviews/SECURITY_REVIEW_BACKEND_CORE_20251008.md`
 - セキュリティサマリー: `docs/reviews/SECURITY_REVIEW_SUMMARY_20251008.md`
 
 ### 参考資料
+
 - [OWASP Top 10 - Injection](https://owasp.org/www-project-top-ten/)
 - [Python string.Template documentation](https://docs.python.org/3/library/string.html#template-strings)
 - [CWE-94: Code Injection](https://cwe.mitre.org/data/definitions/94.html)
@@ -173,6 +188,7 @@ class TestPromptContentSecurity:
 ## 📝 備考
 
 ### 本番デプロイへの影響
+
 - この脆弱性修正は**本番デプロイの必須条件**
 - セキュリティスコア 78 → 85点への改善に貢献
 - 3つのMedium脆弱性のうち最優先対応項目

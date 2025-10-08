@@ -1,8 +1,8 @@
 # DDD原則適合性レビュー結果
 
-**レビュー日**: 2025年10月8日
-**対象**: mypy strict型エラー修正（pyproject.toml）
-**レビュー方式**: DDD原則準拠評価（AutoForgeNexus設計思想基準）
+**レビュー日**: 2025年10月8日 **対象**: mypy
+strict型エラー修正（pyproject.toml） **レビュー方式**:
+DDD原則準拠評価（AutoForgeNexus設計思想基準）
 
 ---
 
@@ -10,7 +10,8 @@
 
 **✅ 完全承認（DDD原則に完全準拠）**
 
-型安全性設定はDDD設計における**横断的関心事（Cross-Cutting Concerns）**として適切に配置されており、ドメイン層の純粋性とビジネスロジックの整合性を維持したまま、技術的品質保証を実現しています。
+型安全性設定はDDD設計における**横断的関心事（Cross-Cutting
+Concerns）**として適切に配置されており、ドメイン層の純粋性とビジネスロジックの整合性を維持したまま、技術的品質保証を実現しています。
 
 ---
 
@@ -18,8 +19,7 @@
 
 ### 1. 横断的関心事の配置
 
-**評価**: ✅ **適切**
-**スコア**: 100/100
+**評価**: ✅ **適切** **スコア**: 100/100
 
 #### 分析結果
 
@@ -32,11 +32,13 @@ disallow_untyped_defs = true
 ```
 
 **適切な理由**:
+
 - 型安全性はドメインロジックではなく、**技術的品質保証**として実装
 - `pyproject.toml`での一元管理により、横断的関心事としてレイヤー全体に適用
 - ドメインモデルの純粋性（ビジネスルール）と技術的関心事（型推論）が明確に分離
 
 **DDD原則との整合性**:
+
 - ✅ ドメイン層がインフラ層に依存しない（依存性逆転の原則）
 - ✅ ビジネスルールが型安全性設定から独立
 - ✅ 集約境界に技術的制約が混入していない
@@ -61,14 +63,14 @@ class Prompt:
 
 ### 2. 境界づけられたコンテキストへの影響
 
-**総合評価**: ✅ **全コンテキストで正の効果**
-**総合スコア**: 95/100
+**総合評価**: ✅ **全コンテキストで正の効果** **総合スコア**: 95/100
 
 #### 2.1 Prompt Engineering Context
-**評価**: ✅ **高い効果**
-**スコア**: 100/100
+
+**評価**: ✅ **高い効果** **スコア**: 100/100
 
 **影響分析**:
+
 ```python
 # src/domain/prompt/value_objects/prompt_content.py
 @dataclass(frozen=True)
@@ -83,15 +85,17 @@ class PromptContent:
 ```
 
 **効果**:
+
 - ✅ テンプレート変数の型安全な埋め込み
 - ✅ 不変条件の型レベル保証（`frozen=True`）
 - ✅ ユビキタス言語（template, variables）の型安全性
 
 #### 2.2 Evaluation Context
-**評価**: ✅ **高い効果**
-**スコア**: 95/100
+
+**評価**: ✅ **高い効果** **スコア**: 95/100
 
 **影響分析**:
+
 ```python
 # 将来実装予定のevaluation集約
 # 型推論によるメトリクス計算の安全性向上が期待される
@@ -100,15 +104,17 @@ class Evaluation:
 ```
 
 **効果**:
+
 - ✅ メトリクス計算での型安全性（数値型強制）
 - ✅ テスト結果集計の型推論精度向上
 - ⚠️ 実装未着手のため実証データなし（-5点）
 
 #### 2.3 LLM Integration Context
-**評価**: ✅ **中程度の効果**
-**スコア**: 90/100
+
+**評価**: ✅ **中程度の効果** **スコア**: 90/100
 
 **影響分析**:
+
 ```toml
 # pyproject.toml
 [[tool.mypy.overrides]]
@@ -120,15 +126,17 @@ ignore_missing_imports = true
 ```
 
 **効果**:
+
 - ✅ LiteLLM統合での型安全性（100+プロバイダー対応）
 - ✅ APIレスポンスの型推論精度
 - ⚠️ 外部ライブラリのため型スタブ未完全（-10点）
 
 #### 2.4 User Interaction Context
-**評価**: ✅ **高い効果**
-**スコア**: 100/100
+
+**評価**: ✅ **高い効果** **スコア**: 100/100
 
 **影響分析**:
+
 ```python
 # src/domain/prompt/value_objects/user_input.py
 @dataclass(frozen=True)
@@ -139,15 +147,17 @@ class UserInput:
 ```
 
 **効果**:
+
 - ✅ ユーザー入力の型安全なバリデーション
 - ✅ オプショナル値の明確な型表現（`str | None`）
 - ✅ 制約条件リストの型推論
 
 #### 2.5 Data Management Context
-**評価**: ✅ **高い効果**
-**スコア**: 95/100
+
+**評価**: ✅ **高い効果** **スコア**: 95/100
 
 **影響分析**:
+
 ```python
 # src/infrastructure/shared/database/base.py
 class TimestampMixin:
@@ -156,6 +166,7 @@ class TimestampMixin:
 ```
 
 **効果**:
+
 - ✅ SQLAlchemy 2.0型プラグインとの統合
 - ✅ ORM型推論の精度向上（`Mapped[T]`）
 - ⚠️ 型オーバーライド必須のため一部調整（-5点）
@@ -164,8 +175,7 @@ class TimestampMixin:
 
 ### 3. 集約境界の型安全性
 
-**評価**: ✅ **最高レベル**
-**スコア**: 100/100
+**評価**: ✅ **最高レベル** **スコア**: 100/100
 
 #### 機能ベース集約パターン検証
 
@@ -201,6 +211,7 @@ class Prompt:
 ```
 
 **効果**:
+
 - ✅ 集約ルートの不変条件が型レベルで保証
 - ✅ 値オブジェクトの参照が常に有効な型
 - ✅ ファクトリメソッドの戻り値型が明確
@@ -213,6 +224,7 @@ evaluation_aggregate.prompt_id: UUID  # 型推論による外部キー安全性
 ```
 
 **効果**:
+
 - ✅ 集約境界を越えた直接参照を型レベルで防止
 - ✅ 外部キーの型推論精度（UUID強制）
 
@@ -231,6 +243,7 @@ class PromptContent:
 ```
 
 **効果**:
+
 - ✅ 値オブジェクトの不変性が型レベルで強制
 - ✅ 初期化時の型安全なバリデーション
 
@@ -238,19 +251,18 @@ class PromptContent:
 
 ### 4. ユビキタス言語と型の整合性
 
-**評価**: ✅ **完全適合**
-**スコア**: 100/100
+**評価**: ✅ **完全適合** **スコア**: 100/100
 
 #### ドメイン用語と型名の一致検証
 
-| ドメイン用語 | 型名 | 型安全性 | 評価 |
-|------------|------|---------|-----|
-| プロンプト | `Prompt` | `class Prompt` | ✅ 100% |
-| プロンプト内容 | `PromptContent` | `@dataclass(frozen=True)` | ✅ 100% |
-| ユーザー入力 | `UserInput` | `@dataclass(frozen=True)` | ✅ 100% |
-| メタデータ | `PromptMetadata` | `@dataclass(frozen=True)` | ✅ 100% |
-| バージョン | `version: int` | `int` | ✅ 100% |
-| ステータス | `status: str` | `str` (将来Literal推奨) | ⚠️ 90% |
+| ドメイン用語   | 型名             | 型安全性                  | 評価    |
+| -------------- | ---------------- | ------------------------- | ------- |
+| プロンプト     | `Prompt`         | `class Prompt`            | ✅ 100% |
+| プロンプト内容 | `PromptContent`  | `@dataclass(frozen=True)` | ✅ 100% |
+| ユーザー入力   | `UserInput`      | `@dataclass(frozen=True)` | ✅ 100% |
+| メタデータ     | `PromptMetadata` | `@dataclass(frozen=True)` | ✅ 100% |
+| バージョン     | `version: int`   | `int`                     | ✅ 100% |
+| ステータス     | `status: str`    | `str` (将来Literal推奨)   | ⚠️ 90%  |
 
 #### ビジネスルールの型表現
 
@@ -262,6 +274,7 @@ def is_ready_to_save(self) -> bool:
 ```
 
 **型安全性の貢献**:
+
 - ✅ ビジネスルールの戻り値型が明確（`bool`）
 - ✅ 型推論によるロジックエラー早期検出
 - ⚠️ ステータス文字列リテラルの型推論改善余地（将来）
@@ -278,6 +291,7 @@ class PromptCreatedEvent:
 ```
 
 **期待効果**:
+
 - ✅ イベント駆動アーキテクチャでの型安全性
 - ✅ イベントソーシング実装での型推論精度
 
@@ -285,8 +299,7 @@ class PromptCreatedEvent:
 
 ### 5. CQRS実装への型安全性影響
 
-**評価**: ✅ **最適な効果**
-**スコア**: 100/100
+**評価**: ✅ **最適な効果** **スコア**: 100/100
 
 #### Application層CQRS構造（backend/CLAUDE.md準拠）
 
@@ -320,6 +333,7 @@ class CreatePromptHandler:
 ```
 
 **型安全性の効果**:
+
 - ✅ コマンド入力の型推論（不正な値を早期検出）
 - ✅ ハンドラーの戻り値型が明確（`UUID`）
 - ✅ トランザクション境界での型安全性
@@ -342,6 +356,7 @@ class GetPromptHandler:
 ```
 
 **型安全性の効果**:
+
 - ✅ クエリの読み取り専用性が型レベルで保証
 - ✅ DTO変換の型推論精度（データ変換ミス防止）
 - ✅ キャッシュ層での型安全性
@@ -356,6 +371,7 @@ disallow_untyped_decorators = false  # FastAPI互換性
 ```
 
 **設定の合理性**:
+
 - ✅ FastAPIデコレータとの互換性維持
 - ✅ ドメイン層の型厳密性は維持（decoratorは表層）
 - ✅ CQRS実装での柔軟性確保
@@ -368,22 +384,24 @@ disallow_untyped_decorators = false  # FastAPI互換性
 
 #### スコアリング詳細
 
-| 評価観点 | スコア | 重み | 加重スコア |
-|---------|-------|-----|----------|
-| 1. 横断的関心事の配置 | 100 | 20% | 20.0 |
-| 2. 境界コンテキスト影響 | 95 | 20% | 19.0 |
-| 3. 集約境界の型安全性 | 100 | 25% | 25.0 |
-| 4. ユビキタス言語整合性 | 100 | 20% | 20.0 |
-| 5. CQRS実装影響 | 100 | 15% | 15.0 |
-| **総合** | **98** | **100%** | **99.0** |
+| 評価観点                | スコア | 重み     | 加重スコア |
+| ----------------------- | ------ | -------- | ---------- |
+| 1. 横断的関心事の配置   | 100    | 20%      | 20.0       |
+| 2. 境界コンテキスト影響 | 95     | 20%      | 19.0       |
+| 3. 集約境界の型安全性   | 100    | 25%      | 25.0       |
+| 4. ユビキタス言語整合性 | 100    | 20%      | 20.0       |
+| 5. CQRS実装影響         | 100    | 15%      | 15.0       |
+| **総合**                | **98** | **100%** | **99.0**   |
 
 #### 減点項目
 
 1. **Evaluation Context実装未着手** (-5点)
+
    - 実証データ不足のため効果測定困難
    - Phase 3完了後に再評価推奨
 
 2. **LLM Integration型スタブ不完全** (-10点軽減)
+
    - 外部ライブラリの制約（LiteLLM, LangChain）
    - `ignore_missing_imports = true`で適切に対処済み
 
@@ -400,11 +418,13 @@ disallow_untyped_decorators = false  # FastAPI互換性
 #### 1. ステータス列挙型の導入
 
 **現状**:
+
 ```python
 metadata = PromptMetadata(status="draft")  # 文字列リテラル
 ```
 
 **推奨**:
+
 ```python
 from typing import Literal
 
@@ -414,6 +434,7 @@ metadata = PromptMetadata(status="draft")  # 型推論で無効値を防止
 ```
 
 **効果**:
+
 - 型レベルで無効なステータスを防止
 - IDEでの補完精度向上
 - ビジネスルールの型安全性強化
@@ -421,6 +442,7 @@ metadata = PromptMetadata(status="draft")  # 型推論で無効値を防止
 #### 2. イベントソーシング型定義
 
 **将来実装時の推奨構造**:
+
 ```python
 # src/domain/shared/events/domain_event.py
 from typing import Protocol
@@ -439,12 +461,14 @@ class PromptCreatedEvent:
 ```
 
 **効果**:
+
 - イベント駆動アーキテクチャでの型安全性
 - Event Sourcing実装の品質向上
 
 #### 3. Repository戻り値の型安全化
 
 **現状**:
+
 ```python
 # src/domain/prompt/repositories/prompt_repository.py
 class IPromptRepository(Protocol):
@@ -452,6 +476,7 @@ class IPromptRepository(Protocol):
 ```
 
 **推奨（Result型導入）**:
+
 ```python
 from typing import Result  # Python 3.13+
 
@@ -460,6 +485,7 @@ class IPromptRepository(Protocol):
 ```
 
 **効果**:
+
 - エラーハンドリングの型安全性
 - 例外ではなく戻り値で処理（関数型プログラミング）
 
@@ -470,6 +496,7 @@ class IPromptRepository(Protocol):
 #### 1. Application層CQRS実装の型検証
 
 **検証項目**:
+
 - コマンド/クエリハンドラーの型推論精度
 - DTOとエンティティ間の型変換安全性
 - イベントバス（Redis Streams）の型安全性
@@ -479,6 +506,7 @@ class IPromptRepository(Protocol):
 #### 2. Infrastructure層の型推論精度
 
 **検証項目**:
+
 - Turso/libSQL接続の型安全性
 - SQLAlchemy 2.0型プラグインの効果測定
 - Redis型スタブの精度
@@ -492,12 +520,14 @@ class IPromptRepository(Protocol):
 #### 1. 型カバレッジの測定
 
 **推奨ツール**:
+
 ```bash
 # mypy型カバレッジレポート
 mypy src/ --strict --html-report mypy-report/
 ```
 
 **目標**:
+
 - ドメイン層: 100%型カバレッジ
 - アプリケーション層: 95%以上
 - インフラ層: 90%以上（外部ライブラリ除く）
@@ -505,6 +535,7 @@ mypy src/ --strict --html-report mypy-report/
 #### 2. 型安全性のCI/CD統合
 
 **推奨GitHub Actionsワークフロー**:
+
 ```yaml
 # .github/workflows/type-check.yml
 - name: MyPy Type Check
@@ -517,6 +548,7 @@ mypy src/ --strict --html-report mypy-report/
 ```
 
 **効果**:
+
 - コミット時の型エラー自動検出
 - PR時の型安全性検証
 
@@ -527,12 +559,14 @@ mypy src/ --strict --html-report mypy-report/
 ### Phase 3: バックエンド実装（現在45%）
 
 **現在の型安全性効果**:
+
 - ✅ ドメインモデルの型推論: 100%
 - ✅ 値オブジェクトの不変性: 100%
 - 🚧 Application層CQRS: 未実装
 - 🚧 Infrastructure層: 部分実装（30%）
 
 **Phase 3完了時の予測効果**:
+
 - 型エラー早期検出: 70%向上
 - リファクタリング安全性: 60%向上
 - 開発生産性: 40%向上
@@ -540,6 +574,7 @@ mypy src/ --strict --html-report mypy-report/
 ### Phase 4: データベース（未着手）
 
 **予測される型安全性効果**:
+
 - Turso/libSQL型推論: +20%
 - SQLAlchemy Mapped型: +15%
 - Redis型スタブ: +10%
@@ -547,6 +582,7 @@ mypy src/ --strict --html-report mypy-report/
 ### Phase 5: フロントエンド（未着手）
 
 **予測される型連携効果**:
+
 - TypeScript 5.9.2との型統合
 - OpenAPI自動生成での型同期
 - エンドツーエンド型安全性: +30%
@@ -554,6 +590,7 @@ mypy src/ --strict --html-report mypy-report/
 ### Phase 6: 統合・品質保証（未着手）
 
 **予測される品質効果**:
+
 - テストカバレッジ80%達成: mypy strictが支援
 - E2Eテスト自動生成: 型情報活用
 - セキュリティスキャン精度: +15%
@@ -567,18 +604,22 @@ mypy src/ --strict --html-report mypy-report/
 #### 承認理由（5つ）
 
 1. **横断的関心事の適切な配置**
+
    - 型安全性がドメイン純粋性を損なわない
    - `pyproject.toml`での一元管理が適切
 
 2. **集約境界の型保護**
+
    - 集約ルート、値オブジェクト、集約間参照すべてで型安全性確保
    - 機能ベース集約パターンとの整合性100%
 
 3. **ユビキタス言語の型表現**
+
    - ドメイン用語と型名が完全一致
    - ビジネスルールが型レベルで表現
 
 4. **CQRS実装の型最適化**
+
    - コマンド/クエリの型分離が明確
    - 読み書き分離が型レベルで保証
 
@@ -590,9 +631,12 @@ mypy src/ --strict --html-report mypy-report/
 
 ## 📝 結論
 
-**mypy strict型エラー修正（pyproject.toml）は、AutoForgeNexusのDDD設計原則に完全適合しており、ドメインモデルの純粋性を維持したまま、技術的品質保証を実現する最適なアプローチである。**
+**mypy
+strict型エラー修正（pyproject.toml）は、AutoForgeNexusのDDD設計原則に完全適合しており、ドメインモデルの純粋性を維持したまま、技術的品質保証を実現する最適なアプローチである。**
 
-**Phase 3実装完了後も、この型安全性設定がドメイン駆動設計の基盤として機能し、Phase 4-6の実装品質向上に寄与することが期待される。**
+**Phase
+3実装完了後も、この型安全性設定がドメイン駆動設計の基盤として機能し、Phase
+4-6の実装品質向上に寄与することが期待される。**
 
 ---
 
@@ -604,7 +648,5 @@ mypy src/ --strict --html-report mypy-report/
 
 ---
 
-**レビュー実施者**: Claude Code (Opus 4.1)
-**レビュー完了日時**: 2025年10月8日
-**DDD適合性スコア**: 98/100点
-**最終判定**: ✅ 完全承認
+**レビュー実施者**: Claude Code (Opus 4.1) **レビュー完了日時**: 2025年10月8日
+**DDD適合性スコア**: 98/100点 **最終判定**: ✅ 完全承認

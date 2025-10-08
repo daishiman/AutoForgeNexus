@@ -1,6 +1,6 @@
 ---
 name: define
-description: "包括的な要件定義とユーザーストーリー作成"
+description: '包括的な要件定義とユーザーストーリー作成'
 category: requirements
 complexity: high
 agents:

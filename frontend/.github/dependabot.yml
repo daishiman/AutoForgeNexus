@@ -5,13 +5,13 @@ version: 2
 
 updates:
   # npm/pnpm依存関係監視
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "02:00"
-      timezone: "Asia/Tokyo"
+      interval: 'weekly'
+      day: 'tuesday'
+      time: '02:00'
+      timezone: 'Asia/Tokyo'
 
     # セキュリティ更新設定
     open-pull-requests-limit: 10
@@ -25,118 +25,118 @@ updates:
     # 更新対象設定
     allow:
       # セキュリティ更新は常に許可
-      - dependency-type: "all"
-        update-type: "security"
+      - dependency-type: 'all'
+        update-type: 'security'
 
       # 本番依存関係のパッチ・マイナー更新
-      - dependency-type: "direct:production"
-        update-type: "version-update:semver-patch"
-      - dependency-type: "direct:production"
-        update-type: "version-update:semver-minor"
+      - dependency-type: 'direct:production'
+        update-type: 'version-update:semver-patch'
+      - dependency-type: 'direct:production'
+        update-type: 'version-update:semver-minor'
 
       # 開発依存関係のパッチ・マイナー更新
-      - dependency-type: "direct:development"
-        update-type: "version-update:semver-patch"
-      - dependency-type: "direct:development"
-        update-type: "version-update:semver-minor"
+      - dependency-type: 'direct:development'
+        update-type: 'version-update:semver-patch'
+      - dependency-type: 'direct:development'
+        update-type: 'version-update:semver-minor'
 
     # 除外パッケージ（安定性重視）
     ignore:
       # 手動管理が必要な重要パッケージ
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "next"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@clerk/nextjs"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "tailwindcss"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@clerk/nextjs'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'tailwindcss'
+        update-types: ['version-update:semver-major']
 
       # 開発ツールの安定性確保
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
 
     # コミット設定
     commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(deps-dev)"
-      include: "scope"
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
 
     # PR設定
     pull-request-branch-name:
-      separator: "/"
+      separator: '/'
 
     # レビュアー設定
     reviewers:
-      - "daishiman"
+      - 'daishiman'
 
     # ラベル設定
     labels:
-      - "dependencies"
-      - "automated"
-      - "security"
+      - 'dependencies'
+      - 'automated'
+      - 'security'
 
     # マイルストーン（セキュリティ更新用）
-    milestone: "Security Updates"
+    milestone: 'Security Updates'
 
   # GitHub Actions更新監視
-  - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
+  - package-ecosystem: 'github-actions'
+    directory: '/.github/workflows'
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "03:00"
-      timezone: "Asia/Tokyo"
+      interval: 'weekly'
+      day: 'wednesday'
+      time: '03:00'
+      timezone: 'Asia/Tokyo'
 
     open-pull-requests-limit: 5
 
     # Actionsはピン留めしたSHAを更新
     allow:
-      - dependency-type: "all"
+      - dependency-type: 'all'
 
     commit-message:
-      prefix: "ci(actions)"
-      include: "scope"
+      prefix: 'ci(actions)'
+      include: 'scope'
 
     labels:
-      - "ci"
-      - "github-actions"
-      - "security"
+      - 'ci'
+      - 'github-actions'
+      - 'security'
 
     reviewers:
-      - "daishiman"
+      - 'daishiman'
 
   # Dockerベースイメージ更新（将来用）
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
-      interval: "monthly"
-      day: "1"
-      time: "04:00"
-      timezone: "Asia/Tokyo"
+      interval: 'monthly'
+      day: '1'
+      time: '04:00'
+      timezone: 'Asia/Tokyo'
 
     open-pull-requests-limit: 3
 
     # セキュリティ重視設定
     allow:
-      - dependency-type: "all"
-        update-type: "security"
-      - dependency-type: "all"
-        update-type: "version-update:semver-patch"
+      - dependency-type: 'all'
+        update-type: 'security'
+      - dependency-type: 'all'
+        update-type: 'version-update:semver-patch'
 
     commit-message:
-      prefix: "chore(docker)"
-      include: "scope"
+      prefix: 'chore(docker)'
+      include: 'scope'
 
     labels:
-      - "docker"
-      - "infrastructure"
-      - "security"
+      - 'docker'
+      - 'infrastructure'
+      - 'security'
 
     reviewers:
-      - "daishiman"
+      - 'daishiman'
 
 # グローバル設定
 registries:
@@ -146,7 +146,6 @@ registries:
     url: https://registry.npmjs.org
     # 必要に応じてトークン設定
     # token: ${{ secrets.NPM_TOKEN }}
-
 # Dependabot設定の詳細説明
 #
 # セキュリティ重視設定:

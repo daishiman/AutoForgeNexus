@@ -7,6 +7,7 @@
 ## 🏗️ Terraform実装戦略
 
 ### ディレクトリ構造
+
 ```
 infrastructure/
 ├── environments/
@@ -49,6 +50,7 @@ infrastructure/
 ## 🔧 主要モジュール実装
 
 ### Cloudflare Workers モジュール
+
 ```hcl
 # modules/cloudflare/workers/main.tf
 terraform {
@@ -94,6 +96,7 @@ resource "cloudflare_worker_route" "autoforge_backend" {
 ```
 
 ### Turso データベース モジュール
+
 ```hcl
 # modules/turso/database/main.tf
 terraform {
@@ -152,6 +155,7 @@ resource "turso_database_token" "backup_token" {
 ```
 
 ### セキュリティ & WAF モジュール
+
 ```hcl
 # modules/security/waf/main.tf
 resource "cloudflare_ruleset" "autoforge_waf" {
@@ -203,7 +207,8 @@ resource "cloudflare_rate_limit" "api_rate_limit" {
 ## 🚀 デプロイメント自動化
 
 ### GitHub Actions統合
-```yaml
+
+````yaml
 # .github/workflows/terraform-apply.yml
 name: Terraform Apply
 
@@ -248,11 +253,15 @@ jobs:
           aws-region: ap-northeast-1
 
       - name: 🏗️ Terraform Init
-        working-directory: infrastructure/environments/${{ github.event.inputs.environment || 'staging' }}
+        working-directory:
+          infrastructure/environments/${{ github.event.inputs.environment ||
+          'staging' }}
         run: terraform init
 
       - name: 📋 Terraform Plan
-        working-directory: infrastructure/environments/${{ github.event.inputs.environment || 'staging' }}
+        working-directory:
+          infrastructure/environments/${{ github.event.inputs.environment ||
+          'staging' }}
         run: |
           terraform plan -out=tfplan
           terraform show -no-color tfplan > plan-output.txt
@@ -272,7 +281,9 @@ jobs:
 
       - name: 🚀 Terraform Apply
         if: github.ref == 'refs/heads/main'
-        working-directory: infrastructure/environments/${{ github.event.inputs.environment || 'staging' }}
+        working-directory:
+          infrastructure/environments/${{ github.event.inputs.environment ||
+          'staging' }}
         run: terraform apply tfplan
 
       - name: 📊 Update Infrastructure Inventory
@@ -280,11 +291,12 @@ jobs:
         run: |
           terraform output -json > infrastructure-state.json
           # Send to monitoring system or inventory database
-```
+````
 
 ## 🔄 災害復旧手順
 
 ### 自動バックアップ
+
 ```hcl
 # modules/backup/main.tf
 resource "aws_s3_bucket" "terraform_state_backup" {
@@ -333,6 +345,7 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
 ```
 
 ### 復旧スクリプト
+
 ```bash
 #!/bin/bash
 # scripts/disaster_recovery.sh
@@ -377,6 +390,7 @@ echo "✅ Disaster recovery completed successfully!"
 ## 📊 コスト管理
 
 ### リソース使用量監視
+
 ```hcl
 # modules/cost_monitoring/main.tf
 resource "cloudflare_worker_script" "cost_monitor" {
@@ -418,6 +432,7 @@ resource "aws_budgets_budget" "autoforge_budget" {
 ## 🔒 セキュリティ強化
 
 ### Secret管理
+
 ```hcl
 # modules/secrets/main.tf
 resource "aws_secretsmanager_secret" "app_secrets" {
@@ -449,6 +464,7 @@ resource "random_password" "jwt_secret" {
 ## 📈 運用監視
 
 ### インフラドリフト検知
+
 ```bash
 #!/bin/bash
 # scripts/drift_detection.sh
@@ -483,21 +499,25 @@ done
 ## 🎯 実装スケジュール
 
 ### Week 1: 基盤構築
+
 - [ ] Terraform環境セットアップ
 - [ ] リモートstate設定
 - [ ] 基本モジュール作成
 
 ### Week 2: 主要リソース
+
 - [ ] Cloudflare Workers/Pages
 - [ ] Turso データベース
 - [ ] 基本セキュリティ設定
 
 ### Week 3: 監視・自動化
+
 - [ ] 監視スタック
 - [ ] CI/CD統合
 - [ ] バックアップ自動化
 
 ### Week 4: 運用最適化
+
 - [ ] ドリフト検知
 - [ ] コスト監視
 - [ ] 災害復旧テスト

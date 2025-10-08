@@ -2,7 +2,7 @@
 
 backend:
   - backend/**/*
-  - '*.py'
+  - "*.py"
   - requirements*.txt
   - Pipfile*
   - pyproject.toml
@@ -10,17 +10,17 @@ backend:
 
 frontend:
   - frontend/**/*
-  - '*.ts'
-  - '*.tsx'
-  - '*.js'
-  - '*.jsx'
+  - "*.ts"
+  - "*.tsx"
+  - "*.js"
+  - "*.jsx"
   - package*.json
   - tsconfig*.json
   - next.config.js
 
 documentation:
   - docs/**/*
-  - '*.md'
+  - "*.md"
   - README*
   - CONTRIBUTING*
   - CHANGELOG*
@@ -40,9 +40,9 @@ ci/cd:
 testing:
   - tests/**/*
   - test/**/*
-  - '*test*.py'
-  - '*test*.ts'
-  - '*test*.js'
+  - "*test*.py"
+  - "*test*.ts"
+  - "*test*.js"
   - jest.config*
   - pytest.ini
   - .coveragerc
@@ -50,15 +50,15 @@ testing:
 database:
   - migrations/**/*
   - alembic/**/*
-  - '*.sql'
+  - "*.sql"
   - schema/**/*
 
 security:
   - security/**/*
   - .github/dependabot.yml
   - SECURITY.md
-  - '*auth*'
-  - '*security*'
+  - "*auth*"
+  - "*security*"
 
 dependencies:
   - requirements*.txt
@@ -74,14 +74,14 @@ configuration:
   - .eslintrc*
   - .gitignore
   - .gitattributes
-  - '*.config.js'
-  - '*.config.ts'
+  - "*.config.js"
+  - "*.config.ts"
   - .env.example
 
 ai/ml:
   - ml/**/*
   - prompts/**/*
   - evaluations/**/*
-  - '*llm*'
-  - '*ai*'
-  - '*vector*'
+  - "*llm*"
+  - "*ai*"
+  - "*vector*"

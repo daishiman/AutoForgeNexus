@@ -18,26 +18,32 @@ AutoForgeNexusシステムで使用する各種データベースURL（Turso、R
 ### 主要機能
 
 #### 1. TursoURLValidator
+
 libSQL/HTTPS/HTTPスキーム、.turso.ioドメインサフィックス、SSRF対策を実装。
 
 **特徴**:
+
 - スキーム検証（`libsql`, `https`, `http`）
 - ドメインサフィックス完全一致（`.turso.io`）
 - プライベートIP範囲排除（SSRF対策）
 - 認証トークン除外（GDPR対応ログ）
 
 #### 2. RedisURLValidator
+
 redisスキーム、ホスト名、RFC 6335準拠ポート範囲の検証。
 
 **特徴**:
+
 - redisスキーム厳格検証
 - ポート範囲検証（1-65535）
 - デフォルトポート対応（6379）
 
 #### 3. SQLiteURLValidator
+
 sqlite:///スキーム、ファイルパス、絶対/相対パス判定。
 
 **特徴**:
+
 - sqlite:///スキーム厳格検証（スラッシュ3つ必須）
 - ファイルパス抽出
 - インメモリDB対応
@@ -246,12 +252,15 @@ def connect_to_sqlite():
 Turso接続URL検証（OWASP ASVS V5.1準拠）
 
 **引数**:
+
 - `url` (str): 検証対象URL（例: "libsql://mydb-user.turso.io"）
 
 **戻り値**:
+
 - `tuple[bool, str | None]`: (検証結果, エラーメッセージ or None)
 
 **例**:
+
 ```python
 is_valid, error = TursoURLValidator.validate_connection_url("libsql://mydb.turso.io")
 assert is_valid is True
@@ -262,12 +271,15 @@ assert is_valid is True
 認証トークン除外したホスト名抽出（GDPR対応ログ用）
 
 **引数**:
+
 - `url` (str): 接続URL（認証トークン含む可能性あり）
 
 **戻り値**:
+
 - `str`: 認証情報を除外した安全なホスト名（エラー時は "invalid_url"）
 
 **例**:
+
 ```python
 safe = TursoURLValidator.extract_safe_hostname("libsql://user:token@mydb.turso.io")
 assert safe == "mydb.turso.io"
@@ -280,9 +292,11 @@ assert safe == "mydb.turso.io"
 Redis接続URL検証（RFC 6335準拠）
 
 **引数**:
+
 - `url` (str): 検証対象URL（例: "redis://localhost:6379/0"）
 
 **戻り値**:
+
 - `tuple[bool, str | None]`: (検証結果, エラーメッセージ or None)
 
 ### SQLiteURLValidator
@@ -292,9 +306,11 @@ Redis接続URL検証（RFC 6335準拠）
 SQLite接続URL検証（RFC 3986準拠）
 
 **引数**:
+
 - `url` (str): 検証対象URL（例: "sqlite:///./data/app.db"）
 
 **戻り値**:
+
 - `tuple[bool, str | None]`: (検証結果, エラーメッセージ or None)
 
 #### `extract_file_path(url: str) -> str | None`
@@ -302,9 +318,11 @@ SQLite接続URL検証（RFC 3986準拠）
 SQLite URLからファイルパス抽出
 
 **引数**:
+
 - `url` (str): SQLite接続URL
 
 **戻り値**:
+
 - `str | None`: ファイルパス（検証失敗時None）
 
 ## 🛡️ セキュリティベストプラクティス
@@ -363,16 +381,19 @@ def connect_with_logging(url: str):
 ## 🔗 関連リソース
 
 ### セキュリティ標準
+
 - [OWASP ASVS V5.1: Input Validation](https://owasp.org/www-project-application-security-verification-standard/)
 - [CWE-20: Improper Input Validation](https://cwe.mitre.org/data/definitions/20.html)
 - [CWE-918: Server-Side Request Forgery (SSRF)](https://cwe.mitre.org/data/definitions/918.html)
 
 ### RFC標準
+
 - [RFC 3986: URI Generic Syntax](https://www.rfc-editor.org/rfc/rfc3986)
 - [RFC 6335: Internet Assigned Numbers Authority](https://www.rfc-editor.org/rfc/rfc6335)
 - [RFC 1918: Address Allocation for Private Internets](https://www.rfc-editor.org/rfc/rfc1918)
 
 ### プロジェクトドキュメント
+
 - [セキュリティポリシー](../../../../docs/security/SECURITY_POLICY.md)
 - [アーキテクチャ設計書](../../../../docs/architecture/backend_architecture.md)
 - [バックエンド実装ガイド](../../../CLAUDE.md)
@@ -380,6 +401,7 @@ def connect_with_logging(url: str):
 ## 📝 変更履歴
 
 ### v1.0.0 (2025-10-08)
+
 - ✨ 初期リリース
 - ✅ OWASP ASVS V5.1準拠実装
 - ✅ CWE-20/CWE-918完全対策
@@ -390,9 +412,11 @@ def connect_with_logging(url: str):
 ## 👨‍💻 実装者
 
 **security-architect Agent**
+
 - 責務: セキュリティアーキテクチャ設計・実装
 - 専門性: OWASP準拠、脆弱性対策、コンプライアンス実装
-- 連携: system-architect, api-designer, database-administrator, compliance-officer
+- 連携: system-architect, api-designer, database-administrator,
+  compliance-officer
 
 ## 📄 ライセンス
 

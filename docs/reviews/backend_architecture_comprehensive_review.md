@@ -1,21 +1,20 @@
 # バックエンドアーキテクチャ包括的レビュー
 
-**レビュー日**: 2025年10月1日
-**対象フェーズ**: Phase 3 Task 3.1完了時点
-**レビュアー**: Backend Architect Agent
-**評価基準**: DDD + Clean Architecture厳格準拠
+**レビュー日**: 2025年10月1日 **対象フェーズ**: Phase 3 Task 3.1完了時点
+**レビュアー**: Backend Architect Agent **評価基準**: DDD + Clean
+Architecture厳格準拠
 
 ---
 
 ## 📊 アーキテクチャスコア: **72/100** (C評価)
 
-| カテゴリ | スコア | 評価 | 備考 |
-|---------|--------|------|------|
-| **DDD準拠性** | 65/100 | D+ | 集約境界は明確だが実装不完全 |
-| **Clean Architecture準拠性** | 78/100 | C+ | レイヤー分離は良好、依存性注入未完 |
-| **機能ベース集約パターン** | 85/100 | B | 構造は優秀、実装が不足 |
-| **データ整合性** | 60/100 | D | トランザクション境界未実装 |
-| **スケーラビリティ** | 70/100 | C | 準備は整っているが実証なし |
+| カテゴリ                     | スコア | 評価 | 備考                               |
+| ---------------------------- | ------ | ---- | ---------------------------------- |
+| **DDD準拠性**                | 65/100 | D+   | 集約境界は明確だが実装不完全       |
+| **Clean Architecture準拠性** | 78/100 | C+   | レイヤー分離は良好、依存性注入未完 |
+| **機能ベース集約パターン**   | 85/100 | B    | 構造は優秀、実装が不足             |
+| **データ整合性**             | 60/100 | D    | トランザクション境界未実装         |
+| **スケーラビリティ**         | 70/100 | C    | 準備は整っているが実証なし         |
 
 ---
 
@@ -24,6 +23,7 @@
 ### ✅ 優れている点
 
 #### 1.1 境界づけられたコンテキストの明確性 ✅ (90点)
+
 ```
 ✅ 明確な境界設定
 - prompt/: プロンプト管理機能
@@ -33,9 +33,11 @@
 - workflow/: ワークフロー管理
 ```
 
-**評価**: 5つのコンテキストが適切に分離され、ユビキタス言語が確立されている。集約間の境界がディレクトリ構造として物理的に表現されている点が優秀。
+**評価**:
+5つのコンテキストが適切に分離され、ユビキタス言語が確立されている。集約間の境界がディレクトリ構造として物理的に表現されている点が優秀。
 
 #### 1.2 値オブジェクトの設計 ✅ (85点)
+
 ```python
 # backend/src/domain/prompt/value_objects/prompt_content.py
 @dataclass(frozen=True)
@@ -50,6 +52,7 @@ class PromptContent:
 ```
 
 **評価**:
+
 - ✅ `frozen=True`による不変性保証
 - ✅ `__post_init__`での自己検証
 - ✅ ビジネスルール内包（変数整合性チェック）
@@ -58,6 +61,7 @@ class PromptContent:
 ### ❌ 致命的な問題点
 
 #### 1.3 集約ルートの実装不完全 ❌ (40点)
+
 ```python
 # backend/src/domain/prompt/entities/prompt.py
 class Prompt:  # ❌ BaseEntityを継承していない
@@ -69,12 +73,16 @@ class Prompt:  # ❌ BaseEntityを継承していない
 ```
 
 **問題点**:
-1. ❌ **エンティティ基底クラス未継承**: `BaseEntity`が定義されているが使用されていない
-2. ❌ **ドメインイベント発行未実装**: `create_from_user_input()`でイベント発行がない
+
+1. ❌ **エンティティ基底クラス未継承**:
+   `BaseEntity`が定義されているが使用されていない
+2. ❌ **ドメインイベント発行未実装**:
+   `create_from_user_input()`でイベント発行がない
 3. ❌ **不変条件保護不足**: `content`, `metadata`がミュータブル（直接変更可能）
 4. ❌ **集約境界違反の可能性**: `history`がリスト直接公開で外部変更可能
 
 **修正案**:
+
 ```python
 from src.domain.shared.base_entity import BaseEntity
 from src.domain.prompt.events.prompt_created import PromptCreatedEvent
@@ -113,17 +121,20 @@ class Prompt(BaseEntity):
 ```
 
 #### 1.4 リポジトリパターン未実装 ❌ (30点)
+
 ```python
 # backend/src/domain/shared/base_repository.py
 # ❌ ファイルが空（1行のみ）
 ```
 
 **問題点**:
+
 - ❌ **インターフェース定義なし**: リポジトリの抽象基底クラスが存在しない
 - ❌ **集約永続化契約未定義**: 保存・取得・削除の標準インターフェースなし
 - ❌ **仕様パターン未実装**: 複雑なクエリ条件の表現方法なし
 
 **修正案**:
+
 ```python
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
@@ -154,13 +165,16 @@ class BaseRepository(ABC, Generic[T]):
 ```
 
 #### 1.5 ドメインサービスの責務不明確 ⚠️ (50点)
+
 ```python
 # backend/src/domain/prompt/services/prompt_generation_service.py
 # ❌ ファイルが空（__init__.pyのみ）
 ```
 
 **問題点**:
-- ⚠️ **ドメインロジックの置き場所不明**: 複数エンティティにまたがるロジックをどこに書くか不明
+
+- ⚠️
+  **ドメインロジックの置き場所不明**: 複数エンティティにまたがるロジックをどこに書くか不明
 - ⚠️ **アプリケーションサービスとの境界曖昧**: 責務分離の基準が不明確
 
 ---
@@ -170,6 +184,7 @@ class BaseRepository(ABC, Generic[T]):
 ### ✅ 優れている点
 
 #### 2.1 レイヤー分離の適切性 ✅ (90点)
+
 ```
 ✅ 4層構造の明確な分離
 backend/src/
@@ -182,6 +197,7 @@ backend/src/
 **評価**: 依存性の方向が内側（domain）に向かっている正しい構造。
 
 #### 2.2 Core層の横断的関心事分離 ✅ (85点)
+
 ```python
 # backend/src/core/config/settings.py
 class Settings(BaseSettings):
@@ -199,6 +215,7 @@ class Settings(BaseSettings):
 ```
 
 **評価**:
+
 - ✅ Pydantic v2による型安全性
 - ✅ 階層的環境変数読み込み（.env.common → .env.{env} → .env.local）
 - ✅ バリデーション実装
@@ -207,17 +224,20 @@ class Settings(BaseSettings):
 ### ❌ 致命的な問題点
 
 #### 2.3 依存性注入機構未実装 ❌ (50点)
+
 ```python
 # backend/src/core/dependencies/
 # ❌ ディレクトリが空
 ```
 
 **問題点**:
+
 1. ❌ **DIコンテナ不在**: リポジトリやサービスのインスタンス管理方法が不明
 2. ❌ **ライフサイクル管理なし**: シングルトン・スコープドなどの管理なし
 3. ❌ **テスタビリティ低下**: モックへの差し替えが困難
 
 **修正案**:
+
 ```python
 # backend/src/core/dependencies/container.py
 from dependency_injector import containers, providers
@@ -246,6 +266,7 @@ class Container(containers.DeclarativeContainer):
 ```
 
 #### 2.4 インターフェース分離原則違反 ⚠️ (65点)
+
 ```python
 # backend/src/infrastructure/prompt/models/prompt_model.py
 class PromptModel(Base, TimestampMixin, SoftDeleteMixin):
@@ -254,10 +275,13 @@ class PromptModel(Base, TimestampMixin, SoftDeleteMixin):
 ```
 
 **問題点**:
-- ⚠️ **ドメインモデルとORMモデルの未分離**: インフラ層のSQLAlchemyモデルが直接使用される可能性
+
+- ⚠️
+  **ドメインモデルとORMモデルの未分離**: インフラ層のSQLAlchemyモデルが直接使用される可能性
 - ⚠️ **マッパー未実装**: ドメインエンティティ ↔ ORMモデルの変換ロジックなし
 
 **修正案**:
+
 ```python
 # backend/src/infrastructure/prompt/mappers/prompt_mapper.py
 class PromptMapper:
@@ -302,6 +326,7 @@ class PromptMapper:
 ### ✅ 優れている点
 
 #### 3.1 変更範囲の局所化 ✅ (90点)
+
 ```
 ✅ 優れた構造
 src/domain/prompt/
@@ -327,6 +352,7 @@ src/infrastructure/prompt/
 **評価**: 各機能が完全に独立したディレクトリ構造を持ち、変更が他の機能に波及しない優れた設計。
 
 #### 3.2 凝集度の高さ ✅ (85点)
+
 - ✅ **単一責任**: 各ディレクトリが明確な責務を持つ
 - ✅ **関連性**: 関連するクラスが同一ディレクトリに配置
 - ✅ **マイクロサービス化可能**: 各機能を独立サービスに分離可能な構造
@@ -334,6 +360,7 @@ src/infrastructure/prompt/
 ### ⚠️ 改善すべき点
 
 #### 3.3 結合度の分析 ⚠️ (75点)
+
 ```python
 # backend/src/domain/prompt/events/prompt_created.py
 from src.domain.shared.events.domain_event import DomainEvent  # ✅ 適切
@@ -345,10 +372,12 @@ from src.domain.shared.events.domain_event import DomainEvent  # ✅ 適切
 ```
 
 **問題点**:
+
 - ⚠️ **暗黙的依存**: コメントで「リポジトリ層で管理」と書かれているが実装なし
 - ⚠️ **集約間参照の実装未完**: IDベース参照のベストプラクティスが未確立
 
 **修正案**:
+
 ```python
 # backend/src/domain/prompt/entities/prompt.py
 class Prompt(BaseEntity):
@@ -373,17 +402,20 @@ class Prompt(BaseEntity):
 ### ❌ 致命的な問題点
 
 #### 4.1 トランザクション境界未定義 ❌ (40点)
+
 ```python
 # backend/src/infrastructure/shared/database/
 # ❌ トランザクション管理機構なし
 ```
 
 **問題点**:
+
 1. ❌ **ユニット・オブ・ワーク未実装**: 複数エンティティの一括コミット機能なし
 2. ❌ **トランザクション境界不明**: どこでcommit/rollbackするか定義なし
 3. ❌ **整合性保証なし**: 部分的な更新が発生する可能性
 
 **修正案**:
+
 ```python
 # backend/src/infrastructure/shared/database/unit_of_work.py
 from abc import ABC, abstractmethod
@@ -437,6 +469,7 @@ async with SQLAlchemyUnitOfWork(session_factory) as uow:
 ```
 
 #### 4.2 楽観的ロック未実装 ❌ (50点)
+
 ```python
 # backend/src/infrastructure/prompt/models/prompt_model.py
 class PromptModel(Base, TimestampMixin, SoftDeleteMixin):
@@ -445,10 +478,12 @@ class PromptModel(Base, TimestampMixin, SoftDeleteMixin):
 ```
 
 **問題点**:
+
 - ❌ **同時更新競合未検出**: 2人が同時に更新するとデータ不整合発生
 - ❌ **バージョンチェックなし**: `version`カラムはあるが検証ロジックなし
 
 **修正案**:
+
 ```python
 # backend/src/infrastructure/prompt/repositories/prompt_repository.py
 class PromptRepositoryImpl(PromptRepository):
@@ -468,16 +503,19 @@ class PromptRepositoryImpl(PromptRepository):
 ```
 
 #### 4.3 イベントソーシング準備不完全 ⚠️ (70点)
+
 ```python
 # backend/src/domain/shared/events/event_store.py
 # ❌ ファイルが空（__init__.pyのみ）
 ```
 
 **問題点**:
+
 - ⚠️ **イベントストア未実装**: イベント永続化の仕組みなし
 - ⚠️ **再構築機能なし**: イベントから集約を再構築する機能なし
 
 **修正案**:
+
 ```python
 # backend/src/infrastructure/shared/events/redis_event_store.py
 class RedisEventStore:
@@ -514,6 +552,7 @@ class RedisEventStore:
 ### ✅ 優れている点
 
 #### 5.1 水平スケール準備 ✅ (80点)
+
 ```python
 # backend/src/core/config/settings.py
 class Settings(BaseSettings):
@@ -527,6 +566,7 @@ class Settings(BaseSettings):
 ### ⚠️ 改善すべき点
 
 #### 5.2 キャッシュ戦略未実装 ⚠️ (60点)
+
 ```python
 # backend/src/core/config/settings.py
 cache_ttl: int = Field(default=3600)
@@ -535,10 +575,12 @@ cache_enabled: bool = Field(default=True)
 ```
 
 **問題点**:
+
 - ⚠️ **キャッシュレイヤーなし**: Redisは設定されているが使用ロジックなし
 - ⚠️ **キャッシュ無効化戦略なし**: データ更新時のキャッシュクリア方法が不明
 
 **修正案**:
+
 ```python
 # backend/src/infrastructure/shared/cache/redis_cache.py
 class RedisCache:
@@ -588,6 +630,7 @@ class CachedPromptRepository(PromptRepository):
 ```
 
 #### 5.3 非同期処理設計未完成 ⚠️ (65点)
+
 ```python
 # backend/src/domain/shared/events/event_bus.py
 class AsyncEventBus(EventBus):
@@ -596,6 +639,7 @@ class AsyncEventBus(EventBus):
 ```
 
 **評価**:
+
 - ✅ **非同期イベントバス実装済み**: 基本構造は存在
 - ⚠️ **ワーカー実装なし**: バックグラウンド処理のワーカー未実装
 - ⚠️ **リトライ戦略なし**: 失敗時の再試行ロジックなし
@@ -607,6 +651,7 @@ class AsyncEventBus(EventBus):
 ### ⚠️ 改善すべき点
 
 #### 6.1 N+1問題対策なし ⚠️ (50点)
+
 ```python
 # backend/src/infrastructure/prompt/models/prompt_model.py
 versions: Mapped[list["PromptModel"]] = relationship(
@@ -618,10 +663,12 @@ versions: Mapped[list["PromptModel"]] = relationship(
 ```
 
 **問題点**:
+
 - ⚠️ **Eager Loading未設定**: 遅延読み込みでN+1クエリ発生の可能性
 - ⚠️ **Join戦略不明**: リレーションの取得方法が不明確
 
 **修正案**:
+
 ```python
 versions: Mapped[list["PromptModel"]] = relationship(
     "PromptModel",
@@ -638,6 +685,7 @@ query = select(PromptModel).options(
 ```
 
 #### 6.2 インデックス戦略 ✅ (80点)
+
 ```python
 # backend/src/infrastructure/prompt/models/prompt_model.py
 __table_args__ = (
@@ -656,6 +704,7 @@ __table_args__ = (
 ## 7. テスト基盤評価: **55/100** (D)
 
 ### 現状分析
+
 ```bash
 実装ファイル: 40ファイル (3,373行)
 テストファイル: 18ファイル
@@ -665,6 +714,7 @@ __table_args__ = (
 ### ❌ 致命的な問題点
 
 #### 7.1 単体テスト不足 ❌ (40点)
+
 ```
 tests/unit/domain/prompt/  # テスト構造はあるが実装少数
 tests/integration/         # 統合テストなし
@@ -672,11 +722,14 @@ tests/e2e/                # E2Eテストなし
 ```
 
 **問題点**:
+
 - ❌ **カバレッジ未達**: 目標80%に対して現状不明（推定20-30%）
 - ❌ **重要パスの未テスト**: 集約ルート、値オブジェクトの主要メソッド未テスト
 
 #### 7.2 テストダブル戦略なし ⚠️ (50点)
+
 **問題点**:
+
 - ⚠️ **モック/スタブ未整備**: リポジトリやサービスのモック実装なし
 - ⚠️ **テストフィクスチャ不足**: テストデータ生成の共通機構なし
 
@@ -687,14 +740,17 @@ tests/e2e/                # E2Eテストなし
 ### 🔴 Critical（即座に対応必須）
 
 1. **BaseEntity未使用** (スコア影響: -10点)
+
    - エンティティが基底クラスを継承していない
    - ドメインイベント発行機構が機能していない
 
 2. **リポジトリインターフェース未定義** (スコア影響: -15点)
+
    - `base_repository.py`が空ファイル
    - 永続化の標準契約なし
 
 3. **トランザクション境界未実装** (スコア影響: -20点)
+
    - Unit of Work未実装
    - データ整合性保証なし
 
@@ -705,12 +761,15 @@ tests/e2e/                # E2Eテストなし
 ### 🟡 High（Phase 3.2-3.3で対応）
 
 5. **ドメインモデル⇔ORMマッパー未実装** (スコア影響: -8点)
+
    - インフラ層とドメイン層の結合度高い
 
 6. **楽観的ロック未実装** (スコア影響: -10点)
+
    - 同時更新競合検出なし
 
 7. **キャッシュレイヤー未実装** (スコア影響: -7点)
+
    - パフォーマンス最適化の機会損失
 
 8. **イベントストア未実装** (スコア影響: -6点)
@@ -730,6 +789,7 @@ tests/e2e/                # E2Eテストなし
 ### Priority 1: 即座に実施（Task 3.2）
 
 #### 1.1 BaseEntity実装と適用
+
 ```python
 # backend/src/domain/shared/base_entity.py
 from abc import ABC
@@ -762,12 +822,14 @@ class BaseEntity(ABC):
 ```
 
 **実装手順**:
+
 1. `base_entity.py`に上記実装を追加
 2. `Prompt`エンティティを`BaseEntity`継承に変更
 3. `create_from_user_input()`でドメインイベント発行を追加
 4. 単体テスト作成（`tests/unit/domain/shared/test_base_entity.py`）
 
 #### 1.2 BaseRepository実装
+
 ```python
 # backend/src/domain/shared/base_repository.py
 from abc import ABC, abstractmethod
@@ -799,12 +861,14 @@ class BaseRepository(ABC, Generic[T]):
 ```
 
 **実装手順**:
+
 1. `base_repository.py`に上記実装を追加
 2. `PromptRepository`インターフェース作成（`src/domain/prompt/repositories/prompt_repository.py`）
 3. `PromptRepositoryImpl`実装（`src/infrastructure/prompt/repositories/prompt_repository_impl.py`）
 4. マッパークラス作成（`src/infrastructure/prompt/mappers/prompt_mapper.py`）
 
 #### 1.3 Unit of Work実装
+
 ```python
 # backend/src/infrastructure/shared/database/unit_of_work.py
 from abc import ABC, abstractmethod
@@ -853,16 +917,19 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 ### Priority 2: Phase 3.3-3.4で実施
 
 #### 2.1 依存性注入コンテナ実装
+
 - `dependency-injector`ライブラリ導入
 - `Container`クラス作成（`src/core/dependencies/container.py`）
 - リポジトリ・サービスの登録
 
 #### 2.2 楽観的ロック実装
+
 - `OptimisticLockException`追加
 - リポジトリでバージョンチェック実装
 - 単体テストで競合検証
 
 #### 2.3 キャッシュレイヤー実装
+
 - `RedisCache`クラス作成
 - `CachedPromptRepository`デコレーター実装
 - キャッシュ無効化戦略確立
@@ -870,16 +937,19 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 ### Priority 3: Phase 3.5-3.7で実施
 
 #### 3.1 イベントソーシング完成
+
 - `RedisEventStore`実装
 - 集約再構築機能実装
 - イベントバージョニング機構
 
 #### 3.2 テストカバレッジ80%達成
+
 - ドメイン層単体テスト充実
 - 統合テスト実装（リポジトリ・イベントバス）
 - E2Eテスト基盤構築
 
 #### 3.3 パフォーマンス最適化
+
 - N+1問題対策（Eager Loading）
 - 複合インデックス追加
 - クエリパフォーマンス計測
@@ -891,37 +961,38 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 ### 🔴 High Risk（早期対応必須）
 
 #### 10.1 データ不整合リスク
+
 **現状**: トランザクション境界未実装、楽観的ロック未実装
 **リスク**: 複数ユーザーの同時更新でデータ破損
-**影響範囲**: プロンプト管理、評価機能全般
-**対策**: Priority 1の1.3（Unit of Work）、Priority 2の2.2（楽観的ロック）実装
+**影響範囲**: プロンプト管理、評価機能全般 **対策**: Priority 1の1.3（Unit of
+Work）、Priority 2の2.2（楽観的ロック）実装
 
 #### 10.2 テスタビリティ低下
+
 **現状**: DI機構なし、モック実装なし
-**リスク**: バグ混入率増加、リファクタリング困難
-**影響範囲**: 全機能の品質保証
+**リスク**: バグ混入率増加、リファクタリング困難 **影響範囲**: 全機能の品質保証
 **対策**: Priority 2の2.1（DIコンテナ）、Priority 3の3.2（テスト充実）
 
 ### 🟡 Medium Risk（Phase 4-5で対応）
 
 #### 10.3 パフォーマンス劣化
+
 **現状**: キャッシュ未実装、N+1問題対策なし
-**リスク**: ユーザー増加でレスポンス遅延
-**影響範囲**: 全API
-**対策**: Priority 2の2.3（キャッシュ）、Priority 3の3.3（最適化）
+**リスク**: ユーザー増加でレスポンス遅延 **影響範囲**: 全API **対策**: Priority
+2の2.3（キャッシュ）、Priority 3の3.3（最適化）
 
 #### 10.4 スケーラビリティ限界
+
 **現状**: 非同期処理未完成、ワーカー未実装
-**リスク**: 並列評価実行時のリソース枯渇
-**影響範囲**: 評価機能
-**対策**: Phase 4でワーカー実装、Redis Streams活用
+**リスク**: 並列評価実行時のリソース枯渇 **影響範囲**: 評価機能 **対策**: Phase
+4でワーカー実装、Redis Streams活用
 
 ### 🟢 Low Risk（Phase 6で対応）
 
 #### 10.5 保守性低下
+
 **現状**: ドメインサービス未実装、仕様パターンなし
-**リスク**: ビジネスロジックの重複・散在
-**影響範囲**: 新機能追加時の開発速度
+**リスク**: ビジネスロジックの重複・散在 **影響範囲**: 新機能追加時の開発速度
 **対策**: Phase 6で戦略パターン、仕様パターン導入
 
 ---
@@ -929,8 +1000,9 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 ## 11. アクションプラン（次の3タスク）
 
 ### Task 3.2: ドメイン層完成（Priority 1）
-**期間**: 2-3日
-**成果物**:
+
+**期間**: 2-3日 **成果物**:
+
 - ✅ `BaseEntity`完全実装と`Prompt`への適用
 - ✅ `BaseRepository`完全実装
 - ✅ `PromptRepository`インターフェース定義
@@ -938,14 +1010,16 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 - ✅ 単体テスト20件追加（カバレッジ50%達成）
 
 **完了基準**:
+
 - [ ] すべてのエンティティが`BaseEntity`継承
 - [ ] ドメインイベントが正しく発行される
 - [ ] リポジトリインターフェースが定義されている
 - [ ] `pytest tests/unit/domain/` がすべてパス
 
 ### Task 3.3: インフラ層実装（Priority 1-2）
-**期間**: 3-4日
-**成果物**:
+
+**期間**: 3-4日 **成果物**:
+
 - ✅ `Unit of Work`実装
 - ✅ `PromptRepositoryImpl`実装（Turso接続）
 - ✅ `PromptMapper`実装（ドメイン⇔ORM変換）
@@ -953,14 +1027,16 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 - ✅ 統合テスト10件追加
 
 **完了基準**:
+
 - [ ] プロンプトの永続化が動作する
 - [ ] トランザクション境界が正しく機能
 - [ ] 同時更新競合が検出される
 - [ ] `pytest tests/integration/` がすべてパス
 
 ### Task 3.4: アプリケーション層実装（Priority 2）
-**期間**: 3-4日
-**成果物**:
+
+**期間**: 3-4日 **成果物**:
+
 - ✅ DIコンテナ実装（`dependency-injector`）
 - ✅ `CreatePromptCommand`/`CreatePromptHandler`実装
 - ✅ `GetPromptQuery`/`GetPromptHandler`実装
@@ -968,6 +1044,7 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 - ✅ E2Eテスト5件追加
 
 **完了基準**:
+
 - [ ] プロンプト作成APIが動作する（POST /api/v1/prompts）
 - [ ] プロンプト取得APIが動作する（GET /api/v1/prompts/{id}）
 - [ ] キャッシュが機能する
@@ -980,25 +1057,31 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 ### 総合評価: **72/100 (C評価)** - 「基礎は良好、実装未完成」
 
 #### ✅ 強み
+
 1. **アーキテクチャ構造**: DDD + Clean Architectureの構造は優秀（85点）
 2. **機能分離**: 機能ベース集約パターンが適切に適用（85点）
 3. **設定管理**: Pydantic v2による型安全な設定管理（85点）
 4. **レイヤー分離**: 依存性の方向が正しい（90点）
 
 #### ❌ 弱み
+
 1. **実装不完全**: 構造はあるが実装が空ファイル多数（-28点）
 2. **データ整合性**: トランザクション・ロック機構なし（-20点）
 3. **テスタビリティ**: DI機構なし、テスト不足（-17点）
 4. **パフォーマンス**: キャッシュ・最適化未実装（-13点）
 
 #### 🎯 次のステップ
+
 **Task 3.2-3.4の完了でスコア目標: 85/100 (B評価)**
+
 - Priority 1の3項目実装でCritical問題解消: +13点（→85点）
 - テストカバレッジ80%達成: +5点（→90点）
 - キャッシュ・最適化実装: +5点（→95点）
 
 #### 📊 達成可能な最終目標
+
 **Phase 3完了時: 90-95/100 (A-評価)**
+
 - DDD/Clean Architecture完全準拠
 - データ整合性保証
 - 80%以上のテストカバレッジ
@@ -1009,24 +1092,29 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 ## 13. レビュー所見
 
 ### 評価コメント
-Task 3.1でのディレクトリ構造設計は**非常に優秀**。DDD + Clean Architectureの理論的理解が深く、機能ベース集約パターンが適切に適用されている。ただし、**実装が構造に追いついていない**状態。
+
+Task 3.1でのディレクトリ構造設計は**非常に優秀**。DDD + Clean
+Architectureの理論的理解が深く、機能ベース集約パターンが適切に適用されている。ただし、**実装が構造に追いついていない**状態。
 
 特に、`base_repository.py`や`event_store.py`などの重要なファイルが空（1行のみ）なのは、**設計フェーズとしては合格だが、実装フェーズとしては不完全**。
 
-Task 3.2-3.4で上記の**Priority 1項目（BaseEntity, BaseRepository, Unit of Work）を実装すれば、アーキテクチャスコアは85点以上に到達**すると評価する。
+Task 3.2-3.4で上記の**Priority 1項目（BaseEntity, BaseRepository, Unit of
+Work）を実装すれば、アーキテクチャスコアは85点以上に到達**すると評価する。
 
 ### 技術的推奨
+
 1. **段階的実装**: 一度にすべて実装せず、Prompt集約を完全に仕上げてから他集約に展開
 2. **テストファースト**: リポジトリ・サービス実装前に単体テスト作成
 3. **統合テスト重視**: ドメイン層とインフラ層の境界テストを充実
 
 ### プロジェクト管理
+
 - **現実的なスケジュール**: Task 3.2-3.4で合計8-11日必要
 - **品質ゲート**: 各タスク完了時にテストカバレッジ確認必須
 - **リスク管理**: データ整合性問題はMVP前に必ず解決すること
 
 ---
 
-**レビュー担当**: Backend Architect Agent
-**次回レビュー**: Task 3.4完了時（Application層実装後）
+**レビュー担当**: Backend Architect Agent **次回レビュー**: Task
+3.4完了時（Application層実装後）
 **署名**: 厳格な基準に基づき、改善可能性を重視した評価を実施

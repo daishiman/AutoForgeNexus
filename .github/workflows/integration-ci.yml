@@ -20,12 +20,12 @@ permissions:
   checks: write
 
 env:
-  PYTHON_VERSION: '3.13'
-  NODE_VERSION: '22'
-  PNPM_VERSION: '9'
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
   # Phase管理: 段階的環境構築に対応
   # Phase 3: バックエンド実装中、Phase 5: フロントエンド未実装
-  CURRENT_PHASE: '3'
+  CURRENT_PHASE: "3"
 
 jobs:
   # Python environment setup
@@ -33,9 +33,9 @@ jobs:
     name: 🐍 Setup Python Environment
     uses: ./.github/workflows/shared-setup-python.yml
     with:
-      python-version: '3.13'
-      working-directory: './backend'
-      cache-key-suffix: '-integration'
+      python-version: "3.13"
+      working-directory: "./backend"
+      cache-key-suffix: "-integration"
       install-dev-deps: true
 
   # Node.js environment setup
@@ -43,10 +43,10 @@ jobs:
     name: 🟢 Setup Node.js Environment
     uses: ./.github/workflows/shared-setup-node.yml
     with:
-      node-version: '22'
-      pnpm-version: '9'
-      working-directory: './frontend'
-      cache-key-suffix: '-integration'
+      node-version: "22"
+      pnpm-version: "9"
+      working-directory: "./frontend"
+      cache-key-suffix: "-integration"
       install-playwright: true
 
   # Full stack integration tests
@@ -72,22 +72,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python  # 必要最小限のセットアップ
+      - name: 🐍 Setup Python # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Setup pnpm  # 必要最小限のセットアップ
+      - name: 📦 Setup pnpm # 必要最小限のセットアップ
         uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: 🟢 Setup Node.js  # 必要最小限のセットアップ
+      - name: 🟢 Setup Node.js # 必要最小限のセットアップ
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: './frontend/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: 📦 Install frontend dependencies (using pnpm cache)
         id: install-deps
@@ -255,23 +255,23 @@ jobs:
       - name: 🔒 Run Trivy security scan
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
 
       - name: 📤 Upload Trivy results
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
 
       - name: 🔒 OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'AutoForgeNexus'
-          path: '.'
-          format: 'HTML'
+          project: "AutoForgeNexus"
+          path: "."
+          format: "HTML"
           args: >
             --enableRetired
             --enableExperimental

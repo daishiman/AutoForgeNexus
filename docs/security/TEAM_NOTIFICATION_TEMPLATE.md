@@ -7,26 +7,30 @@ TruffleHogで秘密情報が検出された際のチーム通知用テンプレ�
 ## 📧 メール・Slack通知テンプレート
 
 ### 件名
+
 ```
 [SECURITY] TruffleHog秘密情報検出 - 即時対応必要
 ```
 
 ### 本文
 
-```markdown
+````markdown
 ## 🚨 セキュリティアラート: 秘密情報検出
 
 ### 📊 検出サマリー
+
 - **検出日時**: 2025年10月8日
 - **検出ツール**: TruffleHog v3.82.13
 - **影響範囲**: ワーキングディレクトリ（Git履歴はクリーン）
 - **深刻度**: HIGH（本番環境トークン含む）
 
 ### 🔍 検出内容
+
 - **Discord Webhook URL**: `.env`, `backend/.env.local`
 - **Cloudflare API Token**: `.env`, `backend/.env.*`（複数環境ファイル）
 
 ### ✅ 安全確認
+
 - ✅ Git履歴に秘密情報は含まれていない
 - ✅ `.gitignore`は適切に設定済み
 - ✅ Git履歴書き換え（git-filter-repo）は不要
@@ -34,16 +38,20 @@ TruffleHogで秘密情報が検出された際のチーム通知用テンプレ�
 ### 🔒 即時対応（実施期限: 本日中）
 
 **1. 秘密情報の無効化**
+
 - Discord Webhook URL削除 → 新規作成
 - Cloudflare API Token削除 → 新規発行
 
 **2. GitHub Secretsへの移行**
+
 ```bash
 gh secret set DISCORD_WEBHOOK_URL --body "new_webhook_url"
 gh secret set CLOUDFLARE_API_TOKEN --body "new_api_token"
 ```
+````
 
 **3. ローカル環境の更新**
+
 ```bash
 # 自動クリーンアップスクリプト実行
 ./scripts/security/cleanup-secrets.sh
@@ -57,23 +65,27 @@ cp frontend/.env.example frontend/.env
 ```
 
 ### 📋 詳細ドキュメント
+
 - 対応計画: `docs/security/SECRET_REMEDIATION_PLAN.md`
 - 実行スクリプト: `scripts/security/cleanup-secrets.sh`
 
 ### ⏰ タイムライン
-| フェーズ | 期限 | 責任者 |
-|---------|------|--------|
+
+| フェーズ                | 期限       | 責任者           |
+| ----------------------- | ---------- | ---------------- |
 | Phase 1: 秘密情報無効化 | 2025-10-08 | セキュリティ担当 |
-| Phase 2: 環境整理 | 2025-10-09 | 開発チーム全員 |
-| Phase 3: 自動検知強化 | 2025-10-10 | DevOps担当 |
-| Phase 4: ドキュメント | 2025-10-11 | テックリード |
+| Phase 2: 環境整理       | 2025-10-09 | 開発チーム全員   |
+| Phase 3: 自動検知強化   | 2025-10-10 | DevOps担当       |
+| Phase 4: ドキュメント   | 2025-10-11 | テックリード     |
 
 ### 🚫 やってはいけないこと
+
 - ❌ 既存の.envファイルをコミット
 - ❌ 古いトークンを引き続き使用
 - ❌ ローカル.envをチームメンバーと共有
 
 ### 📞 連絡先
+
 - セキュリティ担当: [担当者名]
 - テックリード: [担当者名]
 - 緊急連絡先: [連絡先]
@@ -81,9 +93,11 @@ cp frontend/.env.example frontend/.env
 ---
 
 **このアラートを受け取ったら**:
+
 1. 本メッセージを確認
 2. 上記「即時対応」を実施
 3. 完了後に返信またはチケット更新
+
 ```
 
 ---
@@ -92,8 +106,10 @@ cp frontend/.env.example frontend/.env
 
 ### Issueタイトル
 ```
+
 [SECURITY] TruffleHog秘密情報検出 - 環境ファイル整理
-```
+
+````
 
 ### Issue本文
 
@@ -178,20 +194,21 @@ TruffleHogが秘密情報を検出したため、環境ファイルの整理と�
 
 **ラベル**: `security`, `critical`, `tech-debt`
 **マイルストーン**: Security Q4 2025
-```
+````
 
 ---
 
 ## 🎯 PR (Pull Request) テンプレート
 
 ### PRタイトル
+
 ```
 fix(security): TruffleHog検出対応 - 環境ファイル整理とpre-commit強化
 ```
 
 ### PR説明
 
-```markdown
+````markdown
 ## 📝 変更概要
 
 TruffleHogで検出された秘密情報への対応として、環境ファイル整理とセキュリティ強化を実施しました。
@@ -203,12 +220,14 @@ Closes #XXX
 ## 🎯 変更内容
 
 ### セキュリティ対策
+
 - ✅ 秘密情報を含む.envファイルを削除（Git履歴影響なし）
 - ✅ GitHub Secretsに秘密情報を移行
 - ✅ pre-commit フックにTruffleHog統合
 - ✅ CI/CDパイプラインに秘密検知強化
 
 ### ファイル変更
+
 - `docs/security/SECRET_REMEDIATION_PLAN.md` (新規作成)
 - `scripts/security/cleanup-secrets.sh` (新規作成)
 - `.pre-commit-config.yaml` (TruffleHog追加)
@@ -238,6 +257,7 @@ docker run --rm -v $(pwd):/tmp trufflesecurity/trufflehog:latest \
 # 3. CI/CDパイプライン確認
 gh workflow run security-scan.yml
 ```
+````
 
 ## 📊 影響範囲
 
@@ -265,9 +285,11 @@ gh workflow run security-scan.yml
 ---
 
 **この変更により**:
+
 - 🔒 秘密情報漏洩リスクゼロ化
 - 🤖 自動検知による再発防止
 - 📋 明確な管理プロセス確立
+
 ```
 
 ---
@@ -276,12 +298,13 @@ gh workflow run security-scan.yml
 
 ### 緊急アラート用
 ```
+
 🚨 **セキュリティアラート: TruffleHog秘密情報検出**
 
-**影響範囲**: ワーキングディレクトリのみ（Git履歴クリーン）
-**深刻度**: HIGH
+**影響範囲**: ワーキングディレクトリのみ（Git履歴クリーン） **深刻度**: HIGH
 
 **即時対応必要**:
+
 1. Discord Webhook + Cloudflare Token無効化
 2. 新トークンをGitHub Secretsに登録
 3. ローカル環境をクリーンアップ
@@ -289,22 +312,25 @@ gh workflow run security-scan.yml
 詳細: docs/security/SECRET_REMEDIATION_PLAN.md
 
 cc: @security-team @devops-team
+
 ```
 
 ### 完了通知用
 ```
+
 ✅ **TruffleHog秘密情報対応完了**
 
 **実施内容**:
+
 - 秘密情報のローテーション完了
 - GitHub Secrets移行完了
 - pre-commit フック統合完了
 - TruffleHogスキャン: 検出ゼロ
 
-**次のステップ**:
-各開発者は`.env.example`から`.env`を作成してください。
+**次のステップ**: 各開発者は`.env.example`から`.env`を作成してください。
 
 詳細: PR #XXX
+
 ```
 
 ---
@@ -312,3 +338,4 @@ cc: @security-team @devops-team
 **作成日**: 2025年10月8日
 **最終更新**: 2025年10月8日
 **責任者**: version-control-specialist Agent
+```

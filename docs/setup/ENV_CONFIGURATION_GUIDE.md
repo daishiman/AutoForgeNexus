@@ -1,4 +1,5 @@
 # 環境変数設定分離ガイド
+
 ## AutoForgeNexus セキュリティ強化版
 
 ### 📋 概要
@@ -10,12 +11,14 @@
 ### 🔒 セキュリティ侵害の検出（例示）
 
 以下の認証情報形式が露出していた例（モック値）:
+
 - GitHub Personal Access Token: `ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
 - Cloudflare API Token: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`
 - Discord Webhook URL: `https://discord.com/api/webhooks/XXXXX/XXXXX`
 - Brave API Key: `BSABXXXXXXXXXXXXXXXXXXXXXXX`
 
 **対応手順**:
+
 1. 上記トークンを各サービスで即座に無効化
 2. 新しいトークンを生成
 3. `.env`ファイルを`.gitignore`に追加確認
@@ -467,17 +470,17 @@ COMMIT_SHA=${GITHUB_SHA}
 
 ## 📊 環境変数管理マトリックス
 
-| 変数カテゴリ | ルート | Backend | Frontend | Docker | CI/CD |
-|------------|--------|---------|----------|---------|-------|
-| 共通設定 | ✅ | 継承 | 継承 | 継承 | - |
-| データベース | - | ✅ | - | ✅ | ✅ |
-| Redis | ✅ | ✅ | - | ✅ | ✅ |
-| 認証（秘密） | - | ✅ | - | ✅ | - |
-| 認証（公開） | - | - | ✅ | ✅ | - |
-| API Keys | - | ✅ | - | ✅ | - |
-| セキュリティ | - | ✅ | - | ✅ | - |
-| 監視 | ✅ | ✅ | ✅ | - | ✅ |
-| パフォーマンス | ✅ | カスタム | - | - | - |
+| 変数カテゴリ   | ルート | Backend  | Frontend | Docker | CI/CD |
+| -------------- | ------ | -------- | -------- | ------ | ----- |
+| 共通設定       | ✅     | 継承     | 継承     | 継承   | -     |
+| データベース   | -      | ✅       | -        | ✅     | ✅    |
+| Redis          | ✅     | ✅       | -        | ✅     | ✅    |
+| 認証（秘密）   | -      | ✅       | -        | ✅     | -     |
+| 認証（公開）   | -      | -        | ✅       | ✅     | -     |
+| API Keys       | -      | ✅       | -        | ✅     | -     |
+| セキュリティ   | -      | ✅       | -        | ✅     | -     |
+| 監視           | ✅     | ✅       | ✅       | -      | ✅    |
+| パフォーマンス | ✅     | カスタム | -        | -      | -     |
 
 ---
 
@@ -511,6 +514,7 @@ gpg --decrypt backend/.env.production.gpg > backend/.env.production
 ### 3. シークレット管理サービスの利用
 
 **推奨サービス**:
+
 - AWS Secrets Manager
 - HashiCorp Vault
 - Azure Key Vault
@@ -590,20 +594,21 @@ EOF
 services:
   backend:
     env_file:
-      - .env                    # 共通設定
-      - backend/.env.docker     # Docker固有
-      - backend/.env.local      # 開発環境（オーバーライド）
+      - .env # 共通設定
+      - backend/.env.docker # Docker固有
+      - backend/.env.local # 開発環境（オーバーライド）
 
   frontend:
     env_file:
-      - .env                    # 共通設定
-      - frontend/.env.docker    # Docker固有
-      - frontend/.env.local     # 開発環境（オーバーライド）
+      - .env # 共通設定
+      - frontend/.env.docker # Docker固有
+      - frontend/.env.local # 開発環境（オーバーライド）
 ```
 
 ### Step 6: アプリケーション設定更新
 
 **Backend (Python/FastAPI)**:
+
 ```python
 # backend/src/core/config/settings.py
 from pydantic import BaseSettings
@@ -634,6 +639,7 @@ class Settings(BaseSettings):
 ```
 
 **Frontend (Next.js)**:
+
 ```javascript
 // frontend/next.config.js
 module.exports = {
@@ -641,8 +647,8 @@ module.exports = {
     // 環境変数の読み込み優先順位を設定
     ...require('dotenv').config({ path: '../.env' }).parsed,
     ...require('dotenv').config({ path: '.env.local' }).parsed,
-  }
-}
+  },
+};
 ```
 
 ---
@@ -709,5 +715,4 @@ git filter-branch --force --index-filter \
 
 ---
 
-**最終更新**: 2025年1月28日
-**作成者**: AutoForgeNexus Development Team
+**最終更新**: 2025年1月28日 **作成者**: AutoForgeNexus Development Team

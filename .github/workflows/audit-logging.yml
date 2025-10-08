@@ -2,29 +2,29 @@ name: Audit Logging and Compliance
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    types: [ opened, closed, merged ]
+    types: [opened, closed, merged]
   issues:
-    types: [ opened, closed, labeled ]
+    types: [opened, closed, labeled]
   workflow_run:
     workflows: ["*"]
     types: [completed]
   schedule:
     # 監査ログの週次集約（コスト最適化）
-    - cron: '0 2 * * 1'  # UTC 02:00 = JST 11:00 (毎週月曜日)
+    - cron: "0 2 * * 1" # UTC 02:00 = JST 11:00 (毎週月曜日)
   workflow_dispatch:
     inputs:
       audit_period:
-        description: 'Audit log period'
+        description: "Audit log period"
         required: true
-        default: '24h'
+        default: "24h"
         type: choice
         options:
-        - '1h'
-        - '24h'
-        - '7d'
-        - '30d'
+          - "1h"
+          - "24h"
+          - "7d"
+          - "30d"
 
 permissions:
   contents: read
@@ -42,253 +42,253 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Generate audit event
-      id: audit_event
-      run: |
-        AUDIT_ID="AUDIT-$(date +%Y%m%d-%H%M%S)"
-        TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      - name: Generate audit event
+        id: audit_event
+        run: |
+          AUDIT_ID="AUDIT-$(date +%Y%m%d-%H%M%S)"
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-        # 監査イベントの基本構造
-        cat << EOF > audit_event.json
-        {
-          "audit_id": "$AUDIT_ID",
-          "timestamp": "$TIMESTAMP",
-          "event_type": "${{ github.event_name }}",
-          "repository": "${{ github.repository }}",
-          "actor": {
-            "login": "${{ github.actor }}",
-            "type": "${{ github.actor_type || 'User' }}"
-          },
-          "source": {
-            "workflow": "${{ github.workflow }}",
-            "run_id": "${{ github.run_id }}",
-            "run_number": "${{ github.run_number }}",
-            "job": "${{ github.job }}"
-          },
-          "context": {
-            "ref": "${{ github.ref }}",
-            "sha": "${{ github.sha }}",
-            "head_ref": "${{ github.head_ref }}",
-            "base_ref": "${{ github.base_ref }}"
-          }
-        }
-        EOF
-
-        echo "audit_id=$AUDIT_ID" >> $GITHUB_OUTPUT
-        echo "✅ Generated audit event: $AUDIT_ID"
-
-    - name: Collect workflow execution data
-      run: |
-        echo "📊 Collecting workflow execution data..."
-
-        # ワークフロー実行情報の取得
-        WORKFLOW_DATA=$(curl -s \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}")
-
-        # 実行データを監査ログに追加
-        jq '. + {
-          "execution_details": {
-            "status": "'"$(echo "$WORKFLOW_DATA" | jq -r '.status')"'",
-            "conclusion": "'"$(echo "$WORKFLOW_DATA" | jq -r '.conclusion // "null"')"'",
-            "run_started_at": "'"$(echo "$WORKFLOW_DATA" | jq -r '.run_started_at')"'",
-            "created_at": "'"$(echo "$WORKFLOW_DATA" | jq -r '.created_at')"'",
-            "updated_at": "'"$(echo "$WORKFLOW_DATA" | jq -r '.updated_at')"'"
-          }
-        }' audit_event.json > audit_event_detailed.json
-
-        mv audit_event_detailed.json audit_event.json
-
-    - name: Add security context
-      run: |
-        echo "🔒 Adding security context..."
-
-        # セキュリティコンテキストの追加
-        jq '. + {
-          "security_context": {
-            "permissions": [
-              "contents:read",
-              "actions:read",
-              "issues:read",
-              "pull-requests:read",
-              "security-events:read"
-            ],
-            "secrets_used": [
-              "GITHUB_TOKEN"
-            ],
-            "network_access": true,
-            "artifact_creation": true,
-            "environment": "github-actions"
-          }
-        }' audit_event.json > audit_event_security.json
-
-        mv audit_event_security.json audit_event.json
-
-    - name: Add compliance metadata
-      run: |
-        echo "📋 Adding compliance metadata..."
-
-        # コンプライアンスメタデータの追加
-        jq '. + {
-          "compliance": {
-            "retention_period": "365_days",
-            "data_classification": "internal",
-            "regulatory_scope": ["SOC2", "GDPR"],
-            "audit_trail": true,
-            "tamper_evidence": {
-              "hash": (. | tostring | @base64),
-              "algorithm": "base64_encoding"
+          # 監査イベントの基本構造
+          cat << EOF > audit_event.json
+          {
+            "audit_id": "$AUDIT_ID",
+            "timestamp": "$TIMESTAMP",
+            "event_type": "${{ github.event_name }}",
+            "repository": "${{ github.repository }}",
+            "actor": {
+              "login": "${{ github.actor }}",
+              "type": "${{ github.actor_type || 'User' }}"
+            },
+            "source": {
+              "workflow": "${{ github.workflow }}",
+              "run_id": "${{ github.run_id }}",
+              "run_number": "${{ github.run_number }}",
+              "job": "${{ github.job }}"
+            },
+            "context": {
+              "ref": "${{ github.ref }}",
+              "sha": "${{ github.sha }}",
+              "head_ref": "${{ github.head_ref }}",
+              "base_ref": "${{ github.base_ref }}"
             }
           }
-        }' audit_event.json > audit_event_compliance.json
+          EOF
 
-        mv audit_event_compliance.json audit_event.json
+          echo "audit_id=$AUDIT_ID" >> $GITHUB_OUTPUT
+          echo "✅ Generated audit event: $AUDIT_ID"
 
-    - name: Generate daily audit summary
-      if: github.event_name == 'schedule'
-      run: |
-        echo "📈 Generating daily audit summary..."
+      - name: Collect workflow execution data
+        run: |
+          echo "📊 Collecting workflow execution data..."
 
-        # 過去24時間のワークフロー実行数を取得
-        WORKFLOW_RUNS=$(curl -s \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ github.repository }}/actions/runs?per_page=100" \
-          | jq '[.workflow_runs[] | select(.created_at >= (now - 86400 | strftime("%Y-%m-%dT%H:%M:%SZ")))]')
+          # ワークフロー実行情報の取得
+          WORKFLOW_DATA=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}")
 
-        # PR活動の取得
-        PR_ACTIVITY=$(curl -s \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ github.repository }}/pulls?state=all&sort=updated&per_page=50" \
-          | jq '[.[] | select(.updated_at >= (now - 86400 | strftime("%Y-%m-%dT%H:%M:%SZ")))]')
+          # 実行データを監査ログに追加
+          jq '. + {
+            "execution_details": {
+              "status": "'"$(echo "$WORKFLOW_DATA" | jq -r '.status')"'",
+              "conclusion": "'"$(echo "$WORKFLOW_DATA" | jq -r '.conclusion // "null"')"'",
+              "run_started_at": "'"$(echo "$WORKFLOW_DATA" | jq -r '.run_started_at')"'",
+              "created_at": "'"$(echo "$WORKFLOW_DATA" | jq -r '.created_at')"'",
+              "updated_at": "'"$(echo "$WORKFLOW_DATA" | jq -r '.updated_at')"'"
+            }
+          }' audit_event.json > audit_event_detailed.json
 
-        # Issue活動の取得
-        ISSUE_ACTIVITY=$(curl -s \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ github.repository }}/issues?state=all&sort=updated&per_page=50" \
-          | jq '[.[] | select(.updated_at >= (now - 86400 | strftime("%Y-%m-%dT%H:%M:%SZ")))]')
+          mv audit_event_detailed.json audit_event.json
 
-        # サマリー作成
-        cat << EOF > daily_audit_summary.json
-        {
-          "summary_date": "$(date -u +%Y-%m-%d)",
-          "period": "24h",
-          "repository": "${{ github.repository }}",
-          "activity_counts": {
-            "workflow_runs": $(echo "$WORKFLOW_RUNS" | jq 'length'),
-            "pull_requests": $(echo "$PR_ACTIVITY" | jq 'length'),
-            "issues": $(echo "$ISSUE_ACTIVITY" | jq 'length')
-          },
-          "workflow_summary": {
-            "successful_runs": $(echo "$WORKFLOW_RUNS" | jq '[.[] | select(.conclusion == "success")] | length'),
-            "failed_runs": $(echo "$WORKFLOW_RUNS" | jq '[.[] | select(.conclusion == "failure")] | length'),
-            "cancelled_runs": $(echo "$WORKFLOW_RUNS" | jq '[.[] | select(.conclusion == "cancelled")] | length')
-          },
-          "security_events": {
-            "secret_scans": 0,
-            "vulnerability_scans": 0,
-            "access_reviews": 0
-          },
-          "compliance_status": "compliant",
-          "data_retention": "365_days",
-          "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        }
-        EOF
+      - name: Add security context
+        run: |
+          echo "🔒 Adding security context..."
 
-        echo "✅ Daily audit summary generated"
+          # セキュリティコンテキストの追加
+          jq '. + {
+            "security_context": {
+              "permissions": [
+                "contents:read",
+                "actions:read",
+                "issues:read",
+                "pull-requests:read",
+                "security-events:read"
+              ],
+              "secrets_used": [
+                "GITHUB_TOKEN"
+              ],
+              "network_access": true,
+              "artifact_creation": true,
+              "environment": "github-actions"
+            }
+          }' audit_event.json > audit_event_security.json
 
-    - name: Validate audit log integrity
-      run: |
-        echo "🔍 Validating audit log integrity..."
+          mv audit_event_security.json audit_event.json
 
-        # 必須フィールドの検証
-        REQUIRED_FIELDS=(".audit_id" ".timestamp" ".event_type" ".repository" ".actor.login")
+      - name: Add compliance metadata
+        run: |
+          echo "📋 Adding compliance metadata..."
 
-        for field in "${REQUIRED_FIELDS[@]}"; do
-          if ! jq -e "$field" audit_event.json > /dev/null; then
-            echo "❌ Missing required field: $field"
+          # コンプライアンスメタデータの追加
+          jq '. + {
+            "compliance": {
+              "retention_period": "365_days",
+              "data_classification": "internal",
+              "regulatory_scope": ["SOC2", "GDPR"],
+              "audit_trail": true,
+              "tamper_evidence": {
+                "hash": (. | tostring | @base64),
+                "algorithm": "base64_encoding"
+              }
+            }
+          }' audit_event.json > audit_event_compliance.json
+
+          mv audit_event_compliance.json audit_event.json
+
+      - name: Generate daily audit summary
+        if: github.event_name == 'schedule'
+        run: |
+          echo "📈 Generating daily audit summary..."
+
+          # 過去24時間のワークフロー実行数を取得
+          WORKFLOW_RUNS=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs?per_page=100" \
+            | jq '[.workflow_runs[] | select(.created_at >= (now - 86400 | strftime("%Y-%m-%dT%H:%M:%SZ")))]')
+
+          # PR活動の取得
+          PR_ACTIVITY=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?state=all&sort=updated&per_page=50" \
+            | jq '[.[] | select(.updated_at >= (now - 86400 | strftime("%Y-%m-%dT%H:%M:%SZ")))]')
+
+          # Issue活動の取得
+          ISSUE_ACTIVITY=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues?state=all&sort=updated&per_page=50" \
+            | jq '[.[] | select(.updated_at >= (now - 86400 | strftime("%Y-%m-%dT%H:%M:%SZ")))]')
+
+          # サマリー作成
+          cat << EOF > daily_audit_summary.json
+          {
+            "summary_date": "$(date -u +%Y-%m-%d)",
+            "period": "24h",
+            "repository": "${{ github.repository }}",
+            "activity_counts": {
+              "workflow_runs": $(echo "$WORKFLOW_RUNS" | jq 'length'),
+              "pull_requests": $(echo "$PR_ACTIVITY" | jq 'length'),
+              "issues": $(echo "$ISSUE_ACTIVITY" | jq 'length')
+            },
+            "workflow_summary": {
+              "successful_runs": $(echo "$WORKFLOW_RUNS" | jq '[.[] | select(.conclusion == "success")] | length'),
+              "failed_runs": $(echo "$WORKFLOW_RUNS" | jq '[.[] | select(.conclusion == "failure")] | length'),
+              "cancelled_runs": $(echo "$WORKFLOW_RUNS" | jq '[.[] | select(.conclusion == "cancelled")] | length')
+            },
+            "security_events": {
+              "secret_scans": 0,
+              "vulnerability_scans": 0,
+              "access_reviews": 0
+            },
+            "compliance_status": "compliant",
+            "data_retention": "365_days",
+            "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+          echo "✅ Daily audit summary generated"
+
+      - name: Validate audit log integrity
+        run: |
+          echo "🔍 Validating audit log integrity..."
+
+          # 必須フィールドの検証
+          REQUIRED_FIELDS=(".audit_id" ".timestamp" ".event_type" ".repository" ".actor.login")
+
+          for field in "${REQUIRED_FIELDS[@]}"; do
+            if ! jq -e "$field" audit_event.json > /dev/null; then
+              echo "❌ Missing required field: $field"
+              exit 1
+            fi
+          done
+
+          # タイムスタンプの妥当性検証
+          TIMESTAMP=$(jq -r '.timestamp' audit_event.json)
+          if ! date -d "$TIMESTAMP" > /dev/null 2>&1; then
+            echo "❌ Invalid timestamp format: $TIMESTAMP"
             exit 1
           fi
-        done
 
-        # タイムスタンプの妥当性検証
-        TIMESTAMP=$(jq -r '.timestamp' audit_event.json)
-        if ! date -d "$TIMESTAMP" > /dev/null 2>&1; then
-          echo "❌ Invalid timestamp format: $TIMESTAMP"
-          exit 1
-        fi
+          # JSON形式の検証
+          if ! jq '.' audit_event.json > /dev/null; then
+            echo "❌ Invalid JSON format"
+            exit 1
+          fi
 
-        # JSON形式の検証
-        if ! jq '.' audit_event.json > /dev/null; then
-          echo "❌ Invalid JSON format"
-          exit 1
-        fi
+          echo "✅ Audit log validation passed"
 
-        echo "✅ Audit log validation passed"
+      - name: Upload audit logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-logs-${{ steps.audit_event.outputs.audit_id }}
+          path: |
+            audit_event.json
+            daily_audit_summary.json
+          retention-days: 365
+          if-no-files-found: error
 
-    - name: Upload audit logs
-      uses: actions/upload-artifact@v4
-      with:
-        name: audit-logs-${{ steps.audit_event.outputs.audit_id }}
-        path: |
-          audit_event.json
-          daily_audit_summary.json
-        retention-days: 365
-        if-no-files-found: error
+      - name: Send audit log to external system
+        if: env.AUDIT_WEBHOOK_URL != ''
+        env:
+          AUDIT_WEBHOOK_URL: ${{ secrets.AUDIT_WEBHOOK_URL }}
+        run: |
+          if [ -n "$AUDIT_WEBHOOK_URL" ]; then
+            echo "📤 Sending audit log to external system..."
 
-    - name: Send audit log to external system
-      if: env.AUDIT_WEBHOOK_URL != ''
-      env:
-        AUDIT_WEBHOOK_URL: ${{ secrets.AUDIT_WEBHOOK_URL }}
-      run: |
-        if [ -n "$AUDIT_WEBHOOK_URL" ]; then
-          echo "📤 Sending audit log to external system..."
+            # セキュリティ強化された外部送信
+            curl -X POST "$AUDIT_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -H "User-Agent: AutoForgeNexus-Audit/1.0" \
+              -H "X-Audit-Source: github-actions" \
+              -d @audit_event.json \
+              --max-time 30 \
+              --cacert /etc/ssl/certs/ca-certificates.crt \
+              --fail-with-body \
+              --retry 3 \
+              --retry-delay 5 || echo "⚠️ Failed to send audit log to external system"
+          fi
 
-          # セキュリティ強化された外部送信
-          curl -X POST "$AUDIT_WEBHOOK_URL" \
-            -H "Content-Type: application/json" \
-            -H "User-Agent: AutoForgeNexus-Audit/1.0" \
-            -H "X-Audit-Source: github-actions" \
-            -d @audit_event.json \
-            --max-time 30 \
-            --cacert /etc/ssl/certs/ca-certificates.crt \
-            --fail-with-body \
-            --retry 3 \
-            --retry-delay 5 || echo "⚠️ Failed to send audit log to external system"
-        fi
+      - name: Archive audit logs (compliance)
+        if: github.event_name == 'schedule'
+        run: |
+          echo "📦 Archiving audit logs for compliance..."
 
-    - name: Archive audit logs (compliance)
-      if: github.event_name == 'schedule'
-      run: |
-        echo "📦 Archiving audit logs for compliance..."
+          # 月次アーカイブの作成
+          ARCHIVE_DATE=$(date +%Y-%m)
+          ARCHIVE_NAME="audit-archive-$ARCHIVE_DATE"
 
-        # 月次アーカイブの作成
-        ARCHIVE_DATE=$(date +%Y-%m)
-        ARCHIVE_NAME="audit-archive-$ARCHIVE_DATE"
+          # アーカイブディレクトリ作成
+          mkdir -p audit-archives
 
-        # アーカイブディレクトリ作成
-        mkdir -p audit-archives
+          # 既存のアーティファクトを模擬的にアーカイブ
+          cat << EOF > audit-archives/archive-$ARCHIVE_DATE.json
+          {
+            "archive_date": "$ARCHIVE_DATE",
+            "repository": "${{ github.repository }}",
+            "total_events": 0,
+            "retention_period": "7_years",
+            "storage_location": "github-artifacts",
+            "compliance_standards": ["SOC2", "GDPR", "ISO27001"],
+            "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
 
-        # 既存のアーティファクトを模擬的にアーカイブ
-        cat << EOF > audit-archives/archive-$ARCHIVE_DATE.json
-        {
-          "archive_date": "$ARCHIVE_DATE",
-          "repository": "${{ github.repository }}",
-          "total_events": 0,
-          "retention_period": "7_years",
-          "storage_location": "github-artifacts",
-          "compliance_standards": ["SOC2", "GDPR", "ISO27001"],
-          "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        }
-        EOF
-
-        echo "✅ Audit archive created: $ARCHIVE_NAME"
+          echo "✅ Audit archive created: $ARCHIVE_NAME"
 
   compliance-report:
     name: Generate Compliance Report
@@ -297,57 +297,57 @@ jobs:
     if: github.event_name == 'schedule'
 
     steps:
-    - name: Generate compliance report
-      run: |
-        echo "📊 Generating compliance report..."
+      - name: Generate compliance report
+        run: |
+          echo "📊 Generating compliance report..."
 
-        cat << EOF > compliance_report.json
-        {
-          "report_id": "COMP-$(date +%Y%m%d)",
-          "report_date": "$(date -u +%Y-%m-%d)",
-          "repository": "${{ github.repository }}",
-          "compliance_framework": {
-            "soc2": {
-              "status": "compliant",
-              "audit_logs": "enabled",
-              "access_controls": "implemented",
-              "monitoring": "active"
+          cat << EOF > compliance_report.json
+          {
+            "report_id": "COMP-$(date +%Y%m%d)",
+            "report_date": "$(date -u +%Y-%m-%d)",
+            "repository": "${{ github.repository }}",
+            "compliance_framework": {
+              "soc2": {
+                "status": "compliant",
+                "audit_logs": "enabled",
+                "access_controls": "implemented",
+                "monitoring": "active"
+              },
+              "gdpr": {
+                "status": "compliant",
+                "data_retention": "365_days",
+                "data_protection": "encrypted",
+                "audit_trail": "complete"
+              },
+              "iso27001": {
+                "status": "compliant",
+                "security_controls": "implemented",
+                "incident_response": "active",
+                "continuous_monitoring": "enabled"
+              }
             },
-            "gdpr": {
-              "status": "compliant",
-              "data_retention": "365_days",
-              "data_protection": "encrypted",
-              "audit_trail": "complete"
+            "security_posture": {
+              "secret_scanning": "enabled",
+              "vulnerability_scanning": "automated",
+              "dependency_scanning": "active",
+              "security_alerts": "configured"
             },
-            "iso27001": {
-              "status": "compliant",
-              "security_controls": "implemented",
-              "incident_response": "active",
-              "continuous_monitoring": "enabled"
-            }
-          },
-          "security_posture": {
-            "secret_scanning": "enabled",
-            "vulnerability_scanning": "automated",
-            "dependency_scanning": "active",
-            "security_alerts": "configured"
-          },
-          "operational_metrics": {
-            "backup_frequency": "daily",
-            "recovery_testing": "monthly",
-            "security_training": "quarterly",
-            "policy_review": "annual"
-          },
-          "next_review_date": "$(date -d '+3 months' +%Y-%m-%d)",
-          "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        }
-        EOF
+            "operational_metrics": {
+              "backup_frequency": "daily",
+              "recovery_testing": "monthly",
+              "security_training": "quarterly",
+              "policy_review": "annual"
+            },
+            "next_review_date": "$(date -d '+3 months' +%Y-%m-%d)",
+            "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
 
-        echo "✅ Compliance report generated"
+          echo "✅ Compliance report generated"
 
-    - name: Upload compliance report
-      uses: actions/upload-artifact@v4
-      with:
-        name: compliance-report-$(date +%Y%m%d)
-        path: compliance_report.json
-        retention-days: 2555  # 7年保存
+      - name: Upload compliance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-report-$(date +%Y%m%d)
+          path: compliance_report.json
+          retention-days: 2555 # 7年保存

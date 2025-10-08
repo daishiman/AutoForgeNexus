@@ -1,9 +1,7 @@
 # GDPR準拠インシデント評価レポート
 
-**インシデントID**: SEC-20251008-001
-**評価日**: 2025年10月8日
-**評価者**: compliance-officer Agent
-**重大度**: MEDIUM（72時間通知義務なし）
+**インシデントID**: SEC-20251008-001 **評価日**: 2025年10月8日 **評価者**:
+compliance-officer Agent **重大度**: MEDIUM（72時間通知義務なし）
 **ステータス**: ✅ 解決済み（予防的対応完了）
 
 ---
@@ -12,13 +10,14 @@
 
 ### 総合判定
 
-**GDPR準拠状況**: ✅ **準拠**（通知義務なし）
-**リスクレベル**: 🟡 **MEDIUM**（潜在的リスク存在）
-**対応要件**: ⚠️ **予防的改善措置の実施**（即座の通知不要）
+**GDPR準拠状況**: ✅ **準拠**（通知義務なし） **リスクレベル**: 🟡
+**MEDIUM**（潜在的リスク存在） **対応要件**: ⚠️
+**予防的改善措置の実施**（即座の通知不要）
 
 ### 結論
 
-本インシデントは**個人データ侵害には該当しない**ため、GDPR Article 33/34の通知義務は発生しません。ただし、セキュリティベストプラクティスとして予防的改善措置を推奨します。
+本インシデントは**個人データ侵害には該当しない**ため、GDPR Article
+33/34の通知義務は発生しません。ただし、セキュリティベストプラクティスとして予防的改善措置を推奨します。
 
 ---
 
@@ -27,6 +26,7 @@
 ### 1.1 インシデント概要
 
 #### 検出内容
+
 ```yaml
 検出ツール: TruffleHog自動スキャン
 検出日時: 2025-10-08 18:35 JST
@@ -34,12 +34,14 @@
 ```
 
 #### 漏洩した情報
-| 種別 | 内容 | 影響範囲 |
-|------|------|----------|
-| Discord Webhook URL | `https://discord.com/api/webhooks/{id}/{token}` | Git履歴120コミット |
-| Cloudflare API Token | `CLOUDFLARE_API_TOKEN=***` | Git履歴内 |
+
+| 種別                 | 内容                                            | 影響範囲           |
+| -------------------- | ----------------------------------------------- | ------------------ |
+| Discord Webhook URL  | `https://discord.com/api/webhooks/{id}/{token}` | Git履歴120コミット |
+| Cloudflare API Token | `CLOUDFLARE_API_TOKEN=***`                      | Git履歴内          |
 
 #### 既実施の対応
+
 ```yaml
 対応完了日時: 2025-10-08 19:00 JST（コミット5fe40e6）
 実施内容:
@@ -57,15 +59,18 @@
 
 ```markdown
 **違反内容**:
+
 - 秘密情報（Webhook URL、API Token）がGit履歴に平文保存
 - 120コミット分の履歴に露出
 
 **軽減要因**:
+
 - ✅ 即座の検出と修正（24時間以内）
 - ✅ GitHub Secretsへの移行完了
 - ✅ 自動監視システム稼働
 
 **個人データの該当性**: 🟢 **該当しない**
+
 - Discord Webhook URL: サーバーID含むが個人識別情報（PII）ではない
 - Cloudflare API Token: システム認証情報（個人データではない）
 ```
@@ -76,12 +81,14 @@
 
 ```markdown
 **技術的対策**:
+
 - ✅ TruffleHog自動スキャン（毎日実行）
 - ✅ GitHub Actions秘密検出ワークフロー
 - ✅ CodeQL、Trivy、Snykによる多層防御
 - ✅ 365日監査ログ保持
 
 **組織的対策**:
+
 - ✅ セキュリティインシデント対応手順（security-incident.yml）
 - ✅ 監査証跡自動記録（audit-logging.yml）
 - ✅ セキュリティレビュー体制（7エージェント協働）
@@ -95,12 +102,12 @@
 **通知不要の根拠**:
 
 1. **個人データ侵害に該当しない**
+
    - Discord Webhook: システム識別子（PIIではない）
    - Cloudflare Token: 認証情報（個人データではない）
 
-2. **GDPR Article 4(12)の定義**
-   "personal data breach" means a breach of security leading to
-   the accidental or unlawful destruction, loss, alteration,
+2. **GDPR Article 4(12)の定義** "personal data breach" means a breach of
+   security leading to the accidental or unlawful destruction, loss, alteration,
    unauthorised disclosure of, or access to, personal data
 
    ➡️ 本件は"personal data"（個人データ）に該当しない
@@ -118,6 +125,7 @@
 
 ```markdown
 **通知不要の根拠**:
+
 - 個人データ侵害に該当しない
 - データ主体（エンドユーザー）への影響なし
 - Article 34の適用条件を満たさない
@@ -140,13 +148,13 @@ L│ （個人データなし）
 
 **総合リスクスコア**: 5/10（MEDIUM）
 
-| 評価項目 | スコア | 理由 |
-|---------|--------|------|
-| 個人データ露出 | 0/10 | ✅ 個人データ非該当 |
-| システムセキュリティ | 7/10 | ⚠️ 認証情報漏洩の潜在リスク |
-| 規制準拠 | 10/10 | ✅ GDPR通知義務なし |
-| 検出と対応速度 | 9/10 | ✅ 24時間以内に完全解決 |
-| 再発防止体制 | 8/10 | ✅ 自動監視・多層防御実装済み |
+| 評価項目             | スコア | 理由                          |
+| -------------------- | ------ | ----------------------------- |
+| 個人データ露出       | 0/10   | ✅ 個人データ非該当           |
+| システムセキュリティ | 7/10   | ⚠️ 認証情報漏洩の潜在リスク   |
+| 規制準拠             | 10/10  | ✅ GDPR通知義務なし           |
+| 検出と対応速度       | 9/10   | ✅ 24時間以内に完全解決       |
+| 再発防止体制         | 8/10   | ✅ 自動監視・多層防御実装済み |
 
 ---
 
@@ -172,19 +180,20 @@ L│ （個人データなし）
 **URL構造**: `https://discord.com/api/webhooks/{SERVER_ID}/{TOKEN}`
 
 **含まれる情報**:
+
 - SERVER_ID: Discordサーバー識別子（UUID形式）
 - TOKEN: Webhook認証トークン（システム生成）
 
 **PIIの該当性**: 🟢 **非該当**
 
 理由:
+
 1. SERVER_IDはDiscordサーバーの識別子（個人ではなく組織）
 2. TOKENはシステム生成の認証情報（個人属性なし）
 3. GDPR Article 4(1)の"personal data"定義に該当しない
 
-**GDPR Article 4(1) "personal data"**:
-"any information relating to an identified or identifiable
- natural person ('data subject')"
+**GDPR Article 4(1) "personal data"**: "any information relating to an
+identified or identifiable natural person ('data subject')"
 
 ➡️ Webhook URLは"natural person"（自然人）を識別しない
 ```
@@ -197,6 +206,7 @@ L│ （個人データなし）
 **PIIの該当性**: 🟢 **非該当**
 
 理由:
+
 - API TokenはCloudflareアカウントに紐づく
 - アカウントは組織（daishiman/AutoForgeNexus）
 - 個人を直接識別する情報を含まない
@@ -208,16 +218,19 @@ L│ （個人データなし）
 
 ```markdown
 **Discord Webhook URL漏洩のリスク**:
+
 - ⚠️ 第三者による不正通知送信の可能性
 - ⚠️ スパム通知の送信リスク
 - ✅ サーバーデータの読み取り権限なし（送信のみ）
 
 **Cloudflare API Token漏洩のリスク**:
+
 - ⚠️ DNS設定変更の可能性
 - ⚠️ Workers/Pages設定の変更リスク
 - ⚠️ R2ストレージへのアクセス
 
 **現状の対策**:
+
 - ✅ Git履歴から削除済み
 - ✅ GitHub Secretsへ移行完了
 - ✅ Webhook URL無効化・再発行可能
@@ -226,10 +239,8 @@ L│ （個人データなし）
 
 ### 2.4 最終判定
 
-**監督機関への報告**: ❌ **不要**
-**データ主体への通知**: ❌ **不要**
-**内部記録**: ✅ **必須**
-**予防的改善**: ✅ **推奨**
+**監督機関への報告**: ❌ **不要** **データ主体への通知**: ❌ **不要**
+**内部記録**: ✅ **必須** **予防的改善**: ✅ **推奨**
 
 ---
 
@@ -275,7 +286,7 @@ L│ （個人データなし）
 
 証拠:
   - コミットハッシュ: 5fe40e6
-  - コミットメッセージ: "fix(security): Discord Webhook URLをモック値に置換"
+  - コミットメッセージ: 'fix(security): Discord Webhook URLをモック値に置換'
   - 関連Issue: なし（即座に解決）
 ```
 
@@ -315,11 +326,7 @@ L│ （個人データなし）
       "GitHub Issue自動作成",
       "監査ログ記録"
     ],
-    "manual_actions": [
-      "Git履歴クリーンアップ",
-      "Secrets移行",
-      "GDPR評価"
-    ]
+    "manual_actions": ["Git履歴クリーンアップ", "Secrets移行", "GDPR評価"]
   },
   "compliance": {
     "gdpr_notification_required": false,
@@ -335,10 +342,10 @@ L│ （個人データなし）
 保存場所: GitHub Actions Artifacts
 保存期間: 365日（監査要件）
 ファイル:
-  - secret_findings.json      # TruffleHog検出結果
-  - security_incident.json    # インシデント詳細
-  - audit_event.json         # 監査イベント記録
-  - compliance_report.json   # コンプライアンス評価
+  - secret_findings.json # TruffleHog検出結果
+  - security_incident.json # インシデント詳細
+  - audit_event.json # 監査イベント記録
+  - compliance_report.json # コンプライアンス評価
 ```
 
 ---
@@ -382,12 +389,12 @@ L│ （個人データなし）
 
 #### 推奨対策
 
-| 優先度 | 対策 | 工数 | 担当 |
-|--------|------|------|------|
-| 🔴 High | Webhook URL無効化・再発行 | 30分 | security-architect |
-| 🔴 High | Cloudflare Token無効化・再発行 | 30分 | security-architect |
-| 🟡 Medium | Git Hook秘密検知強化 | 2時間 | version-control-specialist |
-| 🟡 Medium | 秘密情報管理ポリシー文書化 | 3時間 | compliance-officer |
+| 優先度    | 対策                           | 工数  | 担当                       |
+| --------- | ------------------------------ | ----- | -------------------------- |
+| 🔴 High   | Webhook URL無効化・再発行      | 30分  | security-architect         |
+| 🔴 High   | Cloudflare Token無効化・再発行 | 30分  | security-architect         |
+| 🟡 Medium | Git Hook秘密検知強化           | 2時間 | version-control-specialist |
+| 🟡 Medium | 秘密情報管理ポリシー文書化     | 3時間 | compliance-officer         |
 
 #### 実装計画
 
@@ -592,12 +599,12 @@ Hour 48-72（72時間以内）:
 
 #### 通知優先順位
 
-| 優先度 | 対象 | 通知タイミング | 方法 |
-|--------|------|---------------|------|
-| 1. Critical | 監督機関 | 72時間以内 | 公式フォーム |
-| 2. High | データ主体 | 高リスク時 | メール・サイト通知 |
-| 3. Medium | 経営層 | 24時間以内 | レポート・会議 |
-| 4. Low | 開発チーム | 即座 | Slack・GitHub Issue |
+| 優先度      | 対象       | 通知タイミング | 方法                |
+| ----------- | ---------- | -------------- | ------------------- |
+| 1. Critical | 監督機関   | 72時間以内     | 公式フォーム        |
+| 2. High     | データ主体 | 高リスク時     | メール・サイト通知  |
+| 3. Medium   | 経営層     | 24時間以内     | レポート・会議      |
+| 4. Low      | 開発チーム | 即座           | Slack・GitHub Issue |
 
 #### 監督機関連絡先（日本）
 
@@ -622,21 +629,22 @@ GDPR監督機関（欧州データ保護委員会）:
 
 #### 総合スコア: 95/100 ✅ **優秀**
 
-| GDPR Article | 準拠状況 | スコア | 備考 |
-|-------------|---------|--------|------|
-| Art. 5(1)(a) 適法性 | ✅ 準拠 | 100/100 | データ処理の適法性確保 |
-| Art. 5(1)(b) 目的制限 | ✅ 準拠 | 100/100 | 明確な目的定義 |
-| Art. 5(1)(c) データ最小化 | ✅ 準拠 | 95/100 | 改善余地あり |
-| Art. 5(1)(d) 正確性 | ✅ 準拠 | 100/100 | データ整合性保証 |
-| Art. 5(1)(e) 保存制限 | ✅ 準拠 | 100/100 | 365日保持ポリシー |
-| **Art. 5(1)(f) 完全性** | ⚠️ **改善中** | **85/100** | **本インシデント対象** |
-| Art. 6 適法性根拠 | ✅ 準拠 | 100/100 | 正当な利益・契約履行 |
-| Art. 25 データ保護 | ✅ 準拠 | 95/100 | Privacy by Design実装中 |
-| **Art. 32 セキュリティ** | ✅ **準拠** | **90/100** | **多層防御実装済み** |
-| Art. 33 侵害通知 | ✅ 準拠 | 100/100 | 本件通知不要 |
-| Art. 34 データ主体通知 | ✅ 準拠 | 100/100 | 本件通知不要 |
+| GDPR Article              | 準拠状況      | スコア     | 備考                    |
+| ------------------------- | ------------- | ---------- | ----------------------- |
+| Art. 5(1)(a) 適法性       | ✅ 準拠       | 100/100    | データ処理の適法性確保  |
+| Art. 5(1)(b) 目的制限     | ✅ 準拠       | 100/100    | 明確な目的定義          |
+| Art. 5(1)(c) データ最小化 | ✅ 準拠       | 95/100     | 改善余地あり            |
+| Art. 5(1)(d) 正確性       | ✅ 準拠       | 100/100    | データ整合性保証        |
+| Art. 5(1)(e) 保存制限     | ✅ 準拠       | 100/100    | 365日保持ポリシー       |
+| **Art. 5(1)(f) 完全性**   | ⚠️ **改善中** | **85/100** | **本インシデント対象**  |
+| Art. 6 適法性根拠         | ✅ 準拠       | 100/100    | 正当な利益・契約履行    |
+| Art. 25 データ保護        | ✅ 準拠       | 95/100     | Privacy by Design実装中 |
+| **Art. 32 セキュリティ**  | ✅ **準拠**   | **90/100** | **多層防御実装済み**    |
+| Art. 33 侵害通知          | ✅ 準拠       | 100/100    | 本件通知不要            |
+| Art. 34 データ主体通知    | ✅ 準拠       | 100/100    | 本件通知不要            |
 
 **改善ポイント**:
+
 - Article 5(1)(f): 秘密情報管理の強化（Git Hook強化で対応）
 - Article 32: セキュリティ対策の継続的改善
 
@@ -705,11 +713,13 @@ A.18 コンプライアンス:
 
 ```markdown
 1. **迅速な検出と対応**
+
    - TruffleHog自動スキャンが24時間以内に検出
    - 即座の修正対応（25分で完全解決）
    - ゼロダウンタイムでの対応完了
 
 2. **多層防御の有効性**
+
    - GitHub Actions自動化が機能
    - 監査証跡が完全に記録
    - エージェント協働体制が機能
@@ -724,11 +734,13 @@ A.18 コンプライアンス:
 
 ```markdown
 1. **事前予防の不足**
+
    - Git Hook秘密検知が未実装
    - 開発者への秘密管理教育不足
    - Secrets使用ガイドライン未整備
 
 2. **インシデント分類の曖昧さ**
+
    - 個人データ該当性の判定基準が不明確
    - GDPRインシデント対応フローが未文書化
    - 通知要否の判断プロセスが不明瞭
@@ -744,51 +756,33 @@ A.18 コンプライアンス:
 #### 秘密情報管理
 
 ```yaml
-推奨事項:
-  1. GitHub Secretsの徹底使用
-     - 環境変数は必ずSecrets経由
-     - .envファイルは.gitignore必須
-     - Secrets Scannerの有効化
+推奨事項: 1. GitHub Secretsの徹底使用 - 環境変数は必ずSecrets経由 -
+  .envファイルは.gitignore必須 - Secrets Scannerの有効化
 
-  2. Git Hookによる事前検知
-     - pre-commitフックでTruffleHog実行
-     - コミット前の自動チェック
-     - 検出時はコミット拒否
+  2. Git Hookによる事前検知 - pre-commitフックでTruffleHog実行 -
+  コミット前の自動チェック - 検出時はコミット拒否
 
-  3. 定期的なスキャン
-     - 毎日のTruffleHogスキャン
-     - 週次のCodeQL分析
-     - 月次の手動レビュー
+  3. 定期的なスキャン - 毎日のTruffleHogスキャン - 週次のCodeQL分析 -
+  月次の手動レビュー
 
-  4. 開発者教育
-     - Secrets管理のベストプラクティス
-     - GDPRコンプライアンス基礎
-     - インシデント対応手順
+  4. 開発者教育 - Secrets管理のベストプラクティス - GDPRコンプライアンス基礎 -
+  インシデント対応手順
 ```
 
 #### GDPR準拠開発
 
 ```yaml
-実装推奨:
-  1. Privacy by Design
-     - 設計段階からプライバシー考慮
-     - データ最小化の自動チェック
-     - デフォルトでプライバシー保護
+実装推奨: 1. Privacy by Design - 設計段階からプライバシー考慮 -
+  データ最小化の自動チェック - デフォルトでプライバシー保護
 
-  2. DPIAの組み込み
-     - 新機能開発時の自動チェック
-     - 個人データ取り扱いの明示
-     - リスク評価の自動化
+  2. DPIAの組み込み - 新機能開発時の自動チェック - 個人データ取り扱いの明示 -
+  リスク評価の自動化
 
-  3. 監査証跡の自動記録
-     - すべての操作をログ記録
-     - 365日以上の保持
-     - 改ざん防止機構
+  3. 監査証跡の自動記録 - すべての操作をログ記録 - 365日以上の保持 -
+  改ざん防止機構
 
-  4. インシデント対応自動化
-     - 検出から通知までの自動化
-     - エスカレーションルールの明確化
-     - 72時間ルールの自動追跡
+  4. インシデント対応自動化 - 検出から通知までの自動化 -
+  エスカレーションルールの明確化 - 72時間ルールの自動追跡
 ```
 
 ### 7.3 次のアクション
@@ -860,7 +854,8 @@ PII: Personally Identifiable Information（個人識別情報）
 DPA: Data Protection Authority（データ保護機関）
 PPC: Personal Information Protection Commission（個人情報保護委員会）
 SOC 2: Service Organization Control 2（サービス組織統制）
-ISO 27001: Information Security Management System（情報セキュリティマネジメント）
+ISO 27001:
+  Information Security Management System（情報セキュリティマネジメント）
 ```
 
 ### B. 参考資料
@@ -894,4 +889,3 @@ NIST Cybersecurity Framework:
 
 **レポート完了日**: 2025年10月8日 19:45 JST
 **次回アクション**: 予防的改善措置の実施開始（2025年10月9日）
-

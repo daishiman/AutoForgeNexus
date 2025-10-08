@@ -2,17 +2,17 @@ name: Backend CI/CD Pipeline - Optimized
 
 on:
   push:
-    branches: [main, develop, 'feature/autoforge-*']
+    branches: [main, develop, "feature/autoforge-*"]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+      - "requirements*.txt"
+      - "pyproject.toml"
   pull_request:
     branches: [main, develop]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
 
 # Global optimization settings
 concurrency:
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: "3.13"
 
 jobs:
   # Shared setup for all jobs
@@ -28,9 +28,9 @@ jobs:
     name: 🔧 Setup Environment
     uses: ./.github/workflows/shared-setup-python.yml
     with:
-      python-version: '3.13'
-      working-directory: './backend'
-      cache-key-suffix: '-backend'
+      python-version: "3.13"
+      working-directory: "./backend"
+      cache-key-suffix: "-backend"
       install-dev-deps: true
 
   # Parallel quality checks with matrix strategy
@@ -41,8 +41,8 @@ jobs:
 
     # 明示的な権限定義（推奨緩和策4対応）
     permissions:
-      contents: read        # リポジトリ読み取り
-      statuses: write       # ステータスチェック更新
+      contents: read # リポジトリ読み取り
+      statuses: write # ステータスチェック更新
 
     strategy:
       fail-fast: false
@@ -50,14 +50,14 @@ jobs:
         check-type: [lint, format, type-check, security]
         include:
           - check-type: lint
-            command: 'ruff check src/ tests/ --output-format=github'
-            name: 'Ruff Linting'
+            command: "ruff check src/ tests/ --output-format=github"
+            name: "Ruff Linting"
           - check-type: format
-            command: 'black --check src/ tests/'
-            name: 'Black Formatting'
+            command: "black --check src/ tests/"
+            name: "Black Formatting"
           - check-type: type-check
-            command: 'mypy src/ --strict'
-            name: 'Type Checking'
+            command: "mypy src/ --strict"
+            name: "Type Checking"
           - check-type: security
             command: |
               echo "🔍 Running Bandit security scan..."
@@ -83,7 +83,7 @@ jobs:
 
               echo "🛡️ Running Safety dependency check..."
               safety check --json || echo "⚠️ Safety check completed with warnings"
-            name: 'Security Scan'
+            name: "Security Scan"
 
     defaults:
       run:
@@ -95,7 +95,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python  # 必要最小限のセットアップ
+      - name: 🐍 Setup Python # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -228,9 +228,9 @@ jobs:
 
     # 明示的な権限定義（推奨緩和策4対応）
     permissions:
-      contents: read        # リポジトリ読み取り
-      pull-requests: write  # Codecovコメント投稿
-      statuses: write       # ステータスチェック更新
+      contents: read # リポジトリ読み取り
+      pull-requests: write # Codecovコメント投稿
+      statuses: write # ステータスチェック更新
 
     strategy:
       fail-fast: false
@@ -238,20 +238,20 @@ jobs:
         test-type: [unit, integration, domain]
         include:
           - test-type: unit
-            path: 'tests/unit/'
-            coverage-flag: 'unit'
-            cov-fail-under: 80  # Phase 3: バックエンド基盤完了時の目標
-            cov-scope: 'src'    # 全ソースコードをカバレッジ対象
+            path: "tests/unit/"
+            coverage-flag: "unit"
+            cov-fail-under: 80 # Phase 3: バックエンド基盤完了時の目標
+            cov-scope: "src" # 全ソースコードをカバレッジ対象
           - test-type: integration
-            path: 'tests/integration/'
-            coverage-flag: 'integration'
-            cov-fail-under: 0   # Phase 4未実装のため全テストスキップ時はカバレッジチェックなし
-            cov-scope: 'src'    # 全ソースコードをカバレッジ対象
+            path: "tests/integration/"
+            coverage-flag: "integration"
+            cov-fail-under: 0 # Phase 4未実装のため全テストスキップ時はカバレッジチェックなし
+            cov-scope: "src" # 全ソースコードをカバレッジ対象
           - test-type: domain
-            path: 'tests/unit/domain/'
-            coverage-flag: 'domain'
-            cov-fail-under: 85  # domain層のみで現実的な目標
-            cov-scope: 'src/domain'  # domain層のみをカバレッジ対象
+            path: "tests/unit/domain/"
+            coverage-flag: "domain"
+            cov-fail-under: 85 # domain層のみで現実的な目標
+            cov-scope: "src/domain" # domain層のみをカバレッジ対象
 
     defaults:
       run:
@@ -263,7 +263,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python  # 必要最小限のセットアップ
+      - name: 🐍 Setup Python # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -403,9 +403,9 @@ jobs:
 
     # 明示的な権限定義（Trivy SARIF アップロード用）
     permissions:
-      contents: read           # リポジトリ読み取り
-      security-events: write   # SARIF結果アップロード（Trivy）
-      actions: read            # アクション読み取り
+      contents: read # リポジトリ読み取り
+      security-events: write # SARIF結果アップロード（Trivy）
+      actions: read # アクション読み取り
 
     steps:
       - name: 📥 Checkout code
@@ -438,17 +438,17 @@ jobs:
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: autoforgenexus-backend:${{ github.sha }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0'  # Phase 3では警告のみ、Phase 4以降で厳格化
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0" # Phase 3では警告のみ、Phase 4以降で厳格化
 
       - name: 📊 Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'docker-security'
+          sarif_file: "trivy-results.sarif"
+          category: "docker-security"
 
       - name: 📝 Generate Trivy report summary
         if: always()
@@ -466,8 +466,8 @@ jobs:
 
     # 明示的な権限定義（推奨緩和策4対応）
     permissions:
-      contents: read        # リポジトリ読み取り
-      actions: write        # アーティファクトアップロード
+      contents: read # リポジトリ読み取り
+      actions: write # アーティファクトアップロード
 
     defaults:
       run:
@@ -479,7 +479,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python  # 必要最小限のセットアップ
+      - name: 🐍 Setup Python # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -621,7 +621,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 🐍 Setup Python  # 必要最小限のセットアップ
+      - name: 🐍 Setup Python # 必要最小限のセットアップ
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}

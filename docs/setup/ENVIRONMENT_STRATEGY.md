@@ -5,14 +5,17 @@
 ### 個人開発での環境構成理由
 
 1. **個人開発の特性**
+
    - 開発者が1人 = localとdevの区別が不要
    - リソースコスト最小化が重要
    - 管理複雑性を避ける
 
 2. **推奨する3環境構成**
+
    ```
    local → staging → production
    ```
+
    - **local**: 開発・テスト（コスト0円）
    - **staging**: PRプレビュー・最終確認
    - **production**: 本番運用
@@ -25,21 +28,27 @@
 ## 📊 環境別の役割と用途
 
 ### 🔧 Local環境（.env.local）
+
 **用途**: 日常の開発作業
+
 - モックAPI使用でコスト削減
 - 高速イテレーション
 - デバッグツール全開放
 - **コスト**: 0円
 
 ### 🚀 Staging環境（.env.staging）
+
 **用途**: リリース前検証
+
 - Cloudflare Pages/Workers Preview
 - 実APIの限定使用
 - パフォーマンステスト
 - **コスト**: 最小限（プレビュー環境は無料枠内）
 
 ### 🏭 Production環境（.env.production）
+
 **用途**: 実運用
+
 - 完全な本番設定
 - セキュリティ最大化
 - 監視・アラート有効
@@ -62,11 +71,11 @@ graph LR
 
 ### 個人開発でのコスト削減
 
-| 環境 | LLM API | Database | Cache | 月額コスト目安 |
-|------|---------|----------|-------|--------------|
-| Local | Mock/無料枠 | SQLite | Local Redis | 0円 |
-| Staging | 無料枠/最小 | Turso Free | Upstash Free | 0-10ドル |
-| Production | 従量課金 | Turso Pro | Upstash Pay-as-go | 10-50ドル |
+| 環境       | LLM API     | Database   | Cache             | 月額コスト目安 |
+| ---------- | ----------- | ---------- | ----------------- | -------------- |
+| Local      | Mock/無料枠 | SQLite     | Local Redis       | 0円            |
+| Staging    | 無料枠/最小 | Turso Free | Upstash Free      | 0-10ドル       |
+| Production | 従量課金    | Turso Pro  | Upstash Pay-as-go | 10-50ドル      |
 
 ### API使用量制限設定
 
@@ -118,20 +127,25 @@ RATE_LIMIT = {
 ## 📈 スケールアップ時の移行パス
 
 ### Phase 1: 個人開発（現在）
+
 ```
 local → staging → production
 ```
 
 ### Phase 2: 小規模チーム（2-5人）
+
 ```
 local → dev → staging → production
 ```
+
 - dev環境追加で共同開発対応
 
 ### Phase 3: 中規模チーム（5人以上）
+
 ```
 local → dev → qa → staging → production
 ```
+
 - QA環境追加で品質保証強化
 
 ## 🔧 環境設定の実装
@@ -223,12 +237,14 @@ esac
 ## 📝 移行チェックリスト
 
 ### 個人開発を継続する場合
+
 - [x] local環境のみ使用
 - [x] staging環境はPRレビュー時のみ
 - [x] production環境は慎重にデプロイ
 - [ ] dev環境は作成不要
 
 ### チーム開発に移行する場合
+
 - [ ] dev環境の追加
 - [ ] 共有データベースの設定
 - [ ] チーム用APIキーの発行
@@ -237,6 +253,7 @@ esac
 ## 🎯 結論
 
 個人開発では：
+
 - **local + staging + production**の3環境で十分
 - dev環境はチーム開発まで不要
 - コスト最適化を最優先

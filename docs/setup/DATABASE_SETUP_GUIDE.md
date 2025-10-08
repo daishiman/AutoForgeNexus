@@ -1,6 +1,7 @@
 # データベース環境構築ガイド
 
-AutoForgeNexusのデータベース環境（Turso + Redis + Alembic）の詳細なセットアップ手順を説明します。
+AutoForgeNexusのデータベース環境（Turso + Redis +
+Alembic）の詳細なセットアップ手順を説明します。
 
 ---
 
@@ -75,20 +76,21 @@ alembic --version   # 1.13.3+
 
 ### 実装スケジュール（合計2時間15分）
 
-| Phase | 作業内容 | 所要時間 | 優先度 |
-|-------|---------|---------|--------|
-| 4-1 | Alembic初期化 | 30分 | 🔴 最高 |
-| 4-2 | Tursoデータベース作成 | 15分 | 🔴 最高 |
-| 4-3 | 環境変数ファイル作成 | 10分 | 🔴 最高 |
-| 4-4 | スキーマ定義 | 45分 | 🟡 高 |
-| 4-5 | マイグレーション | 20分 | 🟡 高 |
-| 4-6 | 接続確認 | 15分 | 🟢 中 |
+| Phase | 作業内容              | 所要時間 | 優先度  |
+| ----- | --------------------- | -------- | ------- |
+| 4-1   | Alembic初期化         | 30分     | 🔴 最高 |
+| 4-2   | Tursoデータベース作成 | 15分     | 🔴 最高 |
+| 4-3   | 環境変数ファイル作成  | 10分     | 🔴 最高 |
+| 4-4   | スキーマ定義          | 45分     | 🟡 高   |
+| 4-5   | マイグレーション      | 20分     | 🟡 高   |
+| 4-6   | 接続確認              | 15分     | 🟢 中   |
 
 ---
 
 ## Phase 4-1: Alembic初期化
 
 ### 目的
+
 データベースマイグレーション管理ツール（Alembic）の初期設定を行い、環境別のデータベース切り替えに対応します。
 
 ### 🐳 Docker環境での作業
@@ -177,7 +179,8 @@ format = %(levelname)-5.5s [%(name)s] %(message)s
 datefmt = %H:%M:%S
 ```
 
-**重要**: `sqlalchemy.url` はコメントアウトまたは削除してください。環境変数から動的に読み込みます。
+**重要**: `sqlalchemy.url`
+はコメントアウトまたは削除してください。環境変数から動的に読み込みます。
 
 #### 1-3. alembic/env.py 設定
 
@@ -274,6 +277,7 @@ exit
 ```
 
 ### 完了基準
+
 - [x] Docker環境が起動している
 - [x] `backend/alembic/env.py` が作成されている
 - [x] `backend/alembic.ini` が正しく設定されている
@@ -284,6 +288,7 @@ exit
 ## Phase 4-2: Tursoデータベース作成
 
 ### 目的
+
 本番環境とステージング環境で使用するTursoデータベースを作成し、接続情報を取得します。
 
 ### ⚠️ ホスト環境での作業
@@ -339,7 +344,8 @@ turso db tokens create autoforgenexus-staging --expiration 90d
 # eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MzMzMTIwMDAs...
 ```
 
-⚠️ **重要**: このトークンをすぐにコピーして、1Passwordやセキュアなパスワードマネージャーに保存してください。**二度と表示されません！**
+⚠️
+**重要**: このトークンをすぐにコピーして、1Passwordやセキュアなパスワードマネージャーに保存してください。**二度と表示されません！**
 
 #### 2-4. データベース情報確認
 
@@ -407,6 +413,7 @@ sqlite> .quit
 ```
 
 ### 完了基準
+
 - [x] Turso認証完了（`turso auth whoami` で確認）
 - [x] ステージングDB作成完了
 - [x] ステージングDB URL・トークン保存完了
@@ -419,17 +426,19 @@ sqlite> .quit
 ## Phase 4-3: 環境変数ファイル作成
 
 ### 目的
+
 各環境（local/staging/production）の設定を環境変数ファイルとして管理します。
 
 ### 🔐 環境変数管理戦略
 
-| 環境 | ファイル | 実際の値の保存先 | Git管理 |
-|------|---------|----------------|---------|
-| **Local** | `.env.local` | ローカルマシン | ❌ 管理外 |
-| **Staging** | `.env.staging` | GitHub Secrets | ❌ 管理外 |
-| **Production** | `.env.production` | GitHub Secrets | ❌ 管理外 |
+| 環境           | ファイル          | 実際の値の保存先 | Git管理   |
+| -------------- | ----------------- | ---------------- | --------- |
+| **Local**      | `.env.local`      | ローカルマシン   | ❌ 管理外 |
+| **Staging**    | `.env.staging`    | GitHub Secrets   | ❌ 管理外 |
+| **Production** | `.env.production` | GitHub Secrets   | ❌ 管理外 |
 
-**重要**: staging/productionファイルは**プレースホルダー形式**（`${VAR_NAME}`）で記述し、CI/CDで実際の値に置換します。
+**重要**:
+staging/productionファイルは**プレースホルダー形式**（`${VAR_NAME}`）で記述し、CI/CDで実際の値に置換します。
 
 ### 📝 ホスト環境での作業
 
@@ -552,7 +561,8 @@ chmod 600 .env.staging
 echo "✅ backend/.env.staging created"
 ```
 
-**重要**: `[your-org]` と `（ステージング用トークン）` を実際の値に置き換えてください。
+**重要**: `[your-org]` と `（ステージング用トークン）`
+を実際の値に置き換えてください。
 
 #### 3-3. 本番環境設定（ホスト環境）
 
@@ -646,6 +656,7 @@ ls -la backend/.env.*
 ```
 
 ### 完了基準
+
 - [x] `backend/.env.local` 作成完了
 - [x] `backend/.env.staging` 作成完了（実際のURL・トークン設定済み）
 - [x] `backend/.env.production` 作成完了（実際のURL・トークン設定済み）
@@ -657,6 +668,7 @@ ls -la backend/.env.*
 ## Phase 4-4: データベーススキーマ定義
 
 ### 目的
+
 DDDに基づくドメインモデルをSQLAlchemyモデルとして実装します。
 
 ### 📝 ホスト環境での作業
@@ -833,26 +845,31 @@ infrastructure/
 **重要**: この構造はCLAUDE.mdの「機能ベース集約」パターンに完全準拠しています
 
 ### 完了基準
+
 - [x] `backend/src/infrastructure/prompt/models/__init__.py` 作成完了
 - [x] `backend/src/infrastructure/prompt/models/prompt_model.py` 作成完了
 - [x] `backend/src/infrastructure/evaluation/models/__init__.py` 作成完了
-- [x] `backend/src/infrastructure/evaluation/models/evaluation_model.py` 作成完了
+- [x] `backend/src/infrastructure/evaluation/models/evaluation_model.py`
+      作成完了
 - [x] すべてのモデルが正しくインポートされている
 - [x] リレーションシップが正しく定義されている（IDのみで参照、集約境界遵守）
 
 ### レビュー完了状況（2025年1月更新）
 
 #### ✅ システムアーキテクト レビュー（95/100点）
+
 - **評価**: EXCELLENT - 本番環境適用可能レベル
 - **強み**: 集約境界の完璧な実装、DDD原則の徹底
 - **改善点**: リポジトリ実装追加、パフォーマンスインデックス
 
 #### ✅ ドメインモデラー レビュー（63.75%）
+
 - **評価**: インフラ層のDDD準拠性は優秀
 - **強み**: 境界づけられたコンテキスト分離、集約境界遵守
 - **課題**: ドメイン層の実装が必要、値オブジェクト未実装
 
 #### ✅ データベース管理者 レビュー（85/100点）
+
 - **評価**: 本番デプロイ可能（条件付き）
 - **強み**: Turso/libSQL完全互換、セキュリティベストプラクティス遵守
 - **改善必須**: トランザクション管理、CHECK制約追加、マイグレーションテスト
@@ -862,6 +879,7 @@ infrastructure/
 ## Phase 4-5: マイグレーション作成と適用
 
 ### 目的
+
 定義したスキーマをデータベースに適用し、各環境で動作確認を行います。
 
 ### 🐳 Docker環境での作業
@@ -1033,6 +1051,7 @@ alembic upgrade head
 ```
 
 ### 完了基準
+
 - [x] 初期マイグレーションファイル生成完了
 - [x] ローカル環境にマイグレーション適用完了
 - [x] ステージング環境にマイグレーション適用完了
@@ -1044,6 +1063,7 @@ alembic upgrade head
 ## Phase 4-6: 接続確認とテスト
 
 ### 目的
+
 データベース接続とマイグレーションが正しく動作していることを統合テストで確認します。
 
 ### 📝 ホスト環境でファイル作成、🐳 Docker環境でテスト実行
@@ -1328,6 +1348,7 @@ python
 ```
 
 ### 完了基準
+
 - [x] 統合テストファイル作成完了
 - [x] すべてのテストがパス（31/32テスト成功）
 - [x] データベース接続確認完了
@@ -1344,6 +1365,7 @@ python
 **原因**: Dockerコンテナ内でAlembicがインストールされていない
 
 **解決策**:
+
 ```bash
 # バックエンドコンテナに接続
 docker compose -f docker-compose.dev.yml exec backend bash
@@ -1368,6 +1390,7 @@ docker compose -f docker-compose.dev.yml up -d
 **原因**: Dockerコンテナ内のPythonパスが正しく設定されていない
 
 **解決策**:
+
 ```bash
 # バックエンドコンテナに接続
 docker compose -f docker-compose.dev.yml exec backend bash
@@ -1393,6 +1416,7 @@ export PYTHONPATH=/app:$PYTHONPATH
 **原因**: 認証トークンが無効または期限切れ
 
 **解決策**:
+
 ```bash
 # 新しいトークンを生成
 turso db tokens create autoforgenexus-staging --expiration 90d
@@ -1413,6 +1437,7 @@ turso db shell autoforgenexus-staging
 **原因**: マイグレーションの状態が不整合
 
 **解決策**:
+
 ```bash
 # 現在のバージョン確認
 alembic current
@@ -1435,6 +1460,7 @@ alembic upgrade head
 **原因**: Redisコンテナが起動していない、またはネットワーク設定の問題
 
 **解決策**:
+
 ```bash
 # ホスト環境（Mac）で実行
 
@@ -1463,6 +1489,7 @@ docker network ls | grep autoforge
 **原因**: Dockerコンテナ内でlibsql-clientがインストールされていない
 
 **解決策**:
+
 ```bash
 # バックエンドコンテナに接続
 docker compose -f docker-compose.dev.yml exec backend bash
@@ -1485,6 +1512,7 @@ docker compose -f docker-compose.dev.yml up -d
 ## チェックリスト
 
 ### Phase 4-1: Alembic初期化
+
 - [ ] Docker環境起動完了
 - [ ] バックエンドコンテナ接続確認
 - [ ] `alembic init alembic` 実行完了（コンテナ内）
@@ -1493,6 +1521,7 @@ docker compose -f docker-compose.dev.yml up -d
 - [ ] `alembic current` コマンド動作確認（コンテナ内）
 
 ### Phase 4-2: Tursoデータベース作成
+
 - [ ] `turso auth login` 認証完了（ホスト環境）
 - [ ] ステージングDB作成完了（ホスト環境）
 - [ ] ステージングDB URL・トークン保存完了（ホスト環境）
@@ -1501,6 +1530,7 @@ docker compose -f docker-compose.dev.yml up -d
 - [ ] CLI経由での接続確認完了（ホスト環境）
 
 ### Phase 4-3: 環境変数ファイル作成
+
 - [ ] `backend/.env.local` 作成完了（実際の値・ホスト環境）
 - [ ] `backend/.env.staging` 作成完了（プレースホルダー形式・ホスト環境）
 - [ ] `backend/.env.production` 作成完了（プレースホルダー形式・ホスト環境）
@@ -1509,20 +1539,26 @@ docker compose -f docker-compose.dev.yml up -d
 - [ ] Dockerボリュームマウントで環境変数が共有されていることを確認
 
 ### Phase 4-4: データベーススキーマ定義
-- [ ] `backend/src/infrastructure/shared/database/base.py` 作成完了（ホスト環境）
-- [ ] `backend/src/infrastructure/prompt/models/prompt_model.py` 作成完了（ホスト環境）
-- [ ] `backend/src/infrastructure/evaluation/models/evaluation_model.py` 作成完了（ホスト環境）
+
+- [ ] `backend/src/infrastructure/shared/database/base.py`
+      作成完了（ホスト環境）
+- [ ] `backend/src/infrastructure/prompt/models/prompt_model.py`
+      作成完了（ホスト環境）
+- [ ] `backend/src/infrastructure/evaluation/models/evaluation_model.py`
+      作成完了（ホスト環境）
 - [ ] すべてのモデルが正しくインポートされている
 - [ ] DDD準拠の機能ベース配置が完了している
 - [ ] Dockerボリュームマウントでファイルが自動反映されている
 
 ### Phase 4-5: マイグレーション作成と適用
+
 - [ ] 初期マイグレーションファイル生成完了（コンテナ内）
 - [ ] ローカル環境にマイグレーション適用完了（コンテナ内）
 - [ ] ステージング環境にマイグレーション適用完了（コンテナ内）
 - [ ] データベーステーブル作成確認完了（コンテナ内 & ホスト環境）
 
 ### Phase 4-6: 接続確認とテスト
+
 - [ ] 統合テストファイル作成完了（ホスト環境）
 - [ ] すべてのテストがパス（コンテナ内実行）
 - [ ] データベース接続確認完了（コンテナ内）
@@ -1531,6 +1567,7 @@ docker compose -f docker-compose.dev.yml up -d
 - [ ] カバレッジレポート確認完了
 
 ### Phase 4-7: GitHub Secrets設定
+
 - [ ] Staging用Secrets登録完了（8個以上）
 - [ ] Production用Secrets登録完了（8個以上）
 - [ ] CI/CDワークフローで環境変数展開設定
@@ -1541,6 +1578,7 @@ docker compose -f docker-compose.dev.yml up -d
 ## Phase 4-7: GitHub Secrets設定
 
 ### 目的
+
 Staging/Production環境の実際の値をGitHub Secretsで安全に管理します。
 
 ### ⚙️ GitHub Secrets登録手順
@@ -1629,7 +1667,8 @@ jobs:
           STAGING_REDIS_HOST: ${{ secrets.STAGING_REDIS_HOST }}
           STAGING_REDIS_PASSWORD: ${{ secrets.STAGING_REDIS_PASSWORD }}
           STAGING_CLERK_SECRET_KEY: ${{ secrets.STAGING_CLERK_SECRET_KEY }}
-          STAGING_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
+          STAGING_CLERK_PUBLISHABLE_KEY:
+            ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
 
       - name: Deploy to Cloudflare Workers
         run: wrangler deploy
@@ -1677,6 +1716,7 @@ jobs:
 - [ ] Production環境は `environment: production` で保護
 
 ### 完了基準
+
 - [ ] Staging用GitHub Secrets登録完了（8個以上）
 - [ ] Production用GitHub Secrets登録完了（8個以上）
 - [ ] CI/CDワークフローで環境変数展開設定完了
@@ -1687,6 +1727,7 @@ jobs:
 ## Phase 4-7: GitHub Secrets設定
 
 ### 目的
+
 Staging/Production環境の実際の値をGitHub Secretsで安全に管理します。
 
 ### 🔐 環境変数管理の全体像
@@ -1824,11 +1865,14 @@ jobs:
           STAGING_REDIS_HOST: ${{ secrets.STAGING_REDIS_HOST }}
           STAGING_REDIS_PASSWORD: ${{ secrets.STAGING_REDIS_PASSWORD }}
           STAGING_CLERK_SECRET_KEY: ${{ secrets.STAGING_CLERK_SECRET_KEY }}
-          STAGING_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
+          STAGING_CLERK_PUBLISHABLE_KEY:
+            ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
           STAGING_OPENAI_API_KEY: ${{ secrets.STAGING_OPENAI_API_KEY }}
           STAGING_ANTHROPIC_API_KEY: ${{ secrets.STAGING_ANTHROPIC_API_KEY }}
-          STAGING_LANGFUSE_PUBLIC_KEY: ${{ secrets.STAGING_LANGFUSE_PUBLIC_KEY }}
-          STAGING_LANGFUSE_SECRET_KEY: ${{ secrets.STAGING_LANGFUSE_SECRET_KEY }}
+          STAGING_LANGFUSE_PUBLIC_KEY:
+            ${{ secrets.STAGING_LANGFUSE_PUBLIC_KEY }}
+          STAGING_LANGFUSE_SECRET_KEY:
+            ${{ secrets.STAGING_LANGFUSE_SECRET_KEY }}
 
       - name: Run Database Migrations
         run: |
@@ -1856,7 +1900,7 @@ on:
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
-    environment: production  # 承認必須環境
+    environment: production # 承認必須環境
 
     steps:
       - uses: actions/checkout@v4
@@ -1892,6 +1936,7 @@ jobs:
 #### ✅ 正しい管理方法
 
 1. **プレースホルダー形式でコミット**
+
    ```bash
    # .env.staging と .env.production はプレースホルダー
    git add backend/.env.staging backend/.env.production
@@ -1899,6 +1944,7 @@ jobs:
    ```
 
 2. **実際の値はGitHub Secretsのみ**
+
    ```bash
    # Secretsで管理（コミット不可）
    gh secret set PROD_TURSO_AUTH_TOKEN -b "eyJ..."
@@ -1938,6 +1984,7 @@ TURSO_AUTH_TOKEN=${PROD_TURSO_AUTH_TOKEN}  # GitHub Secretsで置換
 ```
 
 ### 完了基準
+
 - [ ] Staging用GitHub Secrets登録完了（10個）
 - [ ] Production用GitHub Secrets登録完了（10個）
 - [ ] `.github/workflows/deploy-staging.yml` 作成完了
@@ -1952,6 +1999,7 @@ TURSO_AUTH_TOKEN=${PROD_TURSO_AUTH_TOKEN}  # GitHub Secretsで置換
 データベース環境構築が完了したら、以下のフェーズに進みます：
 
 1. **Phase 5: フロントエンド開発**
+
    - Next.js 15.5.4 + React 19.0.0 環境構築
    - Clerk認証統合
    - shadcn/ui 3.3.1 コンポーネント実装
@@ -1974,6 +2022,5 @@ TURSO_AUTH_TOKEN=${PROD_TURSO_AUTH_TOKEN}  # GitHub Secretsで置換
 
 ---
 
-**最終更新日**: 2025年9月30日
-**作成者**: AutoForgeNexus開発チーム
+**最終更新日**: 2025年9月30日 **作成者**: AutoForgeNexus開発チーム
 **バージョン**: 1.0.0

@@ -1,7 +1,7 @@
 # mypy --strict モード対応: 型エラー修正手順書
 
-**作成日**: 2025-10-08
-**対象**: GitHub Actions CI/CD パイプライン mypy エラー (64件)
+**作成日**: 2025-10-08 **対象**: GitHub Actions
+CI/CD パイプライン mypy エラー (64件)
 **目的**: 型安全性を保ちながらすべての型エラーを修正し、CI を通過させる
 
 ---
@@ -10,14 +10,14 @@
 
 ### 検出されたエラー分類
 
-| カテゴリ | 件数 | 影響ファイル数 |
-|---------|------|--------------|
-| 返り値型アノテーション不足 | 18件 | 6ファイル |
-| ジェネリック型パラメータ欠如 | 15件 | 5ファイル |
-| 引数型アノテーション不足 | 12件 | 4ファイル |
-| Liskov置換原則違反 | 2件 | 1ファイル |
-| Any型の不適切使用 | 8件 | 3ファイル |
-| Optional型の暗黙的使用 | 9件 | 3ファイル |
+| カテゴリ                     | 件数 | 影響ファイル数 |
+| ---------------------------- | ---- | -------------- |
+| 返り値型アノテーション不足   | 18件 | 6ファイル      |
+| ジェネリック型パラメータ欠如 | 15件 | 5ファイル      |
+| 引数型アノテーション不足     | 12件 | 4ファイル      |
+| Liskov置換原則違反           | 2件  | 1ファイル      |
+| Any型の不適切使用            | 8件  | 3ファイル      |
+| Optional型の暗黙的使用       | 9件  | 3ファイル      |
 
 **合計**: 64エラー / 12ファイル
 
@@ -28,6 +28,7 @@
 ### 1. Value Objects (完了)
 
 #### ✅ user_input.py
+
 ```python
 # 修正1: __post_init__の返り値型
 - def __post_init__(self):
@@ -39,6 +40,7 @@
 ```
 
 #### ✅ prompt_content.py
+
 ```python
 # 修正1: __post_init__の返り値型
 - def __post_init__(self):
@@ -52,6 +54,7 @@
 ```
 
 #### ✅ prompt_metadata.py
+
 ```python
 # 修正1: typing.Anyのインポート追加
 + from typing import Any
@@ -72,6 +75,7 @@
 ### 2. Event Classes (完了)
 
 #### ✅ prompt_created.py
+
 ```python
 # 修正: __init__の引数・返り値型
 - def __init__(self, ..., **kwargs):
@@ -79,6 +83,7 @@
 ```
 
 #### ✅ prompt_saved.py
+
 ```python
 # 修正: __init__の引数・返り値型
 - def __init__(self, ..., **kwargs):
@@ -86,6 +91,7 @@
 ```
 
 #### ✅ prompt_updated.py
+
 ```python
 # 修正1: __init__の引数・返り値型
 - def __init__(self, ..., **kwargs):
@@ -97,6 +103,7 @@
 ```
 
 #### ✅ event_store.py
+
 ```python
 # 修正: __init__の返り値型
 - def __init__(self):
@@ -112,6 +119,7 @@
 **エラー箇所**: 17行目、164行目、186行目、202行目、249行目
 
 #### 🔧 修正1: Futureジェネリック型 (17行目)
+
 ```python
 # 現在のコード
 AsyncEventHandler = Callable[[DomainEvent], asyncio.Future]
@@ -120,9 +128,12 @@ AsyncEventHandler = Callable[[DomainEvent], asyncio.Future]
 AsyncEventHandler = Callable[[DomainEvent], asyncio.Future[None]]
 ```
 
-**理由**: `Future` はジェネリック型なので型パラメータが必須。非同期ハンドラーは返り値なしなので `Future[None]`。
+**理由**: `Future`
+はジェネリック型なので型パラメータが必須。非同期ハンドラーは返り値なしなので
+`Future[None]`。
 
 #### 🔧 修正2: Queueジェネリック型 (164行目)
+
 ```python
 # 現在のコード (AsyncEventBus.__init__)
 self._event_queue: asyncio.Queue = asyncio.Queue()
@@ -134,6 +145,7 @@ self._event_queue: asyncio.Queue[DomainEvent] = asyncio.Queue()
 **理由**: `Queue` はジェネリック型で、`DomainEvent` を格納することを明示。
 
 #### 🔧 修正3: Liskov置換原則違反 - subscribe (186行目)
+
 ```python
 # 現在の問題コード
 def subscribe(
@@ -158,6 +170,7 @@ def subscribe(  # type: ignore[override]
 **推奨**: 修正案1 (基底クラス変更) - より型安全
 
 #### 🔧 修正4: Liskov置換原則違反 - unsubscribe (202行目)
+
 ```python
 # 修正案1の場合
 # 基底クラスEventBus
@@ -175,6 +188,7 @@ def unsubscribe(  # type: ignore[override]
 ```
 
 #### 🔧 修正5: 変数アノテーション + asyncio.create_task (249行目)
+
 ```python
 # 現在のコード
 task = asyncio.create_task(handler(event))
@@ -196,6 +210,7 @@ for handler in handlers:
 ```
 
 **理由**:
+
 - `create_task` は `Coroutine` を期待するが、`Future` を受け取っている
 - `asyncio.ensure_future` でラップするか、ハンドラー定義を `async def` に変更
 
@@ -206,6 +221,7 @@ for handler in handlers:
 **エラー箇所**: 149行目、161行目、173行目
 
 #### 🔧 修正1: parse_cors_origins (149行目)
+
 ```python
 # 現在のコード
 @field_validator("cors_allow_origins")
@@ -219,6 +235,7 @@ def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
 ```
 
 #### 🔧 修正2: parse_cors_methods (161行目)
+
 ```python
 # 修正後
 @field_validator("cors_allow_methods")
@@ -227,6 +244,7 @@ def parse_cors_methods(cls, v: str | list[str]) -> list[str]:
 ```
 
 #### 🔧 修正3: parse_cors_headers (173行目)
+
 ```python
 # 修正後
 @field_validator("cors_allow_headers")
@@ -238,9 +256,11 @@ def parse_cors_headers(cls, v: str | list[str]) -> list[str]:
 
 ### 5. Turso Connection (infrastructure/shared/database/turso_connection.py)
 
-**エラー箇所**: 21行目、80行目、105行目、109行目、111行目、116行目、118行目、123行目、132行目、144行目、152行目
+**エラー箇所**:
+21行目、80行目、105行目、109行目、111行目、116行目、118行目、123行目、132行目、144行目、152行目
 
-#### 🔧 修正1: __init__の返り値型 (21行目)
+#### 🔧 修正1: **init**の返り値型 (21行目)
+
 ```python
 # 現在のコード
 def __init__(self):
@@ -250,13 +270,16 @@ def __init__(self) -> None:
 ```
 
 #### 🔧 修正2: get_connection_urlの返り値型 (80行目)
+
 ```python
 # 既に正しい型アノテーションあり
 def get_connection_url(self) -> str:
 ```
+
 **確認**: エラーがないか再チェック必要
 
 #### 🔧 修正3: sessionmakerジェネリック型 (105行目)
+
 ```python
 # 現在のコード
 def get_session_factory(self) -> sessionmaker:
@@ -268,6 +291,7 @@ def get_session_factory(self) -> sessionmaker[Session]:
 ```
 
 #### 🔧 修正4: get_engineのno-untyped-call (109行目)
+
 ```python
 # 現在のコード
 self._session_factory = sessionmaker(
@@ -287,12 +311,14 @@ def get_engine(self) -> Engine:
 ```
 
 #### 🔧 修正5: sessionmaker返り値 (111行目)
+
 ```python
 # 修正後 (修正4の型定義により解決)
 return self._session_factory
 ```
 
 #### 🔧 修正6: get_sessionの返り値 (116行目)
+
 ```python
 # 現在のコード (116行目)
 def get_session(self) -> Session:
@@ -304,6 +330,7 @@ def get_session(self) -> Session:
 ```
 
 #### 🔧 修正7-8: execute_raw/batch_executeの返り値型 (118行目、123行目)
+
 ```python
 # 現在のコード
 async def execute_raw(self, query: str, params: dict | None = None):
@@ -333,12 +360,14 @@ async def batch_execute(
     return results
 ```
 
-**理由**: 
+**理由**:
+
 - `Any`型は型安全性を損なうため避ける
 - libSQL clientは`ResultSet`型を返すことが保証されている
 - paramsは基本的なSQL型のみ許可 (str, int, float, bool, None)
 
 #### 🔧 修正9: closeの返り値型 (132行目)
+
 ```python
 # 現在のコード
 def close(self):
@@ -348,6 +377,7 @@ def close(self) -> None:
 ```
 
 #### 🔧 修正10: get_turso_connectionのno-untyped-call (144行目)
+
 ```python
 # 現在のコード
 _turso_connection = TursoConnection()
@@ -357,6 +387,7 @@ _turso_connection = TursoConnection()
 ```
 
 #### 🔧 修正11: get_db_sessionのGenerator型 (152行目)
+
 ```python
 # 現在のコード
 def get_db_session() -> Session:
@@ -386,7 +417,8 @@ def get_db_session() -> Generator[Session, None, None]:
 
 **エラー箇所**: 87行目、403行目、407行目、425行目、444行目、463行目、464行目
 
-#### 🔧 修正1: HealthChecker.__init__ (87行目)
+#### 🔧 修正1: HealthChecker.**init** (87行目)
+
 ```python
 # 現在のコード
 def __init__(self):
@@ -396,6 +428,7 @@ def __init__(self) -> None:
 ```
 
 #### 🔧 修正2-5: MetricsCollector (403行目、407行目、425行目、444行目)
+
 ```python
 # 修正2: __init__ (403行目)
 def __init__(self) -> None:
@@ -427,6 +460,7 @@ def histogram(
 ```
 
 **注意**: 445行目のOptional型暗黙使用エラー
+
 ```python
 # 現在のコード (エラー)
 stack_trace: str | None = None  # デフォルト引数の型がNone
@@ -444,6 +478,7 @@ def histogram(
 ```
 
 #### 🔧 修正6-7: 初期化関数 (463行目、464行目)
+
 ```python
 # 現在のコード
 health_checker = HealthChecker()  # no-untyped-call
@@ -456,9 +491,11 @@ metrics_collector = MetricsCollector()  # no-untyped-call
 
 ### 7. Observability Middleware (middleware/observability.py)
 
-**エラー箇所**: 25行目、31行目、34行目、47行目、52行目、133行目、196行目、229行目、239行目、243行目、271行目、279行目、296行目、319行目、323行目、347行目、361行目、380行目、381行目、402行目、405行目
+**エラー箇所**:
+25行目、31行目、34行目、47行目、52行目、133行目、196行目、229行目、239行目、243行目、271行目、279行目、296行目、319行目、323行目、347行目、361行目、380行目、381行目、402行目、405行目
 
 #### 🔧 修正1: BaseHTTPMiddleware継承 (25行目)
+
 ```python
 # 現在のコード
 class ObservabilityMiddleware(BaseHTTPMiddleware):
@@ -472,6 +509,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):  # type: ignore[misc]
 ```
 
 #### 🔧 修正2-3: listジェネリック型 (31行目、34行目)
+
 ```python
 # 現在のコード
 self.exclude_paths = exclude_paths or [...]
@@ -489,6 +527,7 @@ def __init__(
 ```
 
 #### 🔧 修正4: Callableジェネリック型 (47行目)
+
 ```python
 # 現在のコード
 async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -504,6 +543,7 @@ async def dispatch(
 ```
 
 #### 🔧 修正5-6: 返り値型Any (52行目、133行目)
+
 ```python
 # 現在のコード (52行目)
 return await call_next(request)
@@ -517,6 +557,7 @@ return await call_next(request)
 ```
 
 #### 🔧 修正7: 返り値型不一致 (196行目)
+
 ```python
 # 現在のコード
 def _sanitize_headers(self, headers: dict) -> str:
@@ -536,6 +577,7 @@ def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
 ```
 
 #### 🔧 修正8: 型不一致代入 (229行目)
+
 ```python
 # 現在のコード (229行目)
 context["request_headers"] = {...}  # dict[str, Any]をstrに代入
@@ -553,6 +595,7 @@ context["request_headers"] = self._sanitize_headers(dict(request.headers))
 ```
 
 #### 🔧 修正9-10: LLMObservabilityMiddleware (239行目、243行目)
+
 ```python
 # 修正9: __init__ (239行目)
 def __init__(
@@ -570,6 +613,7 @@ async def dispatch(
 ```
 
 #### 🔧 修正11-12: LLM関連の型不一致 (271行目、279行目)
+
 ```python
 # 修正11: llm_metricsの型定義 (271行目)
 llm_metrics: dict[str, int | str | float | None] = {
@@ -596,6 +640,7 @@ logger.info(
 ```
 
 #### 🔧 修正13: timing関数 (296行目)
+
 ```python
 # 現在のコード
 def timing(self, metric_name: str, value: float):
@@ -605,6 +650,7 @@ def timing(self, metric_name: str, value: float) -> None:
 ```
 
 #### 🔧 修正14-15: DatabaseObservabilityMiddleware (319行目、323行目)
+
 ```python
 # 修正14: __init__ (319行目)
 def __init__(
@@ -622,6 +668,7 @@ async def dispatch(
 ```
 
 #### 🔧 修正16-17: DB関連の型不一致 (347行目、361行目)
+
 ```python
 # 修正16: db_metricsの型定義 (347行目)
 db_metrics: dict[str, str | float | None] = {
@@ -646,6 +693,7 @@ logger.info(
 ```
 
 #### 🔧 修正18-19: 初期化関数 (380行目、381行目)
+
 ```python
 # 現在のコード
 llm_middleware = LLMObservabilityMiddleware(...)  # no-untyped-call
@@ -655,6 +703,7 @@ db_middleware = DatabaseObservabilityMiddleware(...)  # no-untyped-call
 ```
 
 #### 🔧 修正20: get_request_id (402行目)
+
 ```python
 # 現在のコード
 def get_request_id(request: Request) -> str:
@@ -672,6 +721,7 @@ def get_request_id(request: Request) -> str:
 **理由**: `getattr`より`hasattr`チェックの方が型安全
 
 #### 🔧 修正21: set_request_context (405行目)
+
 ```python
 # 現在のコード
 def set_request_context(request: Request, context: dict):
@@ -690,7 +740,8 @@ def set_request_context(
         setattr(request.state, key, value)
 ```
 
-**理由**: 
+**理由**:
+
 - `Any`型を避けて、実際に使用される型のみを許可
 - `Union`型で明示的に許可する型を列挙
 - 型安全性を保ちながら柔軟性を維持
@@ -718,6 +769,7 @@ else:
 ### Any型の適切な代替手段
 
 #### 1. Union型を使う
+
 ```python
 # ❌ 悪い
 def handle(value: Any) -> Any:
@@ -730,6 +782,7 @@ def handle(value: Union[str, int, float]) -> Union[str, int, float]:
 ```
 
 #### 2. TypedDictを使う
+
 ```python
 # ❌ 悪い
 def process_config(config: dict[str, Any]) -> None:
@@ -748,6 +801,7 @@ def process_config(config: Config) -> None:
 ```
 
 #### 3. Protocolを使う
+
 ```python
 # ❌ 悪い
 def serialize(obj: Any) -> str:
@@ -764,6 +818,7 @@ def serialize(obj: Serializable) -> str:
 ```
 
 #### 4. ジェネリクスを使う
+
 ```python
 # ❌ 悪い
 def first_element(items: list[Any]) -> Any:
@@ -780,6 +835,7 @@ def first_element(items: list[T]) -> T:
 ### 本プロジェクトでの具体例
 
 #### observability.py - コンテキスト型
+
 ```python
 # ❌ 元のコード
 context: dict[str, Any] = {...}
@@ -800,6 +856,7 @@ context: RequestContext = {...}
 ```
 
 #### turso_connection.py - SQL結果型
+
 ```python
 # ❌ 元のコード
 async def execute_raw(self, query: str, params: dict | None = None) -> Any:
@@ -1091,12 +1148,14 @@ gh run watch
 ## 📊 期待される結果
 
 ### 修正前
+
 ```
 Found 64 errors in 12 files (checked 36 source files)
 Error: Process completed with exit code 1.
 ```
 
 ### 修正後
+
 ```
 Success: no issues found in 36 source files
 ```
@@ -1106,15 +1165,18 @@ Success: no issues found in 36 source files
 ## 🔍 修正の影響範囲
 
 ### 破壊的変更
+
 - **なし**: すべて型アノテーション追加のみで、実行時の挙動は変わらない
 
 ### 追加依存関係
+
 ```bash
 # requirements-dev.txt に追加
 types-starlette>=0.35.0  # Starletteの型スタブ
 ```
 
 ### テスト影響
+
 - **なし**: 型チェックのみの変更で、既存テストは影響を受けない
 
 ---
@@ -1122,15 +1184,18 @@ types-starlette>=0.35.0  # Starletteの型スタブ
 ## 📝 レビューポイント
 
 ### 優先度: 高
+
 1. **EventBus基底クラス変更**: Liskov置換原則対応が適切か
 2. **asyncio.create_task修正**: Future vs Coroutine の扱い
 3. **Turso Connection**: sessionmakerのジェネリック型が適切か
 
 ### 優先度: 中
+
 4. **Optional型使用**: Python 3.10+ の `X | None` vs `Optional[X]`
 5. **Any型使用**: 型安全性とのバランス
 
 ### 優先度: 低
+
 6. **型スタブインストール**: `types-starlette` の必要性
 
 ---
@@ -1146,5 +1211,4 @@ types-starlette>=0.35.0  # Starletteの型スタブ
 
 ---
 
-**作成者**: Claude Code
-**最終更新**: 2025-10-08
+**作成者**: Claude Code **最終更新**: 2025-10-08

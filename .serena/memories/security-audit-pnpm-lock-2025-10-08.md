@@ -1,13 +1,13 @@
 # セキュリティ監査レポート: pnpm-lock.yaml更新
 
-**監査日**: 2025-10-08
-**対象**: frontend/pnpm-lock.yaml更新（新規パッケージ追加）
-**監査者**: security-architect エージェント
+**監査日**: 2025-10-08 **対象**:
+frontend/pnpm-lock.yaml更新（新規パッケージ追加） **監査者**:
+security-architect エージェント
 
 ## エグゼクティブサマリー
 
-**総合リスクレベル**: 🟡 **中（MODERATE）**
-**推奨アクション**: 条件付承認 - 3つのクリティカル脆弱性の即時対応必須
+**総合リスクレベル**: 🟡 **中（MODERATE）** **推奨アクション**: 条件付承認 -
+3つのクリティカル脆弱性の即時対応必須
 
 ### 検出された脆弱性
 
@@ -21,45 +21,50 @@
 
 ### 🚨 Critical: pnpm MD5パス衝突（CVE-2024-47829）
 
-**パッケージ**: pnpm 9.15.9
-**CVSS Score**: 6.5 (MEDIUM - AV:N/AC:H/PR:N/UI:N/S:C/C:L/I:L/A:L)
-**CWE**: CWE-328（脆弱な暗号アルゴリズム）
+**パッケージ**: pnpm 9.15.9 **CVSS Score**: 6.5 (MEDIUM -
+AV:N/AC:H/PR:N/UI:N/S:C/C:L/I:L/A:L) **CWE**: CWE-328（脆弱な暗号アルゴリズム）
 
 #### 脆弱性内容
+
 - `depPathToFilename`関数がMD5ハッシュでパス短縮
 - 120文字超のパッケージ名+バージョンで衝突可能
 - 意図的にMD5衝突を引き起こすサプライチェーン攻撃リスク
 
 #### 影響範囲
+
 - 間接依存関係の上書き（古い脆弱なバージョンへの置換）
 - インストール時のエラー検出なし
 - サプライチェーン攻撃の脅威（攻撃者が意図的にパッケージ構築可能）
 
 #### 緩和策
-✅ **短期対応**: 現状維持（攻撃は高度な技術が必要、AC:H）
-🔄 **中期対応**: pnpm 10.0.0+へのアップグレード（SHA-256使用）
+
+✅ **短期対応**: 現状維持（攻撃は高度な技術が必要、AC:H）🔄 **中期対応**: pnpm
+10.0.0+へのアップグレード（SHA-256使用）
 
 ---
 
 ### ⚠️ Medium: ESLint Plugin-Kit ReDoS（GHSA-xffm-g5w8-qvg7）
 
-**パッケージ**: @eslint/plugin-kit 0.2.8
-**CVSS Score**: 未評価（0.0） - しかし本質的にMEDIUM相当
-**CWE**: CWE-1333（ReDoS - 非効率的な正規表現複雑性）
+**パッケージ**: @eslint/plugin-kit 0.2.8 **CVSS
+Score**: 未評価（0.0） - しかし本質的にMEDIUM相当 **CWE**:
+CWE-1333（ReDoS - 非効率的な正規表現複雑性）
 
 #### 脆弱性内容
+
 - `ConfigCommentParser#parseJSONLikeConfig`の正規表現が二次的複雑性
 - 100万文字の入力で無限ループ・高CPU使用
 - DoS攻撃ベクトル
 
 #### 影響範囲
+
 - **限定的影響**: Lintingプロセスのみ（ビルド時のみ実行）
 - ランタイムには影響なし
 - 攻撃には意図的な長大コメント挿入が必要
 
 #### 緩和策
-✅ **即時対応**: eslint 9.18.0が最新で依存解決済み（間接依存）
-🔄 **推奨**: eslint-config-next更新で最新@eslint/plugin-kitへ
+
+✅ **即時対応**: eslint 9.18.0が最新で依存解決済み（間接依存）🔄 **推奨**:
+eslint-config-next更新で最新@eslint/plugin-kitへ
 
 ---
 
@@ -67,16 +72,17 @@
 
 #### Playwright 1.50.0（古いバージョン）
 
-**現在**: 1.50.0
-**最新**: 1.51.1+（2025年9月以降リリース）
+**現在**: 1.50.0 **最新**: 1.51.1+（2025年9月以降リリース）
 **リスク**: 中（MODERATE）
 
 ##### 懸念事項
+
 - セキュリティパッチ未適用
 - Chromium/WebKitブラウザバインディングの潜在的脆弱性
 - E2Eテストでのブラウザ自動化リスク
 
 ##### 推奨アクション
+
 ```bash
 pnpm add -D @playwright/test@latest
 npx playwright install
@@ -84,15 +90,16 @@ npx playwright install
 
 #### SWR 2.2.5 + React 19.0.0非対応
 
-**現在**: SWR 2.2.5（React 18サポート）
-**React**: 19.0.0（2025年最新）
+**現在**: SWR 2.2.5（React 18サポート） **React**: 19.0.0（2025年最新）
 **リスク**: 低（LOW） - 機能は動作するが、将来の非互換性
 
 ##### セキュリティ影響
+
 - ランタイムエラーによる情報漏洩の可能性（低確率）
 - React 19の新APIとの不整合
 
 ##### 推奨アクション
+
 - SWRメンテナがReact 19公式対応版リリースまで監視
 - 代替案: TanStack Query（@tanstack/react-query 5.64.1）はReact 19対応済み
 
@@ -102,34 +109,29 @@ npx playwright install
 
 ### @eslint/eslintrc 3.3.1 ✅ SAFE
 
-**信頼性**: HIGH（公式ESLintエコシステム）
-**脆弱性履歴**: なし
-**npmレジストリ**: 週間DL 40M+、well-maintained
-**供給元**: OpenJS Foundation（信頼できる）
+**信頼性**: HIGH（公式ESLintエコシステム） **脆弱性履歴**: なし
+**npmレジストリ**: 週間DL 40M+、well-maintained **供給元**: OpenJS
+Foundation（信頼できる）
 
 ### @eslint/js 9.37.0 ✅ SAFE
 
-**信頼性**: HIGH（ESLint公式パッケージ）
-**脆弱性履歴**: なし
-**最終更新**: 2025-08（アクティブメンテナンス）
+**信頼性**: HIGH（ESLint公式パッケージ） **脆弱性履歴**: なし **最終更新**:
+2025-08（アクティブメンテナンス）
 
 ### @swc/core 1.13.5 ✅ SAFE
 
-**信頼性**: HIGH（Rustベース高速トランスパイラ）
-**セキュリティ**: Rustメモリ安全性の恩恵
-**脆弱性履歴**: なし（2025年時点）
-**供給元**: Vercel公式サポート
+**信頼性**: HIGH（Rustベース高速トランスパイラ） **セキュリティ**:
+Rustメモリ安全性の恩恵 **脆弱性履歴**: なし（2025年時点） **供給元**:
+Vercel公式サポート
 
 ### @swc/jest 0.2.39 ✅ SAFE
 
-**信頼性**: HIGH（@swc/coreの公式Jestアダプター）
-**脆弱性履歴**: なし
+**信頼性**: HIGH（@swc/coreの公式Jestアダプター） **脆弱性履歴**: なし
 
 ### prettier-plugin-tailwindcss 0.6.11 ✅ SAFE
 
-**信頼性**: HIGH（Tailwind Labs公式）
-**脆弱性履歴**: なし
-**最終更新**: 2025-07（Tailwind CSS 4.0.0対応）
+**信頼性**: HIGH（Tailwind Labs公式） **脆弱性履歴**: なし **最終更新**:
+2025-07（Tailwind CSS 4.0.0対応）
 
 ---
 
@@ -137,7 +139,8 @@ npx playwright install
 
 ### 検証結果: ✅ VERIFIED
 
-pnpm-lock.yamlのすべてのSHA-512ハッシュは整合性検証済み（pnpm audit実行時に自動検証）
+pnpm-lock.yamlのすべてのSHA-512ハッシュは整合性検証済み（pnpm
+audit実行時に自動検証）
 
 ### サプライチェーン攻撃対策
 
@@ -199,6 +202,7 @@ pnpm-lock.yamlのすべてのSHA-512ハッシュは整合性検証済み（pnpm 
 ### 🔴 Critical（即時対応必須）
 
 #### Action 1: pnpm 10.0.0+へのアップグレード
+
 ```bash
 # package.json
 "packageManager": "pnpm@10.0.0"
@@ -216,6 +220,7 @@ volta pin pnpm@10.0.0
 **期限**: 2025-10-15まで（CVE-2024-47829対応）
 
 #### Action 2: Playwright最新版アップグレード
+
 ```bash
 pnpm add -D @playwright/test@latest
 npx playwright install --with-deps
@@ -226,6 +231,7 @@ npx playwright install --with-deps
 ### 🟡 Medium（2週間以内）
 
 #### Action 3: eslint-config-next更新
+
 ```bash
 pnpm update eslint-config-next@latest
 ```
@@ -233,27 +239,30 @@ pnpm update eslint-config-next@latest
 **理由**: 最新@eslint/plugin-kit 0.3.4+へ間接的に更新
 
 #### Action 4: SWR React 19対応監視
+
 - SWRリポジトリIssue追跡: https://github.com/vercel/swr/issues/react-19
 - 代替案検討: @tanstack/react-query移行（React 19完全対応）
 
 ### 🟢 Low（1ヶ月以内）
 
 #### Action 5: Dependabot/Renovate有効化
+
 ```yaml
 # .github/dependabot.yml
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/frontend"
+  - package-ecosystem: 'npm'
+    directory: '/frontend'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
-      - "security"
+      - 'dependencies'
+      - 'security'
 ```
 
 #### Action 6: SBOM（Software Bill of Materials）生成
+
 ```bash
 # CI/CDに統合
 npx @cyclonedx/cyclonedx-npm --output-file sbom.json
@@ -271,7 +280,7 @@ name: Security Scan
 
 on:
   schedule:
-    - cron: '0 2 * * 1'  # 毎週月曜午前2時
+    - cron: '0 2 * * 1' # 毎週月曜午前2時
   workflow_dispatch:
 
 jobs:

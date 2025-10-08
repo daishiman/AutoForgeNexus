@@ -1,17 +1,17 @@
 # TruffleHog誤検出 - 修正アクションプラン
 
-**作成日**: 2025-10-08
-**対象インシデント**: PR #78 Cloudflare API Token誤検出
-**優先度**: 🔴 CRITICAL
-**完了目標**: 2025-10-08 23:59まで（本日中）
+**作成日**: 2025-10-08 **対象インシデント**: PR #78 Cloudflare API Token誤検出
+**優先度**: 🔴 CRITICAL **完了目標**: 2025-10-08 23:59まで（本日中）
 
 ---
 
 ## 🎯 目的
 
-TruffleHogによる誤検出（False Positive）を完全に解消し、CI/CDパイプラインの正常動作を回復する。
+TruffleHogによる誤検出（False
+Positive）を完全に解消し、CI/CDパイプラインの正常動作を回復する。
 
 ### 成功基準
+
 - ✅ TruffleHogスキャンが全コミットでPASS
 - ✅ プレースホルダー標準化ガイドライン完成
 - ✅ `.trufflehog_ignore`設定最適化
@@ -25,8 +25,8 @@ TruffleHogによる誤検出（False Positive）を完全に解消し、CI/CDパ
 ### Phase 1: 即時対応（30分）🔴 CRITICAL
 
 #### Task 1.1: infrastructure/CLAUDE.md修正
-**担当**: documentation-specialist
-**所要時間**: 10分
+
+**担当**: documentation-specialist **所要時間**: 10分
 
 ```bash
 # 現在の問題箇所を修正
@@ -39,8 +39,8 @@ git diff infrastructure/CLAUDE.md
 ```
 
 #### Task 1.2: 全ドキュメントのプレースホルダー監査
-**担当**: documentation-specialist
-**所要時間**: 10分
+
+**担当**: documentation-specialist **所要時間**: 10分
 
 ```bash
 # xxx形式のプレースホルダーを検索
@@ -54,8 +54,8 @@ sed -i '' 's/CLOUDFLARE_API_TOKEN=xxx/CLOUDFLARE_API_TOKEN=<your_cloudflare_api_
 ```
 
 #### Task 1.3: .trufflehog_ignore作成
-**担当**: security-architect
-**所要時間**: 10分
+
+**担当**: security-architect **所要時間**: 10分
 
 ```bash
 # .trufflehog_ignoreファイル作成
@@ -86,8 +86,8 @@ echo ".trufflehog_ignore text eol=lf" >> .gitattributes
 ### Phase 2: CI/CD統合（30分）🔴 CRITICAL
 
 #### Task 2.1: GitHub Actions設定更新
-**担当**: devops-coordinator
-**所要時間**: 15分
+
+**担当**: devops-coordinator **所要時間**: 15分
 
 ```yaml
 # .github/workflows/security.yml修正
@@ -101,15 +101,16 @@ echo ".trufflehog_ignore text eol=lf" >> .gitattributes
 ```
 
 #### 完全な修正版
+
 ```yaml
 # .github/workflows/security.yml
-name: "Security Scanning"
+name: 'Security Scanning'
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ['main', 'develop']
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ['main', 'develop']
 
 jobs:
   secret-scan:
@@ -118,39 +119,39 @@ jobs:
     timeout-minutes: 10
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Run TruffleHog
-      id: trufflehog
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        base: ${{ github.event.pull_request.base.sha || 'main' }}
-        head: HEAD
-        extra_args: --debug --only-verified --exclude-paths=.trufflehog_ignore
+      - name: Run TruffleHog
+        id: trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha || 'main' }}
+          head: HEAD
+          extra_args: --debug --only-verified --exclude-paths=.trufflehog_ignore
 
-    - name: Analyze results
-      if: failure()
-      run: |
-        echo "::warning::TruffleHog detected potential secrets"
-        echo "Please review the findings and verify if they are false positives"
-        echo "If legitimate secrets, rotate them immediately and update .trufflehog_ignore"
+      - name: Analyze results
+        if: failure()
+        run: |
+          echo "::warning::TruffleHog detected potential secrets"
+          echo "Please review the findings and verify if they are false positives"
+          echo "If legitimate secrets, rotate them immediately and update .trufflehog_ignore"
 
-    - name: Upload scan results
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: secret-scan-results-${{ github.run_id }}
-        path: trufflehog-results.json
-        retention-days: 30
+      - name: Upload scan results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: secret-scan-results-${{ github.run_id }}
+          path: trufflehog-results.json
+          retention-days: 30
 ```
 
 #### Task 2.2: 検証スキャン実行
-**担当**: security-architect
-**所要時間**: 15分
+
+**担当**: security-architect **所要時間**: 15分
 
 ```bash
 # ローカルで検証（Dockerが必要）
@@ -171,10 +172,10 @@ docker run --rm -v .:/tmp -w /tmp \
 ### Phase 3: プレースホルダー標準化（1時間）🟡 HIGH
 
 #### Task 3.1: プレースホルダーガイドライン作成
-**担当**: documentation-specialist
-**所要時間**: 30分
 
-```bash
+**担当**: documentation-specialist **所要時間**: 30分
+
+````bash
 # ガイドラインファイル作成
 cat > docs/security/PLACEHOLDER_GUIDELINES.md << 'EOF'
 # 秘密情報プレースホルダー標準ガイドライン
@@ -189,37 +190,43 @@ cat > docs/security/PLACEHOLDER_GUIDELINES.md << 'EOF'
 CLOUDFLARE_API_TOKEN=<your_cloudflare_api_token>
 OPENAI_API_KEY=<your_openai_api_key>
 DATABASE_URL=<your_database_connection_string>
-```
+````
 
 **利点**:
+
 - 何を入力すべきか明確
 - TruffleHogが誤検出しない
 - 開発者に優しい
 
 ### 2. 環境変数参照形式（推奨）
+
 ```env
 CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
 DATABASE_URL=${DATABASE_URL}
 ```
 
 **利点**:
+
 - 環境変数からの取得を明示
 - セキュアな設計パターン
 - 誤検出ゼロ
 
 ### 3. 無効な例示形式（許容）
+
 ```env
 CLOUDFLARE_API_TOKEN=sk-xxxxxxxxxxxxxxxx（無効なトークン）
 API_KEY=example_key_not_real
 ```
 
 **注意**:
+
 - 実際のトークン形式に酷似させない
 - 必ず「無効」と明記
 
 ## ❌ 禁止形式
 
 ### 1. 簡易的な伏字（TruffleHog誤検出）
+
 ```env
 # 禁止
 CLOUDFLARE_API_TOKEN=xxx
@@ -230,6 +237,7 @@ SECRET=***
 **理由**: TruffleHogが実際の秘密情報と誤検出する可能性
 
 ### 2. 実際のトークン形式に酷似
+
 ```env
 # 禁止
 OPENAI_API_KEY=sk-1234567890abcdef1234567890abcdef
@@ -239,6 +247,7 @@ CLOUDFLARE_TOKEN=FgOoUC-WVOS0_xxx...
 **理由**: 検証APIが有効と判定する可能性
 
 ### 3. 実際の秘密情報
+
 ```env
 # 絶対禁止
 OPENAI_API_KEY=sk-実際の有効なキー
@@ -249,6 +258,7 @@ OPENAI_API_KEY=sk-実際の有効なキー
 ## 📋 チェックリスト
 
 ドキュメント作成時に以下を確認:
+
 - [ ] プレースホルダーが推奨形式か
 - [ ] 実際の秘密情報は含まれていないか
 - [ ] `.trufflehog_ignore`への追加が必要か
@@ -257,6 +267,7 @@ OPENAI_API_KEY=sk-実際の有効なキー
 ## 🔧 自動チェック
 
 `.husky/pre-commit`で以下のパターンを検出:
+
 ```bash
 UNSAFE_PATTERNS=(
   "TOKEN=xxx"
@@ -268,14 +279,15 @@ UNSAFE_PATTERNS=(
 ```
 
 ## 📚 参照
+
 - [SECRET_MANAGEMENT_POLICY.md](SECRET_MANAGEMENT_POLICY.md)
 - [DEVELOPER_SECURITY_GUIDE.md](DEVELOPER_SECURITY_GUIDE.md)
 
 ---
 
-**🤖 Generated with [Claude Code](https://claude.com/claude-code)**
-EOF
-```
+**🤖 Generated with [Claude Code](https://claude.com/claude-code)** EOF
+
+````
 
 #### Task 3.2: Pre-commitフック実装
 **担当**: devops-coordinator
@@ -324,15 +336,15 @@ EOF
 
 # 実行権限付与
 chmod +x .husky/pre-commit
-```
+````
 
 ---
 
 ### Phase 4: 検証・ドキュメント（30分）🟡 HIGH
 
 #### Task 4.1: 全体検証
-**担当**: qa-automation-engineer
-**所要時間**: 15分
+
+**担当**: qa-automation-engineer **所要時間**: 15分
 
 ```bash
 # 1. プレースホルダー検索
@@ -360,8 +372,8 @@ grep -A 5 "exclude-paths" .github/workflows/security.yml || echo "❌ exclude-pa
 ```
 
 #### Task 4.2: ドキュメント更新
-**担当**: documentation-specialist
-**所要時間**: 15分
+
+**担当**: documentation-specialist **所要時間**: 15分
 
 ```bash
 # セキュリティドキュメントINDEX更新
@@ -389,18 +401,21 @@ EOF
 ## 🔍 検証チェックリスト
 
 ### 即時対応完了確認
+
 - [ ] `infrastructure/CLAUDE.md`のプレースホルダー修正完了
 - [ ] 全ドキュメントの`xxx`形式プレースホルダー修正完了
 - [ ] `.trufflehog_ignore`ファイル作成完了
 - [ ] `.github/workflows/security.yml`更新完了
 
 ### 機能検証
+
 - [ ] TruffleHogローカルスキャンPASS
 - [ ] Pre-commitフック動作確認
 - [ ] GitHub Actions設定検証
 - [ ] ドキュメント更新完了
 
 ### 最終確認
+
 - [ ] コミット・プッシュ実行
 - [ ] PR作成
 - [ ] CI/CDパイプライン成功確認
@@ -501,6 +516,7 @@ echo ""
 ## 📊 成功基準の検証
 
 ### 1. TruffleHogスキャン成功
+
 ```bash
 # 期待結果
 ✅ No verified secrets found
@@ -508,11 +524,13 @@ echo ""
 ```
 
 ### 2. CI/CDパイプライン成功
+
 - ✅ GitHub Actions `secret-scan` ジョブPASS
 - ✅ すべてのセキュリティチェックPASS
 - ✅ PR マージ可能状態
 
 ### 3. ドキュメント品質
+
 - ✅ プレースホルダーがすべて推奨形式
 - ✅ ガイドライン文書完成
 - ✅ セキュリティINDEX更新
@@ -561,12 +579,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## 🔗 関連ドキュメント
 
 ### 今回作成したドキュメント
+
 1. [TRUFFLEHOG_DETECTION_ROOT_CAUSE_ANALYSIS_20251008.md](TRUFFLEHOG_DETECTION_ROOT_CAUSE_ANALYSIS_20251008.md) - 根本原因分析
-2. [OWASP_GDPR_COMPLIANCE_ASSESSMENT_20251008.md](OWASP_GDPR_COMPLIANCE_ASSESSMENT_20251008.md) - OWASP/GDPR準拠評価
+2. [OWASP_GDPR_COMPLIANCE_ASSESSMENT_20251008.md](OWASP_GDPR_COMPLIANCE_ASSESSMENT_20251008.md) -
+   OWASP/GDPR準拠評価
 3. [PLACEHOLDER_GUIDELINES.md](PLACEHOLDER_GUIDELINES.md) - プレースホルダー標準ガイド
 4. [TRUFFLEHOG_REMEDIATION_ACTION_PLAN_20251008.md](TRUFFLEHOG_REMEDIATION_ACTION_PLAN_20251008.md) - 本ドキュメント
 
 ### 既存セキュリティドキュメント
+
 - [SECRET_MANAGEMENT_POLICY.md](SECRET_MANAGEMENT_POLICY.md)
 - [DEVELOPER_SECURITY_GUIDE.md](DEVELOPER_SECURITY_GUIDE.md)
 - [INCIDENT_RESPONSE_REPORT_2025-10-08.md](INCIDENT_RESPONSE_REPORT_2025-10-08.md)
@@ -575,13 +596,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ## 📅 実装スケジュール
 
-| Phase | タスク | 所要時間 | 担当 | 期限 |
-|-------|-------|---------|------|------|
-| **Phase 1** | ドキュメント修正 | 30分 | documentation-specialist | 本日中 |
-| **Phase 2** | CI/CD統合 | 30分 | devops-coordinator | 本日中 |
-| **Phase 3** | 標準化 | 1時間 | documentation-specialist | 本日中 |
-| **Phase 4** | 検証 | 30分 | qa-automation-engineer | 本日中 |
-| **合計** | | **2.5時間** | | **2025-10-08 23:59** |
+| Phase       | タスク           | 所要時間    | 担当                     | 期限                 |
+| ----------- | ---------------- | ----------- | ------------------------ | -------------------- |
+| **Phase 1** | ドキュメント修正 | 30分        | documentation-specialist | 本日中               |
+| **Phase 2** | CI/CD統合        | 30分        | devops-coordinator       | 本日中               |
+| **Phase 3** | 標準化           | 1時間       | documentation-specialist | 本日中               |
+| **Phase 4** | 検証             | 30分        | qa-automation-engineer   | 本日中               |
+| **合計**    |                  | **2.5時間** |                          | **2025-10-08 23:59** |
 
 ---
 

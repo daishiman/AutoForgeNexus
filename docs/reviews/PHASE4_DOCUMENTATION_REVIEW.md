@@ -13,13 +13,13 @@
 
 ### 総合スコア: **88/100 (EXCELLENT - 本番環境使用可能)**
 
-| 評価項目 | スコア | 評価 |
-|---------|-------|------|
-| 完全性 | 92/100 | EXCELLENT |
-| 正確性 | 95/100 | EXCELLENT |
-| 明確性 | 85/100 | GOOD |
-| アクセシビリティ | 80/100 | GOOD |
-| 保守性 | 88/100 | EXCELLENT |
+| 評価項目         | スコア | 評価      |
+| ---------------- | ------ | --------- |
+| 完全性           | 92/100 | EXCELLENT |
+| 正確性           | 95/100 | EXCELLENT |
+| 明確性           | 85/100 | GOOD      |
+| アクセシビリティ | 80/100 | GOOD      |
+| 保守性           | 88/100 | EXCELLENT |
 
 ### ✅ 強み
 
@@ -47,6 +47,7 @@
 ### ✅ 完備している項目
 
 #### 環境構築手順（100%完備）
+
 - [x] **Phase 4-1**: Alembic初期化（詳細度: 優秀）
   - Docker環境での作業フロー明記
   - alembic.ini設定例完備
@@ -77,6 +78,7 @@
   - envsubst置換パターン
 
 #### トラブルシューティング（85%完備）
+
 - [x] `alembic: command not found`
 - [x] `ModuleNotFoundError: No module named 'src'`
 - [x] `Turso authentication failed`
@@ -85,6 +87,7 @@
 - [x] `libsql_client not found`
 
 #### アーキテクチャ説明（90%完備）
+
 - [x] 全体アーキテクチャ図（ASCII）
 - [x] 環境別データベース戦略
 - [x] DDD境界づけられたコンテキスト
@@ -93,31 +96,38 @@
 ### ⚠️ 不足している項目
 
 #### 追加が必要なセクション
+
 1. **パフォーマンスチューニング** (Priority: HIGH)
+
    ```markdown
    ## パフォーマンス最適化
 
    ### インデックス戦略
+
    - 複合インデックスの設計指針
    - カバリングインデックスの活用
    - インデックス効果の測定方法
 
    ### クエリ最適化
+
    - N+1問題の回避方法
    - Eager Loading vs Lazy Loading
    - バッチクエリの実装
 
    ### 接続プール設定
+
    - pool_size, max_overflow調整
    - 接続タイムアウト設定
    - デッドロック対策
    ```
 
 2. **バックアップ・リカバリ手順** (Priority: HIGH)
-   ```markdown
+
+   ````markdown
    ## データバックアップ
 
    ### Turso自動バックアップ
+
    ```bash
    # 日次バックアップ設定
    turso db replicate autoforgenexus-production --region nrt
@@ -125,8 +135,10 @@
    # リカバリ手順
    turso db restore autoforgenexus-production --from-backup <backup-id>
    ```
+   ````
 
    ### ローカルバックアップ
+
    ```bash
    # SQLiteダンプ
    sqlite3 data/autoforge_dev.db .dump > backup.sql
@@ -134,31 +146,43 @@
    # リストア
    sqlite3 data/autoforge_dev_restored.db < backup.sql
    ```
+
+   ```
+
    ```
 
 3. **監視・アラート設定** (Priority: MEDIUM)
-   ```markdown
+
+   ````markdown
    ## データベース監視
 
    ### Tursoダッシュボード
+
    - クエリパフォーマンス監視
    - 接続数・帯域幅追跡
    - エラー率アラート
 
    ### カスタムメトリクス
+
    ```python
    from prometheus_client import Counter, Histogram
 
    db_query_duration = Histogram('db_query_duration_seconds', 'Database query duration')
    db_errors = Counter('db_errors_total', 'Database errors')
    ```
+   ````
+
+   ```
+
    ```
 
 4. **マイグレーション戦略** (Priority: MEDIUM)
+
    ```markdown
    ## 本番環境マイグレーション戦略
 
    ### ゼロダウンタイムマイグレーション
+
    1. **後方互換性のある変更**: カラム追加、インデックス追加
    2. **段階的なスキーマ変更**:
       - Phase 1: 新カラム追加（NULL許可）
@@ -167,6 +191,7 @@
    3. **ブルーグリーンデプロイ対応**
 
    ### ロールバック計画
+
    - 各マイグレーションにdowngrade実装必須
    - 本番適用前にステージングで検証
    - データ損失リスクの事前評価
@@ -181,6 +206,7 @@
 ### ✅ 良好な箇所
 
 #### infrastructure/shared/database/base.py
+
 ```python
 class Base(DeclarativeBase):
     """
@@ -194,9 +220,11 @@ class Base(DeclarativeBase):
             ...
     """
 ```
+
 **評価**: EXCELLENT - 使用例付き、明確な目的説明
 
 #### infrastructure/prompt/models/prompt_model.py
+
 ```python
 class PromptModel(Base, TimestampMixin, SoftDeleteMixin):
     """
@@ -206,6 +234,7 @@ class PromptModel(Base, TimestampMixin, SoftDeleteMixin):
     責務: プロンプトの内容、メタデータ、バージョン管理
     """
 ```
+
 **評価**: GOOD - DDD用語と責務が明確
 
 ### ⚠️ 改善が必要な箇所
@@ -213,6 +242,7 @@ class PromptModel(Base, TimestampMixin, SoftDeleteMixin):
 #### 1. infrastructure/shared/database/turso_connection.py
 
 **現状の問題点**:
+
 ```python
 def get_connection_url(self) -> str:
     """Get appropriate database URL based on environment"""
@@ -220,6 +250,7 @@ def get_connection_url(self) -> str:
 ```
 
 **改善提案**:
+
 ```python
 def get_connection_url(self) -> str:
     """
@@ -251,6 +282,7 @@ def get_connection_url(self) -> str:
 #### 2. alembic/env.py
 
 **現状の問題点**:
+
 ```python
 def run_migrations_online() -> None:
     """オンラインモードでマイグレーション実行"""
@@ -258,6 +290,7 @@ def run_migrations_online() -> None:
 ```
 
 **改善提案**:
+
 ```python
 def run_migrations_online() -> None:
     """
@@ -289,6 +322,7 @@ def run_migrations_online() -> None:
 **問題**: `infrastructure/prompt/repositories/` が未実装
 
 **改善提案**: リポジトリインターフェースとCRUD実装を追加
+
 ```python
 # domain/prompt/repositories/prompt_repository.py
 from abc import ABC, abstractmethod
@@ -336,14 +370,14 @@ class PromptRepository(ABC):
 
 ### Docstringカバレッジ推定
 
-| モジュール | カバレッジ | 評価 |
-|-----------|----------|------|
-| `infrastructure/shared/database/base.py` | 85% | GOOD |
-| `infrastructure/prompt/models/` | 70% | ACCEPTABLE |
-| `infrastructure/evaluation/models/` | 70% | ACCEPTABLE |
-| `infrastructure/shared/database/turso_connection.py` | 30% | POOR |
-| `alembic/env.py` | 40% | POOR |
-| **全体平均** | **59%** | **NEEDS IMPROVEMENT** |
+| モジュール                                           | カバレッジ | 評価                  |
+| ---------------------------------------------------- | ---------- | --------------------- |
+| `infrastructure/shared/database/base.py`             | 85%        | GOOD                  |
+| `infrastructure/prompt/models/`                      | 70%        | ACCEPTABLE            |
+| `infrastructure/evaluation/models/`                  | 70%        | ACCEPTABLE            |
+| `infrastructure/shared/database/turso_connection.py` | 30%        | POOR                  |
+| `alembic/env.py`                                     | 40%        | POOR                  |
+| **全体平均**                                         | **59%**    | **NEEDS IMPROVEMENT** |
 
 **目標**: 80%以上（本番環境品質基準）
 
@@ -365,6 +399,7 @@ class PromptRepository(ABC):
 #### OpenAPI仕様の自動生成
 
 **backend/src/main.py**:
+
 ```python
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -429,6 +464,7 @@ app.openapi = custom_openapi
 #### エンドポイント例
 
 **backend/src/presentation/api/v1/prompt/endpoints.py**:
+
 ```python
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
@@ -506,6 +542,7 @@ async def create_prompt(
 #### 統合テストの網羅性
 
 **tests/integration/test_database_connection.py** (DATABASE_SETUP_GUIDE.md内):
+
 ```python
 class TestDatabaseConnection:
     """データベース接続テスト"""
@@ -530,6 +567,7 @@ class TestDatabaseConnection:
         """リレーションシップテスト"""
         # Prompt-Evaluation関係の検証
 ```
+
 **評価**: EXCELLENT - DDD境界を尊重したテスト設計
 
 ### ⚠️ 改善が必要な箇所
@@ -539,12 +577,14 @@ class TestDatabaseConnection:
 **問題**: 個別モジュールのテスト戦略が未記載
 
 **改善提案**:
-```markdown
+
+````markdown
 ## ユニットテスト戦略
 
 ### テスト対象レイヤー
 
 #### ドメイン層（カバレッジ目標: 90%+）
+
 ```python
 # tests/unit/domain/prompt/test_prompt_entity.py
 def test_prompt_create_with_valid_data():
@@ -561,8 +601,10 @@ def test_prompt_create_with_empty_title_raises_error():
     with pytest.raises(ValidationError):
         Prompt.create(title="", content="...", user_id=...)
 ```
+````
 
 #### インフラ層（カバレッジ目標: 80%+）
+
 ```python
 # tests/unit/infrastructure/test_turso_connection.py
 @pytest.fixture
@@ -584,7 +626,8 @@ def test_get_connection_url_production(mock_env):
     assert "libsql://prod.turso.io" in url
     assert "authToken=token123" in url
 ```
-```
+
+````
 
 #### 2. E2Eテストシナリオ未定義
 
@@ -612,9 +655,10 @@ Scenario: ユーザーが新規プロンプトを作成し評価を実行
   Then 評価ステータスが"completed"になっている
   And 評価スコアが0.0-1.0の範囲である
   And テスト結果が3件以上存在する
-```
+````
 
 **実装**:
+
 ```python
 # tests/e2e/test_prompt_evaluation_flow.py
 @pytest.mark.e2e
@@ -665,7 +709,8 @@ async def test_full_prompt_evaluation_flow(
     assert 0.0 <= result["overall_score"] <= 1.0
     assert len(result["test_results"]) >= 3
 ```
-```
+
+````
 
 ---
 
@@ -728,26 +773,30 @@ async def test_full_prompt_evaluation_flow(
 - [ ] JWT署名検証の実装
 - [ ] レート制限（60 req/min）
 - [ ] 異常アクセスパターンの検知
-```
+````
 
 #### 2. データ保護
 
 **追加すべきセクション**:
-```markdown
+
+````markdown
 ## データ保護戦略
 
 ### 個人情報（PII）の扱い
+
 - **保存データ**: user_id（Clerk UUID）のみ
 - **暗号化**: Turso転送時暗号化（TLS 1.3）
 - **保存時暗号化**: Turso自動暗号化
 - **アクセスログ**: 監査ログ有効化
 
 ### GDPR準拠
+
 - **データポータビリティ**: エクスポートAPI実装予定
 - **忘れられる権利**: 論理削除（SoftDeleteMixin）実装済み
 - **データ最小化**: 必要最小限のデータのみ保存
 
 ### バックアップ暗号化
+
 ```bash
 # 暗号化バックアップ作成
 sqlite3 data/autoforge_dev.db .dump | gpg --encrypt --recipient admin@autoforge.com > backup.sql.gpg
@@ -755,7 +804,9 @@ sqlite3 data/autoforge_dev.db .dump | gpg --encrypt --recipient admin@autoforge.
 # 復号化
 gpg --decrypt backup.sql.gpg | sqlite3 restored.db
 ```
-```
+````
+
+````
 
 ---
 
@@ -782,15 +833,17 @@ __table_args__ = (
     Index("idx_prompts_parent_id", "parent_id"),       # 👍 バージョン履歴
     Index("idx_prompts_deleted_at", "deleted_at"),     # 👍 論理削除
 )
-```
+````
 
 #### 改善推奨: 複合インデックス追加
+
 ```python
 # ユーザー別・ステータス別・作成日時の複合検索に最適化
 Index("idx_prompts_user_status_created", "user_id", "status", "created_at")
 ```
 
 **効果測定**:
+
 ```sql
 -- Before: 単一インデックス使用（100ms）
 EXPLAIN QUERY PLAN
@@ -806,6 +859,7 @@ LIMIT 10;
 ### クエリ最適化パターン
 
 #### N+1問題の回避
+
 ```python
 # ❌ BAD: N+1問題発生
 prompts = session.query(PromptModel).filter_by(user_id=user_id).all()
@@ -822,6 +876,7 @@ prompts = session.query(PromptModel)\
 ```
 
 #### ページネーション最適化
+
 ```python
 # ❌ BAD: OFFSET遅延（100万件目から10件取得で10秒）
 prompts = session.query(PromptModel)\
@@ -842,6 +897,7 @@ prompts = session.query(PromptModel)\
 ### 接続プール設定
 
 #### 環境別推奨設定
+
 ```python
 # Development（低負荷）
 engine = create_engine(
@@ -866,13 +922,15 @@ engine = create_engine(
 ### パフォーマンスメトリクス
 
 #### 目標値設定
-| メトリクス | 目標値 | 測定方法 |
-|-----------|-------|---------|
-| クエリP95レイテンシ | < 50ms | LangFuse |
-| 接続プール利用率 | < 70% | Prometheus |
-| スロークエリ（>1s） | 0件/日 | Tursoダッシュボード |
-| インデックスヒット率 | > 95% | `EXPLAIN QUERY PLAN` |
-```
+
+| メトリクス           | 目標値 | 測定方法             |
+| -------------------- | ------ | -------------------- |
+| クエリP95レイテンシ  | < 50ms | LangFuse             |
+| 接続プール利用率     | < 70%  | Prometheus           |
+| スロークエリ（>1s）  | 0件/日 | Tursoダッシュボード  |
+| インデックスヒット率 | > 95%  | `EXPLAIN QUERY PLAN` |
+
+````
 
 ---
 
@@ -912,9 +970,10 @@ graph TB
     style C fill:#90EE90
     style D fill:#FFD700
     style E fill:#FF6347
-```
+````
 
 ### マイグレーションフロー
+
 ```mermaid
 sequenceDiagram
     participant Dev as Developer
@@ -930,7 +989,8 @@ sequenceDiagram
     Alembic->>DB: Apply migration
     DB-->>Alembic: Success
 ```
-```
+
+````
 
 #### 2. スクリーンショット推奨箇所
 
@@ -950,7 +1010,7 @@ sequenceDiagram
 
 ## Overview
 This guide provides comprehensive instructions for setting up the AutoForgeNexus database environment...
-```
+````
 
 ---
 
@@ -971,22 +1031,26 @@ This guide provides comprehensive instructions for setting up the AutoForgeNexus
 #### 1. 変更ログの追加
 
 **追加すべきセクション**:
+
 ```markdown
 ## 変更履歴
 
 ### v1.1.0（予定: 2025-10-15）
+
 - [ ] パフォーマンスチューニングガイド追加
 - [ ] E2Eテストシナリオ追加
 - [ ] セキュリティ脅威モデル追加
 - [ ] 英語版ドキュメント作成
 
 ### v1.0.0（2025-09-30）
+
 - [x] 初版リリース
 - [x] Phase 4-1～4-7完全対応
 - [x] トラブルシューティング6パターン
 - [x] DDD準拠のモデル設計
 
 ### v0.9.0（2025-09-20）
+
 - [x] ドラフト版作成
 - [x] 基本構造確立
 ```
@@ -994,16 +1058,19 @@ This guide provides comprehensive instructions for setting up the AutoForgeNexus
 #### 2. ドキュメントメンテナンスガイド
 
 **追加すべきセクション**:
+
 ```markdown
 ## このドキュメントのメンテナンス
 
 ### 更新が必要なタイミング
 
 1. **技術スタック変更時**（例: SQLAlchemy 2.0 → 3.0）
+
    - 影響セクション: Phase 4-4, コード例
    - 更新担当: Backend Lead
 
 2. **新環境追加時**（例: QA環境）
+
    - 影響セクション: Phase 4-3, 環境変数管理
    - 更新担当: DevOps Engineer
 
@@ -1033,20 +1100,23 @@ This guide provides comprehensive instructions for setting up the AutoForgeNexus
 ### ✅ 優れた点
 
 #### 明確な境界づけられたコンテキスト
+
 ```markdown
 ## DDDアーキテクチャ準拠: 各ドメインから明示的にインポート
 
-from src.infrastructure.prompt.models.prompt_model import PromptModel
-from src.infrastructure.evaluation.models.evaluation_model import EvaluationModel
+from src.infrastructure.prompt.models.prompt_model import PromptModel from
+src.infrastructure.evaluation.models.evaluation_model import EvaluationModel
 ```
 
 #### 集約境界の厳守
+
 ```python
 # 注意: PromptModelとのrelationshipは定義しない
 # → 集約境界を越えるため、リポジトリ層でprompt_idを使って取得
 ```
 
 #### 値オブジェクトの推奨
+
 ```python
 # 現在: String型のID
 id: Mapped[str] = mapped_column(String(36), ...)
@@ -1064,24 +1134,30 @@ class PromptId(ValueObject):
 #### 1. DDD用語集の追加
 
 **追加すべきセクション**:
-```markdown
+
+````markdown
 ## DDD用語集
 
 ### エンティティ (Entity)
+
 **定義**: 一意の識別子（ID）を持ち、ライフサイクル全体で同一性を保つオブジェクト
 
 **AutoForgeNexusでの例**:
+
 - `PromptModel`: プロンプトID（UUID）で識別
 - `EvaluationModel`: 評価ID（UUID）で識別
 
 **特徴**:
+
 - IDが同じなら、属性が変化しても同一とみなす
 - TimestampMixin, SoftDeleteMixinで共通動作を実装
 
 ### 値オブジェクト (Value Object)
+
 **定義**: 属性の値で等価性を判断する、不変（immutable）なオブジェクト
 
 **推奨実装**:
+
 ```python
 @dataclass(frozen=True)
 class PromptTitle:
@@ -1092,11 +1168,14 @@ class PromptTitle:
         if not self.value or len(self.value) > 255:
             raise ValueError("Title must be 1-255 characters")
 ```
+````
 
 ### 集約 (Aggregate)
+
 **定義**: エンティティと値オブジェクトのクラスターで、一貫性境界を形成
 
 **AutoForgeNexusでの集約設計**:
+
 ```
 Prompt Aggregate (集約ルート: PromptModel)
 ├── PromptModel (エンティティ)
@@ -1111,14 +1190,17 @@ Evaluation Aggregate (集約ルート: EvaluationModel)
 ```
 
 **集約境界ルール**:
+
 1. 外部から集約ルートのみアクセス可能
 2. 集約間はIDで参照（直接参照禁止）
 3. トランザクション境界 = 集約境界
 
 ### リポジトリ (Repository)
+
 **定義**: 集約の永続化と再構築を担当するインターフェース
 
 **実装パターン**:
+
 ```python
 # domain/prompt/repositories/prompt_repository.py (インターフェース)
 class PromptRepository(ABC):
@@ -1130,7 +1212,8 @@ class TursoPromptRepository(PromptRepository):
     async def save(self, prompt: Prompt) -> None:
         # ORMマッピング処理
 ```
-```
+
+````
 
 #### 2. アンチパターンの警告
 
@@ -1144,9 +1227,10 @@ class TursoPromptRepository(PromptRepository):
 ```python
 # EvaluationModelからPromptModelに直接アクセス
 evaluation.prompt.title  # NG: 集約境界を越えている
-```
+````
 
 **正しいコード**:
+
 ```python
 # リポジトリ経由でPromptを取得
 prompt = await prompt_repository.find_by_id(evaluation.prompt_id)
@@ -1156,6 +1240,7 @@ title = prompt.title
 ### ❌ アンチパターン2: 貧血ドメインモデル
 
 **問題のあるコード**:
+
 ```python
 # モデルがデータ保持のみ（ビジネスロジックなし）
 class PromptModel(Base):
@@ -1173,6 +1258,7 @@ class PromptService:
 ```
 
 **正しいコード**:
+
 ```python
 # エンティティにビジネスロジックを持たせる
 class Prompt(Entity):
@@ -1195,6 +1281,7 @@ class PromptApplicationService:
 ### ❌ アンチパターン3: ORMの直接公開
 
 **問題のあるコード**:
+
 ```python
 # コントローラーでORMモデルを直接操作
 @router.get("/prompts/{id}")
@@ -1204,6 +1291,7 @@ async def get_prompt(id: str, session: Session = Depends(get_db_session)):
 ```
 
 **正しいコード**:
+
 ```python
 # レイヤー分離とDTOの使用
 @router.get("/prompts/{id}", response_model=PromptResponse)
@@ -1211,6 +1299,7 @@ async def get_prompt(id: str, service: PromptQueryService = Depends()):
     prompt = await service.get_prompt_by_id(PromptId(id))
     return PromptResponse.from_domain(prompt)  # DTO変換
 ```
+
 ```
 
 ---
@@ -1249,23 +1338,24 @@ async def get_prompt(id: str, service: PromptQueryService = Depends()):
 ### ドキュメンテーションカバレッジ
 
 ```
+
 全体カバレッジ: ████████████░░░░░░░░ 65%
 
-├─ セットアップガイド:   ██████████████████░░ 92%
-├─ コードドキュメント:   █████████████░░░░░░░ 65%
-├─ APIドキュメント:      ████░░░░░░░░░░░░░░░░ 20%
-├─ テスト戦略:           ██████████████░░░░░░ 70%
-├─ セキュリティ:         ████████████░░░░░░░░ 60%
-└─ パフォーマンス:       ████████░░░░░░░░░░░░ 40%
+├─ セットアップガイド: ██████████████████░░ 92% ├─ コードドキュメント:
+█████████████░░░░░░░ 65% ├─ APIドキュメント: ████░░░░░░░░░░░░░░░░ 20%
+├─ テスト戦略: ██████████████░░░░░░ 70% ├─ セキュリティ: ████████████░░░░░░░░
+60% └─ パフォーマンス: ████████░░░░░░░░░░░░ 40%
+
 ```
 
 ### 品質スコア推移（予測）
 
 ```
-現在:  88/100 (EXCELLENT)
-1ヶ月後: 93/100 (EXCELLENT+) ← 高優先度改善完了
-3ヶ月後: 97/100 (WORLD-CLASS) ← 全改善完了
-```
+
+現在: 88/100 (EXCELLENT) 1ヶ月後: 93/100 (EXCELLENT+) ← 高優先度改善完了3ヶ月後:
+97/100 (WORLD-CLASS) ← 全改善完了
+
+````
 
 ### ROI分析
 
@@ -1297,7 +1387,7 @@ async def get_prompt(id: str, service: PromptQueryService = Depends()):
   --domain prompt \
   --pattern ddd \
   --docstring-coverage 80
-```
+````
 
 ### Week 3-4: High Priority
 
@@ -1346,18 +1436,19 @@ async def get_prompt(id: str, service: PromptQueryService = Depends()):
 ## 📚 参考資料
 
 ### 内部ドキュメント
+
 - [DATABASE_SETUP_GUIDE.md](/Users/dm/dev/dev/個人開発/AutoForgeNexus/docs/setup/DATABASE_SETUP_GUIDE.md)
 - [CLAUDE.md](/Users/dm/dev/dev/個人開発/AutoForgeNexus/CLAUDE.md)
 - [backend/CLAUDE.md](/Users/dm/dev/dev/個人開発/AutoForgeNexus/backend/CLAUDE.md)
 
 ### 外部リンク
+
 - [SQLAlchemy 2.0ドキュメント](https://docs.sqlalchemy.org/en/20/)
 - [Domain-Driven Design Reference](https://www.domainlanguage.com/ddd/reference/)
 - [API Documentation Best Practices](https://swagger.io/resources/articles/best-practices-in-api-documentation/)
 
 ---
 
-**レビュー完了日**: 2025年10月1日
-**次回レビュー推奨日**: 2025年11月1日（改善実装後）
-**レビュー担当**: テクニカルライター（AI Agent）
+**レビュー完了日**: 2025年10月1日 **次回レビュー推奨日**:
+2025年11月1日（改善実装後） **レビュー担当**: テクニカルライター（AI Agent）
 **承認者**: Backend Lead, Technical Writer, Security Engineer（推奨）

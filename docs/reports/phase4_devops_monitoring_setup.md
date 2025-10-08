@@ -2,23 +2,27 @@
 
 ## 🎯 概要
 
-Phase 4データベース環境の運用品質向上のため、包括的な監視・観測性スタックの実装計画です。
+Phase
+4データベース環境の運用品質向上のため、包括的な監視・観測性スタックの実装計画です。
 
 ## 📊 実装優先度
 
 ### 🔴 Tier 1（即座実装必須）
+
 1. **アプリケーションメトリクス**: Prometheus + Grafana
 2. **データベース監視**: Turso接続・パフォーマンス
 3. **基本アラート**: サービス停止、エラー率急増
 4. **ヘルスチェック**: 多層ヘルスチェック実装
 
 ### 🟡 Tier 2（2週間以内）
+
 1. **LLM監視**: LangFuse統合
 2. **ログ集約**: 構造化ログ + Loki
 3. **SLI/SLO定義**: 可用性・レスポンス時間
 4. **コスト監視**: LLMプロバイダー使用量
 
 ### 🟢 Tier 3（1ヶ月以内）
+
 1. **分散トレーシング**: OpenTelemetry
 2. **セキュリティ監視**: 異常検知
 3. **予測アラート**: 容量・パフォーマンス予測
@@ -26,6 +30,7 @@ Phase 4データベース環境の運用品質向上のため、包括的な監�
 ## 🏗️ 技術実装
 
 ### Prometheus設定
+
 ```yaml
 # monitoring/prometheus.yml
 global:
@@ -36,13 +41,13 @@ global:
     environment: ${ENVIRONMENT}
 
 rule_files:
-  - "rules/*.yml"
+  - 'rules/*.yml'
 
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          - alertmanager:9093
+            - alertmanager:9093
 
 scrape_configs:
   # FastAPI メトリクス
@@ -65,6 +70,7 @@ scrape_configs:
 ```
 
 ### Grafana ダッシュボード
+
 ```json
 {
   "dashboard": {
@@ -110,6 +116,7 @@ scrape_configs:
 ```
 
 ### アラートルール
+
 ```yaml
 # monitoring/rules/database.yml
 groups:
@@ -121,31 +128,36 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Database connection pool utilization high"
-          description: "Connection pool is {{ $value | humanizePercentage }} full"
+          summary: 'Database connection pool utilization high'
+          description:
+            'Connection pool is {{ $value | humanizePercentage }} full'
 
       - alert: DatabaseQuerySlow
-        expr: histogram_quantile(0.95, turso_query_duration_seconds_bucket) > 1.0
+        expr:
+          histogram_quantile(0.95, turso_query_duration_seconds_bucket) > 1.0
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "Database queries are slow"
-          description: "P95 query time is {{ $value }}s"
+          summary: 'Database queries are slow'
+          description: 'P95 query time is {{ $value }}s'
 
       - alert: APIResponseSlow
-        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket{job="autoforge-backend"}) > 0.5
+        expr:
+          histogram_quantile(0.95,
+          http_request_duration_seconds_bucket{job="autoforge-backend"}) > 0.5
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "API response time degraded"
-          description: "P95 response time is {{ $value }}s"
+          summary: 'API response time degraded'
+          description: 'P95 response time is {{ $value }}s'
 ```
 
 ## 🔧 実装手順
 
 ### Step 1: 基本監視スタック
+
 ```bash
 # 1. 監視設定ファイル作成
 mkdir -p monitoring/{prometheus,grafana,alertmanager}
@@ -160,6 +172,7 @@ curl -X POST http://grafana:3000/api/dashboards/db \
 ```
 
 ### Step 2: アプリケーション監視
+
 ```python
 # backend/src/monitoring/metrics.py
 from prometheus_client import Counter, Histogram, Gauge
@@ -188,25 +201,31 @@ class MonitoringMiddleware:
 ```
 
 ### Step 3: SLI/SLO定義
+
 ```yaml
 # monitoring/slos.yml
 objectives:
   availability:
     target: 99.9%
-    measurement: "sum(rate(http_requests_total{status!~'5..'}[5m])) / sum(rate(http_requests_total[5m]))"
+    measurement:
+      "sum(rate(http_requests_total{status!~'5..'}[5m])) /
+      sum(rate(http_requests_total[5m]))"
 
   latency:
-    target: 95%  # 95%のリクエストが500ms以下
-    measurement: "histogram_quantile(0.95, http_request_duration_seconds_bucket) < 0.5"
+    target: 95% # 95%のリクエストが500ms以下
+    measurement:
+      'histogram_quantile(0.95, http_request_duration_seconds_bucket) < 0.5'
 
   database_performance:
-    target: 99%   # 99%のクエリが1秒以下
-    measurement: "histogram_quantile(0.99, turso_query_duration_seconds_bucket) < 1.0"
+    target: 99% # 99%のクエリが1秒以下
+    measurement:
+      'histogram_quantile(0.99, turso_query_duration_seconds_bucket) < 1.0'
 ```
 
 ## 📱 アラート通知
 
 ### Discord統合
+
 ```python
 # monitoring/alerting/discord_webhook.py
 import httpx
@@ -234,6 +253,7 @@ async def send_alert(webhook_url: str, alert_data: dict):
 ## 🎯 運用手順
 
 ### デイリーチェック
+
 ```bash
 #!/bin/bash
 # scripts/daily_health_check.sh
@@ -258,6 +278,7 @@ echo "=== Health Check Complete ==="
 ```
 
 ### ウィークリーレポート
+
 ```python
 # scripts/weekly_report.py
 import asyncio
@@ -289,6 +310,7 @@ async def generate_weekly_report():
 ## 💰 コスト最適化
 
 ### リソース監視
+
 ```yaml
 # Cloudflare Workers使用量監視
 cloudflare_workers_requests_total:
@@ -304,6 +326,7 @@ turso_rows_read_total:
 ## 📈 継続改善
 
 ### メトリクス収集の拡張
+
 1. **ビジネスメトリクス**: プロンプト作成数、評価実行数
 2. **ユーザーエクスペリエンス**: Core Web Vitals、エラー率
 3. **セキュリティ**: 認証失敗、レート制限達成

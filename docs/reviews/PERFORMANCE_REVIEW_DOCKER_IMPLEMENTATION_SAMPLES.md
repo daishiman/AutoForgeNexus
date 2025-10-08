@@ -1,8 +1,8 @@
 # Docker パフォーマンス最適化 - 実装サンプル集
 
-**関連レポート**: [PERFORMANCE_REVIEW_DOCKER_2025-10-08.md](./PERFORMANCE_REVIEW_DOCKER_2025-10-08.md)
-**作成日**: 2025年10月8日
-**対象**: backend/Dockerfile, backend/.dockerignore
+**関連レポート**:
+[PERFORMANCE_REVIEW_DOCKER_2025-10-08.md](./PERFORMANCE_REVIEW_DOCKER_2025-10-08.md)
+**作成日**: 2025年10月8日 **対象**: backend/Dockerfile, backend/.dockerignore
 
 このドキュメントは、パフォーマンスレビューで提案された改善策の**具体的な実装例**を提供します。
 
@@ -388,13 +388,13 @@ services:
       dockerfile: Dockerfile
     environment:
       # ワーカー設定
-      WORKERS: auto                 # CPU/メモリに応じて自動調整
-      MEMORY_LIMIT_MB: 512          # メモリ制限
-      MAX_REQUESTS: 1000            # ワーカー再起動閾値
+      WORKERS: auto # CPU/メモリに応じて自動調整
+      MEMORY_LIMIT_MB: 512 # メモリ制限
+      MAX_REQUESTS: 1000 # ワーカー再起動閾値
 
       # パフォーマンスチューニング
-      UVICORN_LOOP: uvloop          # 高速イベントループ
-      UVICORN_HTTP: httptools       # 高速HTTPパーサー
+      UVICORN_LOOP: uvloop # 高速イベントループ
+      UVICORN_HTTP: httptools # 高速HTTPパーサー
       LOG_LEVEL: info
 
     # リソース制限
@@ -895,5 +895,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s \
 
 ---
 
-**ドキュメント作成**: 2025年10月8日
-**次回更新予定**: 2025年11月8日（実装結果反映）
+**ドキュメント作成**: 2025年10月8日 **次回更新予定**:
+2025年11月8日（実装結果反映）

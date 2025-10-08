@@ -1,9 +1,8 @@
 # URL検証修正 コンプライアンス影響評価レポート
 
-**評価日**: 2025年10月8日
-**評価対象**: URL検証機能（未実装/計画中）
-**評価担当**: compliance-officer Agent
-**評価スコープ**: GDPR準拠、ISO 27001/27002、OWASP ASVS、CWE-20対策、監査証跡
+**評価日**: 2025年10月8日 **評価対象**: URL検証機能（未実装/計画中）
+**評価担当**: compliance-officer Agent **評価スコープ**: GDPR準拠、ISO
+27001/27002、OWASP ASVS、CWE-20対策、監査証跡
 
 ---
 
@@ -11,13 +10,14 @@
 
 ### 総合コンプライアンス評価
 
-**コンプライアンススコア**: **N/A (未実装)**
-**評価判定**: **⚠️ 実装待機中 - 計画承認**
+**コンプライアンススコア**: **N/A (未実装)** **評価判定**:
+**⚠️ 実装待機中 - 計画承認**
 
 ### 実装状況
 
 - **現状**: URL検証機能は未実装（Phase 3 - 40%完了時点）
-- **既存セキュリティレビュー**: `SECURITY_REVIEW_BACKEND_CORE_20251008.md`で基盤評価完了
+- **既存セキュリティレビュー**:
+  `SECURITY_REVIEW_BACKEND_CORE_20251008.md`で基盤評価完了
 - **検出された脆弱性**: Medium×3件（URL検証とは直接関連なし）
   - **MED-2025-003**: 秘密情報のログ出力リスク（CVSS 5.8）
   - **MED-2025-004**: データベース接続文字列の平文管理（CVSS 5.3）
@@ -38,6 +38,7 @@ URL検証機能が実装される際に、規制要件とコンプライアン�
 #### URL内の認証情報除外の適合性
 
 **URL検証において想定される処理**:
+
 ```python
 # 想定実装例
 def validate_url(url: str) -> bool:
@@ -56,11 +57,13 @@ def validate_url(url: str) -> bool:
 ```
 
 **GDPR準拠ポイント**:
+
 - ✅ URL内のユーザー名・パスワードを処理対象から除外
 - ✅ ログ記録時の自動サニタイズ実装必須
 - ✅ 個人情報の収集最小化
 
 **推奨実装**:
+
 ```python
 # 認証情報除外のベストプラクティス
 def sanitize_url_for_logging(url: str) -> str:
@@ -88,6 +91,7 @@ def sanitize_url_for_logging(url: str) -> str:
 #### 既存実装の活用
 
 **現状の優れた実装（observability.py）**:
+
 ```python
 # 既存の機密情報サニタイズ実装
 def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
@@ -105,6 +109,7 @@ def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
 ```
 
 **URL検証への適用**:
+
 ```python
 # URL検証ログ記録の推奨実装
 def log_url_validation(url: str, result: bool, reason: str | None = None):
@@ -129,6 +134,7 @@ def log_url_validation(url: str, result: bool, reason: str | None = None):
 ```
 
 **GDPR準拠確認項目**:
+
 - ✅ 認証情報の自動マスキング
 - ✅ ログ保持期間の定義（推奨: 90日）
 - ✅ アクセス制御（認可された管理者のみ）
@@ -143,6 +149,7 @@ def log_url_validation(url: str, result: bool, reason: str | None = None):
 **URL検証のプライバシー保護設計**:
 
 1. **デフォルトで安全**:
+
    ```python
    # デフォルトでプライバシー保護
    @dataclass(frozen=True)
@@ -154,6 +161,7 @@ def log_url_validation(url: str, result: bool, reason: str | None = None):
    ```
 
 2. **最小権限原則**:
+
    - URL検証機能は検証結果のみ返却
    - URLの詳細情報は必要最小限のログのみ
 
@@ -161,12 +169,10 @@ def log_url_validation(url: str, result: bool, reason: str | None = None):
    - URL処理による個人情報漏洩リスク: **Low**
    - 認証情報除外により大幅にリスク軽減
 
-**推奨DPIA結果**:
-| 項目 | リスク評価 | 軽減策 | 残存リスク |
-|------|-----------|--------|-----------|
-| 認証情報漏洩 | High | 自動マスキング | Low |
-| ログファイル露出 | Medium | アクセス制御・暗号化 | Low |
-| 外部システム送信 | Low | 検証のみ、送信なし | Minimal |
+**推奨DPIA結果**: | 項目 | リスク評価 | 軽減策 | 残存リスク |
+|------|-----------|--------|-----------| | 認証情報漏洩 | High
+| 自動マスキング | Low | | ログファイル露出 | Medium | アクセス制御・暗号化 |
+Low | | 外部システム送信 | Low | 検証のみ、送信なし | Minimal |
 
 ---
 
@@ -222,13 +228,12 @@ class SecureURLValidator:
         return ValidationResult(valid=True)
 ```
 
-**ISO 27002管理策マッピング**:
-| 管理策 | 要件 | URL検証での実装 | ステータス |
-|--------|------|-----------------|-----------|
-| **A.8.2.3** | 情報の取扱い | 認証情報の自動除去 | ✅ 準拠予定 |
-| **A.9.4.1** | アクセス制限 | 検証結果のロールベース制御 | ⚠️ Phase 3.8実装 |
-| **A.12.4.1** | イベントログ | 検証イベントの監査ログ記録 | ✅ 準拠予定 |
-| **A.12.4.3** | 管理者ログ | 管理者による検証操作の記録 | ✅ 準拠予定 |
+**ISO 27002管理策マッピング**: | 管理策 | 要件 | URL検証での実装 | ステータス |
+|--------|------|-----------------|-----------| | **A.8.2.3**
+| 情報の取扱い | 認証情報の自動除去 | ✅ 準拠予定 | | **A.9.4.1**
+| アクセス制限 | 検証結果のロールベース制御 | ⚠️ Phase 3.8実装 | | **A.12.4.1**
+| イベントログ | 検証イベントの監査ログ記録 | ✅ 準拠予定 | | **A.12.4.3**
+| 管理者ログ | 管理者による検証操作の記録 | ✅ 準拠予定 |
 
 ---
 
@@ -239,6 +244,7 @@ class SecureURLValidator:
 #### ASVS V5.1 - Input Validation
 
 **ASVS V5.1.1 - URL検証要件**:
+
 ```python
 # OWASP ASVS V5.1準拠のURL検証
 def validate_url_asvs(url: str) -> bool:
@@ -276,6 +282,7 @@ def validate_url_asvs(url: str) -> bool:
 ```
 
 **ASVS準拠チェックリスト**:
+
 - [x] **V5.1.1**: 入力の不信任原則（すべてのURLを検証）
 - [x] **V5.1.2**: ホワイトリスト検証（許可スキームのみ）
 - [x] **V5.1.3**: 出力エンコーディング（認証情報除去）
@@ -360,16 +367,12 @@ class CWE20CompliantURLValidator:
             return ValidationResult(valid=False, error=str(e))
 ```
 
-**CWE-20対策評価**:
-| 対策項目 | 実装状況 | 効果 |
-|---------|---------|------|
-| 型チェック | ✅ 実装予定 | 型安全性確保 |
-| 長さ制限 | ✅ 実装予定 | DoS対策 |
-| ホワイトリスト | ✅ 実装予定 | 無効なスキーム拒否 |
-| 認証情報除外 | ✅ 実装予定 | 機密情報保護 |
-| ポート検証 | ✅ 実装予定 | 無効なポート拒否 |
-| エラーハンドリング | ✅ 実装予定 | 安全な失敗 |
-| ログ記録 | ✅ 実装予定 | 監査証跡 |
+**CWE-20対策評価**: | 対策項目 | 実装状況 | 効果 | |---------|---------|------|
+| 型チェック | ✅ 実装予定 | 型安全性確保 | | 長さ制限 | ✅ 実装予定 | DoS対策 |
+| ホワイトリスト | ✅ 実装予定 | 無効なスキーム拒否 | | 認証情報除外 |
+✅ 実装予定 | 機密情報保護 | | ポート検証 | ✅ 実装予定 | 無効なポート拒否 |
+| エラーハンドリング | ✅ 実装予定 | 安全な失敗 | | ログ記録 |
+✅ 実装予定 | 監査証跡 |
 
 ---
 
@@ -382,6 +385,7 @@ class CWE20CompliantURLValidator:
 #### 監査ログ要件
 
 **必須記録項目**:
+
 ```python
 @dataclass
 class URLValidationAuditLog:
@@ -411,6 +415,7 @@ class URLValidationAuditLog:
 ```
 
 **監査ログ記録例**:
+
 ```python
 def audit_url_validation(
     url: str,
@@ -462,15 +467,14 @@ def audit_url_validation(
 
 #### ログ保持ポリシー
 
-**推奨ログ保持期間**:
-| ログタイプ | 保持期間 | 理由 |
-|-----------|---------|------|
-| **通常の検証ログ** | 90日 | GDPR Article 5(1)(e)準拠 |
-| **セキュリティイベント** | 1年 | ISO 27001 A.12.4.1要件 |
-| **エラーログ** | 180日 | デバッグ・トラブルシューティング |
-| **監査ログ** | 2年 | 法的要件・コンプライアンス監査 |
+**推奨ログ保持期間**: | ログタイプ | 保持期間 | 理由 |
+|-----------|---------|------| | **通常の検証ログ** | 90日 | GDPR Article
+5(1)(e)準拠 | | **セキュリティイベント** | 1年 | ISO 27001 A.12.4.1要件 | |
+**エラーログ** | 180日 | デバッグ・トラブルシューティング | | **監査ログ** |
+2年 | 法的要件・コンプライアンス監査 |
 
 **ログローテーション設定例**:
+
 ```python
 # logging設定（loguru活用）
 from loguru import logger
@@ -504,6 +508,7 @@ logger.add(
 **URL検証におけるセキュリティイベント**:
 
 1. **認証情報検出**:
+
    ```python
    if parsed.username or parsed.password:
        logger.warning(
@@ -519,6 +524,7 @@ logger.add(
    ```
 
 2. **無効なスキーム**:
+
    ```python
    if parsed.scheme not in allowed_schemes:
        logger.warning(
@@ -547,6 +553,7 @@ logger.add(
    ```
 
 **セキュリティイベント集約**:
+
 ```python
 class SecurityEventTracker:
     """セキュリティイベント追跡"""
@@ -598,15 +605,16 @@ class SecurityEventTracker:
 #### 既存のCodeQL設定活用
 
 **現状のCodeQL実装（Phase 2完了）**:
+
 ```yaml
 # .github/workflows/codeql.yml
-name: "CodeQL"
+name: 'CodeQL'
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ['main', 'develop']
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ['main', 'develop']
 
 jobs:
   analyze:
@@ -614,7 +622,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        language: [ 'python', 'javascript' ]
+        language: ['python', 'javascript']
 
     steps:
       - name: Checkout repository
@@ -632,32 +640,29 @@ jobs:
 **URL検証コードのCodeQL対応**:
 
 1. **CWE-20検出ルール**:
+
    ```yaml
    # .github/codeql/custom-queries/url-validation.ql
    import python
 
-   from FunctionCall call, Expr arg
-   where
-     call.getFunction().getName() = "urlparse" and
-     arg = call.getArg(0) and
-     not exists(Call validation |
-       validation.getFunction().getName().matches("validate%")
-     )
-   select call, "URL parsing without prior validation"
+   from FunctionCall call, Expr arg where call.getFunction().getName() =
+   "urlparse" and arg = call.getArg(0) and not exists(Call validation |
+   validation.getFunction().getName().matches("validate%") ) select call, "URL
+   parsing without prior validation"
    ```
 
 2. **認証情報検出ルール**:
+
    ```yaml
    # 認証情報を含むURL検出
    import python
 
-   from StrConst url
-   where
-     url.getText().regexpMatch(".*://[^:]+:[^@]+@.*")
+   from StrConst url where url.getText().regexpMatch(".*://[^:]+:[^@]+@.*")
    select url, "URL contains embedded credentials"
    ```
 
 **CodeQL準拠チェックリスト**:
+
 - [x] CWE-20（不適切な入力検証）検出
 - [x] CWE-532（ログへの機密情報出力）検出
 - [x] CWE-798（ハードコードされた認証情報）検出
@@ -672,6 +677,7 @@ jobs:
 #### CI/CDパイプライン統合
 
 **URL検証コードのセキュリティチェック**:
+
 ```yaml
 # .github/workflows/security-checks.yml
 name: Security Checks
@@ -712,8 +718,7 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: >-
-            p/security-audit
-            p/owasp-top-ten
+            p/security-audit p/owasp-top-ten
 
       # ✅ 4. Trivy（脆弱性スキャン）
       - name: Run Trivy
@@ -752,12 +757,9 @@ graph TD
     I --> J[検証・監視]
 ```
 
-**脆弱性管理SLA**:
-| 深刻度 | 対応期限 | エスカレーション |
-|--------|---------|-----------------|
-| **Critical** | 24時間 | CTO/Security Lead |
-| **High** | 3日 | Tech Lead |
-| **Medium** | 1週間 | Development Team |
+**脆弱性管理SLA**: | 深刻度 | 対応期限 | エスカレーション |
+|--------|---------|-----------------| | **Critical** | 24時間 | CTO/Security
+Lead | | **High** | 3日 | Tech Lead | | **Medium** | 1週間 | Development Team |
 | **Low** | 次回スプリント | Product Backlog |
 
 ---
@@ -768,17 +770,17 @@ graph TD
 
 **URL検証実装時の必須要件**:
 
-| カテゴリ | 要件 | 配点 | 評価 |
-|---------|------|------|------|
-| **GDPR** | データ最小化原則 | 20点 | ✅ 準拠予定 |
-| **GDPR** | ログ記録の適切性 | 10点 | ✅ 準拠予定 |
-| **GDPR** | プライバシーバイデザイン | 10点 | ✅ 準拠予定 |
-| **ISO 27001** | 情報の取扱い | 15点 | ✅ 準拠予定 |
-| **ISO 27001** | アクセス制御 | 10点 | ⚠️ Phase 3.8 |
-| **OWASP ASVS** | 入力検証 | 15点 | ✅ 準拠予定 |
-| **CWE-20** | 対策完全性 | 10点 | ✅ 準拠予定 |
-| **監査証跡** | ログ記録 | 5点 | ✅ 準拠予定 |
-| **CodeQL** | 静的解析 | 5点 | ✅ 準拠予定 |
+| カテゴリ       | 要件                     | 配点 | 評価         |
+| -------------- | ------------------------ | ---- | ------------ |
+| **GDPR**       | データ最小化原則         | 20点 | ✅ 準拠予定  |
+| **GDPR**       | ログ記録の適切性         | 10点 | ✅ 準拠予定  |
+| **GDPR**       | プライバシーバイデザイン | 10点 | ✅ 準拠予定  |
+| **ISO 27001**  | 情報の取扱い             | 15点 | ✅ 準拠予定  |
+| **ISO 27001**  | アクセス制御             | 10点 | ⚠️ Phase 3.8 |
+| **OWASP ASVS** | 入力検証                 | 15点 | ✅ 準拠予定  |
+| **CWE-20**     | 対策完全性               | 10点 | ✅ 準拠予定  |
+| **監査証跡**   | ログ記録                 | 5点  | ✅ 準拠予定  |
+| **CodeQL**     | 静的解析                 | 5点  | ✅ 準拠予定  |
 
 **合計スコア**: **95/100点**（アクセス制御がPhase 3.8実装予定のため-5点）
 
@@ -791,6 +793,7 @@ graph TD
 #### 承認条件
 
 **即時承認可能（Phase 3.7実装時）**:
+
 - ✅ データ最小化原則の実装
 - ✅ 認証情報の自動除外
 - ✅ ログサニタイゼーション
@@ -798,10 +801,12 @@ graph TD
 - ✅ 監査ログ記録
 
 **条件付承認（Phase 3.8実装時に完全承認）**:
+
 - ⚠️ ロールベースアクセス制御（RBAC）
 - ⚠️ ユーザー認証統合（Clerk）
 
 **本番環境デプロイ承認条件**:
+
 1. ✅ すべてのMedium脆弱性解消（MED-2025-003, 004, 005）
 2. ✅ URL検証機能のセキュリティテスト > 80%カバレッジ
 3. ✅ CodeQL/Trivy/Banditのすべてのスキャン合格
@@ -1151,14 +1156,15 @@ class TestCWE20Mitigation:
 
 **URL検証機能のコンプライアンスリスク評価**:
 
-| リスク | 可能性 | 影響 | リスクレベル | 軽減策 |
-|--------|--------|------|-------------|--------|
-| **GDPR違反（認証情報ログ記録）** | Medium | High | **Medium** | ✅ 自動サニタイズ実装 |
-| **ISO 27001不適合（監査ログ不足）** | Low | Medium | **Low** | ✅ 包括的監査ログ |
-| **OWASP ASVS不準拠（入力検証不足）** | Low | Medium | **Low** | ✅ ホワイトリスト検証 |
-| **CodeQL検出（CWE-20）** | Low | Low | **Low** | ✅ 静的解析統合 |
+| リスク                               | 可能性 | 影響   | リスクレベル | 軽減策                |
+| ------------------------------------ | ------ | ------ | ------------ | --------------------- |
+| **GDPR違反（認証情報ログ記録）**     | Medium | High   | **Medium**   | ✅ 自動サニタイズ実装 |
+| **ISO 27001不適合（監査ログ不足）**  | Low    | Medium | **Low**      | ✅ 包括的監査ログ     |
+| **OWASP ASVS不準拠（入力検証不足）** | Low    | Medium | **Low**      | ✅ ホワイトリスト検証 |
+| **CodeQL検出（CWE-20）**             | Low    | Low    | **Low**      | ✅ 静的解析統合       |
 
 **軽減策の有効性**:
+
 - ✅ 認証情報サニタイズ: リスク**95%削減**
 - ✅ 監査ログ記録: コンプライアンス**100%達成**
 - ✅ ホワイトリスト検証: CWE-20対策**完全**
@@ -1171,11 +1177,13 @@ class TestCWE20Mitigation:
 **Phase 3.7実装時（1週間以内）**:
 
 1. **URL検証機能実装**（推定工数: 4時間）
+
    - コンプライアンス準拠実装
    - 認証情報自動除外
    - ログサニタイゼーション
 
 2. **テストケース追加**（推定工数: 2時間）
+
    - GDPR準拠テスト
    - OWASP ASVS準拠テスト
    - CWE-20対策テスト
@@ -1185,6 +1193,7 @@ class TestCWE20Mitigation:
    - セキュリティゲート設定
 
 **成功基準**:
+
 - [ ] コンプライアンススコア > 95点
 - [ ] テストカバレッジ > 80%
 - [ ] CodeQL/Trivy/Bandit全スキャン合格
@@ -1201,6 +1210,7 @@ class TestCWE20Mitigation:
 #### 承認条件
 
 **即時承認可能**（実装時）:
+
 - ✅ GDPR Article 5, 25準拠実装
 - ✅ ISO 27001/27002 A.8.2.3, A.12.4.1準拠
 - ✅ OWASP ASVS V5.1準拠
@@ -1208,6 +1218,7 @@ class TestCWE20Mitigation:
 - ✅ 監査ログ記録
 
 **条件付承認**（Phase 3.8完了後に完全承認）:
+
 - ⚠️ ISO 27001 A.9.4.1（アクセス制御） - Phase 3.8実装予定
 - ⚠️ ユーザー認証統合（Clerk） - Phase 3.8実装予定
 
@@ -1217,14 +1228,14 @@ class TestCWE20Mitigation:
 
 **優先度マトリックス**:
 
-| 実装項目 | 優先度 | 推定工数 | コンプライアンス影響 |
-|---------|--------|---------|---------------------|
-| **認証情報自動除外** | 🔴 Critical | 1時間 | GDPR必須 |
-| **ログサニタイゼーション** | 🔴 Critical | 1時間 | GDPR必須 |
-| **ホワイトリスト検証** | 🟠 High | 1時間 | OWASP ASVS必須 |
-| **監査ログ記録** | 🟠 High | 1時間 | ISO 27001必須 |
-| **CI/CD統合** | 🟡 Medium | 1時間 | CodeQL推奨 |
-| **アクセス制御** | 🟢 Low | 3日 | ISO 27001（Phase 3.8） |
+| 実装項目                   | 優先度      | 推定工数 | コンプライアンス影響   |
+| -------------------------- | ----------- | -------- | ---------------------- |
+| **認証情報自動除外**       | 🔴 Critical | 1時間    | GDPR必須               |
+| **ログサニタイゼーション** | 🔴 Critical | 1時間    | GDPR必須               |
+| **ホワイトリスト検証**     | 🟠 High     | 1時間    | OWASP ASVS必須         |
+| **監査ログ記録**           | 🟠 High     | 1時間    | ISO 27001必須          |
+| **CI/CD統合**              | 🟡 Medium   | 1時間    | CodeQL推奨             |
+| **アクセス制御**           | 🟢 Low      | 3日      | ISO 27001（Phase 3.8） |
 
 **合計推定工数**: **5時間**（Phase 3.7実装分）
 
@@ -1235,10 +1246,12 @@ class TestCWE20Mitigation:
 ### 9.1 即時対応（実装時）
 
 1. **コンプライアンス準拠URL検証実装**
+
    - 上記の`CompliantURLValidator`を基に実装
    - GDPR/ISO/OWASP準拠確認
 
 2. **テストケース追加**
+
    - コンプライアンステスト実装
    - カバレッジ > 80%達成
 
@@ -1251,6 +1264,7 @@ class TestCWE20Mitigation:
 ### 9.2 短期対応（Phase 3.7完了時）
 
 1. **コンプライアンス再評価**
+
    - 実装後のスコア測定
    - 95点以上達成確認
 
@@ -1263,6 +1277,7 @@ class TestCWE20Mitigation:
 ### 9.3 中期対応（Phase 3.8完了時）
 
 1. **完全コンプライアンス達成**
+
    - アクセス制御統合
    - Clerk認証連携
    - 100点達成
@@ -1278,12 +1293,14 @@ class TestCWE20Mitigation:
 ### 10.1 現状評価
 
 **ポジティブ**:
+
 - ✅ 既存セキュリティ基盤が優秀（スコア78/100）
 - ✅ ログシステムが既に包括的（observability.py）
 - ✅ CI/CD統合完了（CodeQL/Trivy/Bandit）
 - ✅ Phase 2完了時点でSLSA Level 3準拠
 
 **改善必要**:
+
 - ⚠️ URL検証機能が未実装（Phase 3.7で実装予定）
 - ⚠️ アクセス制御未実装（Phase 3.8で実装予定）
 - ⚠️ Medium脆弱性3件未解消（Phase 3.7対応予定）
@@ -1295,6 +1312,7 @@ class TestCWE20Mitigation:
 **最終判定**: ✅ **条件付きコンプライアンス承認**
 
 **実装時の必須要件**:
+
 1. ✅ GDPR Article 5準拠（データ最小化）
 2. ✅ GDPR Article 25準拠（プライバシーバイデザイン）
 3. ✅ ISO 27001 A.8.2.3準拠（情報の取扱い）
@@ -1302,26 +1320,28 @@ class TestCWE20Mitigation:
 5. ✅ CWE-20完全対策
 
 **Phase 3.8完了時に完全承認**:
+
 - ISO 27001 A.9.4.1準拠（アクセス制御）
 - Clerk認証統合完了
 
 ---
 
-**承認者**: compliance-officer Agent
-**承認日**: 2025年10月8日
-**有効期限**: URL検証機能実装完了まで
-**再評価**: Phase 3.7完了時（URL検証実装後）
+**承認者**: compliance-officer Agent **承認日**: 2025年10月8日 **有効期限**:
+URL検証機能実装完了まで **再評価**: Phase 3.7完了時（URL検証実装後）
 
 ---
 
 **参考文献**:
+
 - GDPR: https://gdpr.eu/
 - ISO 27001/27002: https://www.iso.org/isoiec-27001-information-security.html
-- OWASP ASVS: https://owasp.org/www-project-application-security-verification-standard/
+- OWASP ASVS:
+  https://owasp.org/www-project-application-security-verification-standard/
 - CWE-20: https://cwe.mitre.org/data/definitions/20.html
 - CodeQL: https://codeql.github.com/
 
 **関連文書**:
+
 - `SECURITY_REVIEW_BACKEND_CORE_20251008.md`
 - `SECURITY_REVIEW_SUMMARY_20251008.md`
 - `SECURITY_IMPLEMENTATION_REPORT_20251007.md`

@@ -1,7 +1,6 @@
 # 🚀 AutoForgeNexus デプロイメント完全ガイド
 
-**最終更新日**: 2025年10月1日
-**対象バージョン**: AutoForgeNexus v1.0.0
+**最終更新日**: 2025年10月1日 **対象バージョン**: AutoForgeNexus v1.0.0
 **推定所要時間**: 3-4日（外部サービス承認待ち時間含む）
 
 ---
@@ -37,28 +36,28 @@
 
 ### 📊 全体の流れ（所要時間）
 
-| Phase | 内容 | 所要時間 | 前提条件 |
-|-------|------|----------|----------|
-| **Phase A** | 外部サービスアカウント作成 | 2-3時間 | クレジットカード（一部サービス） |
-| **Phase B** | Cloudflare設定 | 1-2時間 | Cloudflareアカウント |
-| **Phase C** | GitHub Secrets設定 | 30分 | GitHub Admin権限 |
-| **Phase D** | 環境変数ファイル作成 | 30分 | Phase A完了 |
-| **Phase E** | ローカル動作確認 | 1-2時間 | Docker環境 |
-| **Phase F** | Staging デプロイ | 1時間 | Phase A-E完了 |
-| **Phase G** | Production デプロイ | 30分 | Phase F完了 |
+| Phase       | 内容                       | 所要時間 | 前提条件                         |
+| ----------- | -------------------------- | -------- | -------------------------------- |
+| **Phase A** | 外部サービスアカウント作成 | 2-3時間  | クレジットカード（一部サービス） |
+| **Phase B** | Cloudflare設定             | 1-2時間  | Cloudflareアカウント             |
+| **Phase C** | GitHub Secrets設定         | 30分     | GitHub Admin権限                 |
+| **Phase D** | 環境変数ファイル作成       | 30分     | Phase A完了                      |
+| **Phase E** | ローカル動作確認           | 1-2時間  | Docker環境                       |
+| **Phase F** | Staging デプロイ           | 1時間    | Phase A-E完了                    |
+| **Phase G** | Production デプロイ        | 30分     | Phase F完了                      |
 
 ### 💰 必要な費用（月額概算）
 
-| サービス | 無料枠 | 推定コスト（Production） |
-|---------|--------|------------------------|
-| Clerk | 10,000 MAU | $0-$25/月 |
-| Turso | 500行/月 | $0-$29/月 |
-| Cloudflare Workers | 100,000リクエスト/日 | $0-$5/月 |
-| Cloudflare Pages | 500ビルド/月 | $0 |
-| Upstash Redis | 10,000コマンド/日 | $0-$10/月 |
-| OpenAI API | 従量課金 | $10-$100/月 |
-| Anthropic API | 従量課金 | $10-$100/月 |
-| **合計** | - | **$20-$270/月** |
+| サービス           | 無料枠               | 推定コスト（Production） |
+| ------------------ | -------------------- | ------------------------ |
+| Clerk              | 10,000 MAU           | $0-$25/月                |
+| Turso              | 500行/月             | $0-$29/月                |
+| Cloudflare Workers | 100,000リクエスト/日 | $0-$5/月                 |
+| Cloudflare Pages   | 500ビルド/月         | $0                       |
+| Upstash Redis      | 10,000コマンド/日    | $0-$10/月                |
+| OpenAI API         | 従量課金             | $10-$100/月              |
+| Anthropic API      | 従量課金             | $10-$100/月              |
+| **合計**           | -                    | **$20-$270/月**          |
 
 **注**: 開発初期は無料枠内で運用可能
 
@@ -80,6 +79,7 @@ gh --version         # GitHub CLI 2.0+
 ```
 
 **すべてのバージョンが要件を満たしていますか？**
+
 - [x] Git 2.40以上
 - [x] Node.js 20.0以上
 - [x] pnpm 8.0以上
@@ -115,6 +115,7 @@ ls -la
 ```
 
 **ディレクトリ構造は正常ですか？**
+
 - [x] backendディレクトリが存在
 - [x] frontendディレクトリが存在
 - [x] docker-compose.dev.ymlが存在
@@ -125,9 +126,10 @@ ls -la
 以下のアカウントを**事前に作成**してください（メールアドレスのみ）:
 
 - [x] GitHubアカウント（既存のものでOK）
-- [X] Gmailアカウント（各サービス登録用、既存でOK）
+- [x] Gmailアカウント（各サービス登録用、既存でOK）
 
 **次のPhaseで作成するアカウント（今はまだ不要）:**
+
 - Clerk（認証サービス）
 - Turso（データベース）
 - Cloudflare（デプロイ先）
@@ -139,9 +141,11 @@ ls -la
 
 ## Phase A: 外部サービスセットアップ
 
-このPhaseでは、AutoForgeNexusが依存する6つの外部サービスのアカウント作成とAPI Key取得を行います。
+このPhaseでは、AutoForgeNexusが依存する6つの外部サービスのアカウント作成とAPI
+Key取得を行います。
 
 ### ⏱️ 所要時間: 2-3時間
+
 ### 🎯 達成目標: 全サービスのAPI Key取得完了
 
 ---
@@ -149,6 +153,7 @@ ls -la
 ### A-1: Clerk認証サービス（30-45分）
 
 #### 📌 Clerkとは
+
 - OAuth 2.0ベースの認証・認可サービス
 - ユーザー管理、MFA、組織管理機能を提供
 - 無料枠: 月間10,000 MAU（月間アクティブユーザー）
@@ -158,6 +163,7 @@ ls -la
 ##### ステップ1: アカウント作成
 
 1. **公式サイトにアクセス**
+
    ```
    https://clerk.com
    ```
@@ -170,6 +176,7 @@ ls -la
    - 自動的にClerk Dashboardにリダイレクト
 
 **確認:**
+
 - [ ] Clerk Dashboardが表示されている
 - [ ] 画面左上に自分のアイコンが表示されている
 
@@ -178,6 +185,7 @@ ls -la
 1. **Dashboard上部の「Create application」ボタンをクリック**
 
 2. **アプリケーション設定**
+
    ```
    Application name: AutoForgeNexus
    Sign-in options: 以下をすべてチェック
@@ -193,6 +201,7 @@ ls -la
    - 「Continue」をクリック
 
 **確認:**
+
 - [x] Application「AutoForgeNexus」が作成されている
 - [x] Dashboard左サイドバーに「AutoForgeNexus」が表示されている
 
@@ -205,9 +214,11 @@ ls -la
 3. **以下の2つのキーをコピー:**
 
    **① Publishable Key（公開鍵）**
+
    ```
    形式: pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
+
    - 「Copy」ボタンをクリック
    - テキストエディタに以下の形式で保存:
      ```
@@ -215,9 +226,11 @@ ls -la
      ```
 
    **② Secret Key（秘密鍵）**
+
    ```
    形式: sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
+
    - 右側の「Show」ボタンをクリック
    - 「Copy」ボタンをクリック
    - テキストエディタに以下の形式で保存:
@@ -225,9 +238,11 @@ ls -la
      STAGING_CLERK_SECRET_KEY=sk_test_xxxxxxxxx...
      ```
 
-⚠️ **重要**: Secret Keyは二度と表示されないため、必ず安全な場所に保存してください。
+⚠️ **重要**: Secret
+Keyは二度と表示されないため、必ず安全な場所に保存してください。
 
 **確認:**
+
 - [x] `pk_test_`で始まる公開鍵をコピー済み
 - [x] `sk_test_`で始まる秘密鍵をコピー済み
 - [x] 両方のキーをテキストファイルに保存済み
@@ -239,6 +254,7 @@ ls -la
 2. **「Create production instance」を選択**
 
 3. **Production Instance名を入力**
+
    ```
    Instance name: AutoForgeNexus Production
    ```
@@ -246,6 +262,7 @@ ls -la
 4. **「Create」ボタンをクリック**
 
 **確認:**
+
 - [ ] Production Instanceが作成されている
 - [ ] 環境切り替えボタンで「Production」が選択可能
 
@@ -260,54 +277,64 @@ ls -la
 4. **以下の2つのキーをコピー:**
 
    **① Production Publishable Key**
+
    ```
    形式: pk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
+
    - テキストファイルに保存:
      ```
      PROD_CLERK_PUBLIC_KEY=pk_live_xxxxxxxxx...
      ```
 
    **② Production Secret Key**
+
    ```
    形式: sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
+
    - テキストファイルに保存:
      ```
      PROD_CLERK_SECRET_KEY=sk_live_xxxxxxxxx...
      ```
 
 **確認:**
+
 - [ ] `pk_live_`で始まる本番公開鍵をコピー済み
 - [ ] `sk_live_`で始まる本番秘密鍵をコピー済み
 
 ##### ステップ6: Webhook Secret取得（⚠️ 後回し推奨 - Issue #76参照）
 
-⚠️ **重要**: Webhookの設定は**MVP完成後に実装**することを推奨します。基本的な認証機能はWebhookなしで動作します。
+⚠️ **重要**:
+Webhookの設定は**MVP完成後に実装**することを推奨します。基本的な認証機能はWebhookなしで動作します。
 
 **Webhookが必要な機能:**
+
 - ユーザー登録時の自動処理（ウェルカムメール、初期データ作成）
 - ユーザー削除時のデータ自動クリーンアップ
 - リアルタイムなユーザー情報同期
 
 **Webhookなしでも動作する機能:**
+
 - ✅ ユーザーログイン/ログアウト
 - ✅ 認証・認可
 - ✅ プロフィール表示
 - ✅ 基本的な全機能
 
-**Webhook実装の詳細**: [Issue #76](https://github.com/daishiman/AutoForgeNexus/issues/76) を参照
+**Webhook実装の詳細**:
+[Issue #76](https://github.com/daishiman/AutoForgeNexus/issues/76) を参照
 
 #### なぜ環境ごとに別々のWebhook Secretが必要？
 
 Webhookは**Staging/Production環境ごとに別々のSecret**が必要です:
 
-| 環境 | Webhook URL | データベース | 用途 |
-|------|-------------|-------------|------|
-| **Staging** | `api-staging.autoforgenexus.com/webhooks/clerk` | Staging DB | テスト環境 |
-| **Production** | `api.autoforgenexus.com/webhooks/clerk` | Production DB | 本番環境 |
+| 環境           | Webhook URL                                     | データベース  | 用途       |
+| -------------- | ----------------------------------------------- | ------------- | ---------- |
+| **Staging**    | `api-staging.autoforgenexus.com/webhooks/clerk` | Staging DB    | テスト環境 |
+| **Production** | `api.autoforgenexus.com/webhooks/clerk`         | Production DB | 本番環境   |
 
-**理由**: Stagingでテストした通知がProductionのデータベースに書き込まれるのを防ぐため。
+**理由**:
+Stagingでテストした通知がProductionのデータベースに書き込まれるのを防ぐため。
 
 ```
 ❌ 悪い例（Webhook Secretを共有）:
@@ -332,6 +359,7 @@ Production通知 → Production DB書き込み
 3. **「Add Endpoint」ボタンをクリック**
 
 4. **Webhook設定**
+
    ```
    Endpoint URL: https://api-staging.autoforgenexus.com/webhooks/clerk
    Subscribe to events: 以下をすべてチェック
@@ -354,6 +382,7 @@ Production通知 → Production DB書き込み
 1. **環境を「Production」に切り替え**
 
 2. **上記と同じ手順で設定**
+
    ```
    Endpoint URL: https://api.autoforgenexus.com/webhooks/clerk
    ```
@@ -370,12 +399,14 @@ Production通知 → Production DB書き込み
 #### ✅ A-1完了条件
 
 以下の4つのキーが取得できていること:
+
 - [x] `STAGING_CLERK_PUBLIC_KEY`（Development Publishable Key）
 - [x] `STAGING_CLERK_SECRET_KEY`（Development Secret Key）
 - [ ] `PROD_CLERK_PUBLIC_KEY`（Production Publishable Key）
 - [ ] `PROD_CLERK_SECRET_KEY`（Production Secret Key）
 
 **オプション（後回し）:**
+
 - [x] `STAGING_CLERK_WEBHOOK_SECRET`
 - [ ] `PROD_CLERK_WEBHOOK_SECRET`
 
@@ -403,6 +434,7 @@ chmod 600 ~/clerk-keys.txt
 ### A-2: Turso データベース（30-45分）
 
 #### 📌 Tursoとは
+
 - libSQL（SQLiteフォーク）ベースの分散データベース
 - エッジロケーションに自動レプリケーション
 - 無料枠: 月間500行書き込み、9GBストレージ
@@ -421,6 +453,7 @@ turso --version
 ```
 
 **他のOSの場合:**
+
 ```bash
 # Linux/WSL
 curl -sSfL https://get.tur.so/install.sh | bash
@@ -432,6 +465,7 @@ source ~/.zshrc
 ```
 
 **確認:**
+
 - [x] `turso --version`でバージョンが表示される
 - [x] バージョンがv0.90以上
 
@@ -449,11 +483,13 @@ turso auth whoami
 ```
 
 **ブラウザで:**
+
 1. GitHubの認証画面が表示される
 2. 「Authorize Turso」をクリック
 3. 「Success」画面が表示される
 
 **確認:**
+
 - [x] `turso auth whoami`でGitHubユーザー名が表示される
 - [x] エラーが出ていない
 
@@ -471,6 +507,7 @@ turso db locations
 ```
 
 **日本向けサービスの推奨リージョン:**
+
 - `nrt` - Tokyo, Japan（最優先）
 - `iad` - Virginia, USA（バックアップ）
 
@@ -487,6 +524,7 @@ turso db create autoforgenexus-staging --location nrt
 ```
 
 **確認:**
+
 - [x] `Created database`メッセージが表示された
 - [x] エラーが出ていない
 
@@ -501,12 +539,14 @@ turso db show autoforgenexus-staging --url
 ```
 
 **URLをコピーして保存:**
+
 ```bash
 # 一時保存ファイルに追記
 echo "TURSO_STAGING_DATABASE_URL=libsql://autoforgenexus-staging-your-org.turso.io" >> ~/turso-keys.txt
 ```
 
 **確認:**
+
 - [x] `libsql://`で始まるURLが表示された
 - [x] URLをテキストファイルに保存済み
 
@@ -523,6 +563,7 @@ turso db tokens create autoforgenexus-staging --expiration 90d
 ⚠️ **重要**: このトークンは二度と表示されないため、必ず保存してください！
 
 **トークンをコピーして保存:**
+
 ```bash
 # トークンを環境変数に一時保存
 export TURSO_STAGING_TOKEN="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
@@ -532,6 +573,7 @@ echo "TURSO_STAGING_AUTH_TOKEN=$TURSO_STAGING_TOKEN" >> ~/turso-keys.txt
 ```
 
 **確認:**
+
 - [x] `eyJ`で始まるトークンが表示された
 - [x] トークンをテキストファイルに保存済み
 
@@ -546,6 +588,7 @@ turso db create autoforgenexus-production --location nrt
 ```
 
 **確認:**
+
 - [x] Production DBが作成された
 
 ##### ステップ8: Production データベースURL取得
@@ -590,6 +633,7 @@ sqlite> .quit
 ```
 
 **確認:**
+
 - [x] Staging DBに接続できた
 - [x] Production DBに接続できた
 - [x] 両方で`SELECT`文が正常に実行された
@@ -597,6 +641,7 @@ sqlite> .quit
 #### ✅ A-2完了条件
 
 以下の4つの情報が取得できていること:
+
 - [x] `TURSO_STAGING_DATABASE_URL`
 - [x] `TURSO_STAGING_AUTH_TOKEN`
 - [x] `TURSO_PROD_DATABASE_URL`
@@ -607,6 +652,7 @@ sqlite> .quit
 ### A-3: OpenAI API（15-20分）
 
 #### 📌 OpenAI APIとは
+
 - GPT-4等の大規模言語モデルAPIを提供
 - AutoForgeNexusのプロンプト生成・評価に使用
 - 従量課金制（$0.03/1K tokens）
@@ -616,6 +662,7 @@ sqlite> .quit
 ##### ステップ1: アカウント作成
 
 1. **公式サイトにアクセス**
+
    ```
    https://platform.openai.com
    ```
@@ -628,6 +675,7 @@ sqlite> .quit
    - OpenAIの利用規約に同意
 
 **確認:**
+
 - [x] OpenAI Platform Dashboardが表示されている
 
 ##### ステップ2: 課金設定（必須）
@@ -637,6 +685,7 @@ sqlite> .quit
 2. **「Add payment method」ボタンをクリック**
 
 3. **クレジットカード情報を入力**
+
    ```
    Card number: xxxx-xxxx-xxxx-xxxx
    Expiry date: MM/YY
@@ -654,6 +703,7 @@ sqlite> .quit
      ```
 
 **確認:**
+
 - [x] クレジットカードが登録されている
 - [x] 使用制限が設定されている
 
@@ -664,6 +714,7 @@ sqlite> .quit
 2. **「Create new secret key」ボタンをクリック**
 
 3. **API Key設定**
+
    ```
    Name: AutoForgeNexus Staging
    Permissions: All (デフォルト)
@@ -688,6 +739,7 @@ sqlite> .quit
 1. **再度「Create new secret key」ボタンをクリック**
 
 2. **API Key設定**
+
    ```
    Name: AutoForgeNexus Production
    Permissions: All
@@ -711,12 +763,14 @@ curl https://api.openai.com/v1/models \
 ```
 
 **確認:**
+
 - [x] `gpt-4`が表示された
 - [x] エラーが出ていない
 
 #### ✅ A-3完了条件
 
 以下の2つのAPI Keyが取得できていること:
+
 - [x] `OPENAI_STAGING_API_KEY`
 - [x] `OPENAI_PROD_API_KEY`
 - [x] 課金設定が完了している
@@ -727,6 +781,7 @@ curl https://api.openai.com/v1/models \
 ### A-4: Anthropic Claude API（15-20分）
 
 #### 📌 Anthropic APIとは
+
 - Claude 3.5 Sonnetの大規模言語モデルAPIを提供
 - AutoForgeNexusの高度な推論タスクに使用
 - 従量課金制（$3/MTok input, $15/MTok output）
@@ -736,6 +791,7 @@ curl https://api.openai.com/v1/models \
 ##### ステップ1: アカウント作成
 
 1. **公式サイトにアクセス**
+
    ```
    https://console.anthropic.com
    ```
@@ -743,6 +799,7 @@ curl https://api.openai.com/v1/models \
 2. **「Sign Up」ボタンをクリック**
 
 3. **メールアドレスでサインアップ**
+
    ```
    Email: your-email@example.com
    Password: ********（強力なパスワード）
@@ -753,6 +810,7 @@ curl https://api.openai.com/v1/models \
    - 「Verify Email」リンクをクリック
 
 **確認:**
+
 - [x] Anthropic Console Dashboardが表示されている
 
 ##### ステップ2: 課金設定
@@ -764,6 +822,7 @@ curl https://api.openai.com/v1/models \
 3. **クレジットカード情報を入力**
 
 4. **初回クレジット購入（必須）**
+
    ```
    Amount: $10（最低金額）
    ```
@@ -771,6 +830,7 @@ curl https://api.openai.com/v1/models \
 5. **「Purchase」ボタンをクリック**
 
 **確認:**
+
 - [x] クレジットカードが登録されている
 - [x] $10のクレジットが購入されている
 
@@ -781,6 +841,7 @@ curl https://api.openai.com/v1/models \
 2. **「Create Key」ボタンをクリック**
 
 3. **API Key設定**
+
    ```
    Name: AutoForgeNexus Staging
    ```
@@ -801,6 +862,7 @@ curl https://api.openai.com/v1/models \
 1. **再度「Create Key」ボタンをクリック**
 
 2. **API Key設定**
+
    ```
    Name: AutoForgeNexus Production
    ```
@@ -829,12 +891,14 @@ curl https://api.anthropic.com/v1/messages \
 ```
 
 **確認:**
+
 - [x] Claudeからの応答が表示された
 - [x] エラーが出ていない
 
 #### ✅ A-4完了条件
 
 以下の2つのAPI Keyが取得できていること:
+
 - [x] `ANTHROPIC_STAGING_API_KEY`
 - [x] `ANTHROPIC_PROD_API_KEY`
 - [x] 課金設定が完了している
@@ -845,6 +909,7 @@ curl https://api.anthropic.com/v1/messages \
 ### A-5: Upstash Redis（15-20分）
 
 #### 📌 Upstash Redisとは
+
 - サーバーレス Redis（キャッシュ・セッション管理）
 - グローバルレプリケーション対応
 - 無料枠: 10,000コマンド/日
@@ -854,6 +919,7 @@ curl https://api.anthropic.com/v1/messages \
 ##### ステップ1: アカウント作成
 
 1. **公式サイトにアクセス**
+
    ```
    https://upstash.com
    ```
@@ -865,6 +931,7 @@ curl https://api.anthropic.com/v1/messages \
    - GitHubの認証画面で「Authorize Upstash」をクリック
 
 **確認:**
+
 - [ ] Upstash Console Dashboardが表示されている
 
 ##### ステップ2: Staging Redis作成
@@ -872,6 +939,7 @@ curl https://api.anthropic.com/v1/messages \
 1. **「Create Database」ボタンをクリック**
 
 2. **Redis設定**
+
    ```
    Name: autoforgenexus-staging
    Type: Regional（無料枠）
@@ -884,6 +952,7 @@ curl https://api.anthropic.com/v1/messages \
 4. **作成完了を待つ（30秒程度）**
 
 **確認:**
+
 - [ ] Redis「autoforgenexus-staging」が作成されている
 - [ ] Statusが「Active」になっている
 
@@ -896,12 +965,14 @@ curl https://api.anthropic.com/v1/messages \
 3. **以下の情報をコピー:**
 
    **① Endpoint**
+
    ```
    形式: usable-xxxxx-12345.upstash.io
    Port: 6379
    ```
 
    **② Password**
+
    ```
    形式: AXjE...（ランダム文字列）
    ```
@@ -916,6 +987,7 @@ curl https://api.anthropic.com/v1/messages \
    ```
 
 **確認:**
+
 - [x] Endpointをコピー済み
 - [x] Passwordをコピー済み
 - [x] ファイルに保存済み
@@ -925,6 +997,7 @@ curl https://api.anthropic.com/v1/messages \
 1. **再度「Create Database」ボタンをクリック**
 
 2. **Redis設定**
+
    ```
    Name: autoforgenexus-production
    Type: Regional（無料枠）
@@ -970,6 +1043,7 @@ curl https://your-redis-instance.upstash.io/get/test:key \
 ```
 
 **使用するトークン:**
+
 - Upstash Dashboard → Details → **REST Token**（`AURsAAInc...`で始まる）
 - ⚠️ これは**Password**とは異なります
 
@@ -991,6 +1065,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 ```
 
 **使用するパスワード:**
+
 - Upstash Dashboard → Details → **Password**（マスクされている `••••••••`）
 - ⚠️ これは**REST Token**とは異なります
 
@@ -1001,6 +1076,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 - ✅ **ローカル開発**: Redis Protocol（方法B）が便利
 
 **確認:**
+
 - [x] REST APIで接続確認完了（`{"result":"PONG"}`が返る）
 - [x] Redis Protocolで接続確認完了（オプション）
 
@@ -1009,25 +1085,30 @@ redis-cli -h lucky-marten-17516.upstash.io \
 以下の接続情報が取得できていること:
 
 **必須（REST API用）:**
+
 - [x] `REDIS_STAGING_REST_URL`（例: https://lucky-marten-17516.upstash.io）
 - [x] `REDIS_STAGING_REST_TOKEN`（例: AURsAAInc...）
 - [ ] `REDIS_PROD_REST_URL`（Staging環境と同じ値を使用）
 - [ ] `REDIS_PROD_REST_TOKEN`（Staging環境と同じ値を使用）
 
 **オプション（Redis Protocol用）:**
+
 - [x] `REDIS_STAGING_HOST`, `REDIS_STAGING_PORT`, `REDIS_STAGING_PASSWORD`
 - [ ] `REDIS_PROD_HOST`, `REDIS_PROD_PORT`, `REDIS_PROD_PASSWORD`
 
 **動作確認:**
+
 - [x] REST APIで接続確認完了（`{"result":"PONG"}`が返る）
 
-**⚠️ 重要**: Issue #77の方針に従い、本番環境もStaging環境のRedisインスタンスを併用します
+**⚠️ 重要**: Issue
+#77の方針に従い、本番環境もStaging環境のRedisインスタンスを併用します
 
 ---
 
 ### A-6: LangFuse 観測性（オプション・15分）
 
 #### 📌 LangFuseとは
+
 - LLM実行の観測・トレーシングプラットフォーム
 - プロンプト評価、コスト追跡、デバッグに使用
 - 無料枠: 月間50,000トレース
@@ -1037,6 +1118,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 ##### ステップ1: アカウント作成
 
 1. **公式サイトにアクセス**
+
    ```
    https://cloud.langfuse.com
    ```
@@ -1046,6 +1128,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 3. **GitHubアカウントでサインアップ**
 
 **確認:**
+
 - [ ] LangFuse Dashboardが表示されている
 
 ##### ステップ2: Project作成
@@ -1053,6 +1136,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 1. **「Create Project」ボタンをクリック**
 
 2. **Project設定**
+
    ```
    Name: AutoForgeNexus Staging
    ```
@@ -1066,6 +1150,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 2. **「Create new API key」ボタンをクリック**
 
 3. **以下の2つのキーをコピー:**
+
    ```
    Public Key: pk-lf-xxxxxxxxx...
    Secret Key: sk-lf-xxxxxxxxx...
@@ -1084,6 +1169,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 1. **再度「Create Project」ボタンをクリック**
 
 2. **Project設定**
+
    ```
    Name: AutoForgeNexus Production
    ```
@@ -1091,11 +1177,13 @@ redis-cli -h lucky-marten-17516.upstash.io \
 3. **API Keysをコピーして保存**
 
 **確認:**
+
 - [ ] Staging/Production両方のAPI Keysを取得済み
 
 #### ✅ A-6完了条件
 
 以下のAPI Keyが取得できていること（オプション）:
+
 - [x] `LANGFUSE_STAGING_PUBLIC_KEY`, `LANGFUSE_STAGING_SECRET_KEY`
 - [ x `LANGFUSE_PROD_PUBLIC_KEY`, `LANGFUSE_PROD_SECRET_KEY`
 
@@ -1106,6 +1194,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 すべてのAPI Keyが取得できましたか？
 
 ### 必須サービス（6個）
+
 - [ ] Clerk（Development + Production）
 - [x] Turso（Staging + Production）
 - [x] OpenAI（Staging + Production）
@@ -1113,6 +1202,7 @@ redis-cli -h lucky-marten-17516.upstash.io \
 - [ ] Upstash Redis（Staging + Production）
 
 ### オプションサービス
+
 - [x] LangFuse（Staging + Production）
 
 ### 取得した情報の整理
@@ -1134,6 +1224,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
 ```
 
 **次のPhase Bに進む前に:**
+
 - [ ] すべてのAPI Keyがファイルに保存されている
 - [ ] バックアップを作成済み
 - [ ] ファイル権限が600になっている
@@ -1145,6 +1236,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
 このPhaseでは、バックエンド（Workers）とフロントエンド（Pages）のデプロイ先となるCloudflareの設定を行います。
 
 ### ⏱️ 所要時間: 1-2時間
+
 ### 🎯 達成目標: Cloudflare Workers/Pages設定完了
 
 ---
@@ -1156,11 +1248,13 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
 ##### ステップ1: アカウント作成
 
 1. **公式サイトにアクセス**
+
    ```
    https://dash.cloudflare.com/sign-up
    ```
 
 2. **メールアドレスとパスワードを入力**
+
    ```
    Email: your-email@example.com
    Password: ********（強力なパスワード）
@@ -1173,6 +1267,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
    - 「Verify email address」リンクをクリック
 
 **確認:**
+
 - [x] Cloudflare Dashboardが表示されている
 - [x] 画面左上に「Cloudflare」ロゴが表示されている
 
@@ -1183,6 +1278,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
    - 「Free」プラン（$0/月）を選択
 
 **確認:**
+
 - [x] Workers & Pages Dashboardが表示されている
 
 ---
@@ -1208,11 +1304,13 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
 ##### ステップ2: Token権限設定
 
 1. **Token名を入力**
+
    ```
    Token name: AutoForgeNexus-Deploy
    ```
 
 2. **Permissions設定（確認のみ、変更不要）**
+
    ```
    Account → Cloudflare Workers Scripts → Edit
    Account → Cloudflare Pages → Edit
@@ -1220,6 +1318,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
    ```
 
 3. **Account Resources**
+
    ```
    Include: All accounts
    ```
@@ -1245,6 +1344,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
 ⚠️ **重要**: このTokenは二度と表示されないため、必ず保存してください。
 
 **確認:**
+
 - [x] API Tokenをコピー済み
 - [x] ファイルに保存済み
 
@@ -1259,6 +1359,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
 1. **Cloudflare Dashboard左サイドバーから「Workers & Pages」をクリック**
 
 2. **画面右側の「Account ID」をコピー**
+
    ```
    形式: 32文字の16進数（例: 1234567890abcdef1234567890abcdef）
    ```
@@ -1269,6 +1370,7 @@ cp ~/autoforge-all-keys.txt ~/Desktop/autoforge-keys-backup-$(date +%Y%m%d).txt
    ```
 
 **確認:**
+
 - [x] Account IDをコピー済み
 - [x] ファイルに保存済み
 
@@ -1363,16 +1465,19 @@ EOF
 **⚠️ 重要な注意点:**
 
 1. **route設定について**
+
    - `route`設定はコメントアウトしています
    - 独自ドメイン（autoforgenexus.com）を取得・設定した後に有効化してください
    - ドメイン未取得の場合、`https://<worker-name>.<account-subdomain>.workers.dev`形式のURLが自動発行されます
 
 2. **Python Workers固有の設定**
+
    - `build.command`は空文字列（Cloudflare Workersが自動処理）
    - `requirements.txt`の依存関係は自動的にバンドルされます
    - `build.upload.format`設定は不要（Python Workers専用設定）
 
 3. **環境別observability設定**
+
    - **Staging**: 100%サンプリング（詳細なトレース取得）
    - **Production**: 10%サンプリング（コスト最適化）
 
@@ -1382,6 +1487,7 @@ EOF
    - wrangler.tomlにはSecrets名のみを記載（値は含めない）
 
 **確認チェックリスト（更新）:**
+
 - [x] `backend/wrangler.toml`が作成された
 - [x] ファイル内容を確認（`cat wrangler.toml`）
 - [x] route設定がコメントアウトされていることを確認
@@ -1399,6 +1505,7 @@ wrangler --version
 ```
 
 **確認:**
+
 - [x] `wrangler --version`でバージョンが表示される
 - [x] バージョンが3.x以上
 
@@ -1420,6 +1527,7 @@ wrangler whoami
 ```
 
 **確認:**
+
 - [x] `wrangler whoami`でメールアドレスが表示される
 - [x] エラーが出ていない
 
@@ -1436,11 +1544,13 @@ wrangler whoami
 2. **「Create」→「Pages」→「Connect to Git」を選択**
 
 3. **GitHubリポジトリを接続**
+
    - 「Connect GitHub」ボタンをクリック
    - GitHubの認証画面で「Authorize Cloudflare Pages」をクリック
    - リポジトリ「AutoForgeNexus」を選択
 
 4. **ビルド設定**
+
    ```
    Project name: autoforgenexus-frontend
    Production branch: main
@@ -1457,6 +1567,7 @@ wrangler whoami
 7. **初回デプロイを待つ（5-10分）**
 
 **確認:**
+
 - [ ] Pagesプロジェクト「autoforgenexus-frontend」が作成されている
 - [ ] 初回デプロイが成功している（緑色のチェックマーク）
 
@@ -1471,6 +1582,7 @@ wrangler whoami
 3. **「Set up a custom domain」ボタンをクリック**
 
 4. **ドメイン設定**
+
    ```
    Staging: staging.autoforgenexus.com
    Production: autoforgenexus.com
@@ -1479,6 +1591,7 @@ wrangler whoami
 5. **DNS設定の指示に従う（Cloudflare DNSの場合は自動）**
 
 **確認:**
+
 - [ ] カスタムドメインが追加されている
 - [ ] SSL証明書が自動発行されている
 
@@ -1489,21 +1602,25 @@ wrangler whoami
 以下の設定が完了しましたか？
 
 ### Cloudflare基本設定
+
 - [ ] Cloudflareアカウント作成済み
 - [ ] API Token取得済み（`CLOUDFLARE_API_TOKEN`）
 - [ ] Account ID取得済み（`CLOUDFLARE_ACCOUNT_ID`）
 
 ### Workers設定
+
 - [ ] `backend/wrangler.toml`作成済み
 - [ ] Wrangler CLIインストール済み
 - [ ] Wrangler認証完了（`wrangler whoami`成功）
 
 ### Pages設定
+
 - [ ] Pagesプロジェクト「autoforgenexus-frontend」作成済み
 - [ ] GitHubリポジトリ接続済み
 - [ ] 初回デプロイ成功
 
 ### 次のPhase Cに進む前に
+
 - [ ] すべてのCloudflare情報がファイルに保存されている
 - [ ] wrangler.tomlが正しく作成されている
 
@@ -1511,9 +1628,11 @@ wrangler whoami
 
 ## Phase C: GitHub Secrets設定
 
-このPhaseでは、Phase Aで取得したすべてのAPI KeyをGitHub Secretsに登録し、CI/CD自動デプロイの準備を行います。
+このPhaseでは、Phase Aで取得したすべてのAPI KeyをGitHub
+Secretsに登録し、CI/CD自動デプロイの準備を行います。
 
 ### ⏱️ 所要時間: 30分
+
 ### 🎯 達成目標: GitHub Secrets登録完了、CI/CD準備完了
 
 ---
@@ -1535,6 +1654,7 @@ gh auth status
 ```
 
 **未認証の場合:**
+
 ```bash
 # GitHub CLIでログイン
 gh auth login
@@ -1547,6 +1667,7 @@ gh auth login
 ```
 
 **確認:**
+
 - [x] `gh auth status`でログイン済み状態が表示される
 - [x] リポジトリへのアクセス権限がある
 
@@ -1569,6 +1690,7 @@ gh repo view daishiman/AutoForgeNexus --json permissions
 ```
 
 **確認:**
+
 - [x] `permissions.admin: true`が表示される
 - [x] Secrets登録権限がある
 
@@ -1595,6 +1717,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep CLERK
 ```
 
 **確認:**
+
 - [x] `STAGING_CLERK_PUBLIC_KEY`が登録されている
 - [x] `STAGING_CLERK_SECRET_KEY`が登録されている
 
@@ -1615,6 +1738,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep TURSO_STAGING
 ```
 
 **確認:**
+
 - [x] `TURSO_STAGING_DATABASE_URL`が登録されている
 - [x] `TURSO_STAGING_AUTH_TOKEN`が登録されている
 
@@ -1636,6 +1760,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep -E "OPENAI|ANTHROPIC"
 ```
 
 **確認:**
+
 - [x] `OPENAI_STAGING_API_KEY`が登録されている
 - [x] `ANTHROPIC_STAGING_API_KEY`が登録されている
 
@@ -1656,6 +1781,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep REDIS_STAGING
 ```
 
 **確認:**
+
 - [x] `REDIS_STAGING_REST_URL`が登録されている
 - [x] `REDIS_STAGING_REST_TOKEN`が登録されている
 
@@ -1676,6 +1802,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep LANGFUSE_STAGING
 ```
 
 **確認:**
+
 - [x] `LANGFUSE_STAGING_PUBLIC_KEY`が登録されている（オプション）
 - [x] `LANGFUSE_STAGING_SECRET_KEY`が登録されている（オプション）
 
@@ -1702,6 +1829,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep PROD_CLERK
 ```
 
 **確認:**
+
 - [x] `PROD_CLERK_PUBLIC_KEY`が登録されている
 - [x] `PROD_CLERK_SECRET_KEY`が登録されている
 
@@ -1722,6 +1850,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep TURSO_PROD
 ```
 
 **確認:**
+
 - [x] `TURSO_PROD_DATABASE_URL`が登録されている
 - [x] `TURSO_PROD_AUTH_TOKEN`が登録されている
 
@@ -1743,12 +1872,14 @@ gh secret list --repo daishiman/AutoForgeNexus | grep -E "OPENAI_PROD|ANTHROPIC_
 ```
 
 **確認:**
+
 - [x] `OPENAI_PROD_API_KEY`が登録されている
 - [x] `ANTHROPIC_PROD_API_KEY`が登録されている
 
 ##### ステップ4: Redis Production Secrets登録
 
-⚠️ **重要**: Issue #77の方針に従い、本番環境もStagingのRedisインスタンスを使用します。
+⚠️ **重要**: Issue
+#77の方針に従い、本番環境もStagingのRedisインスタンスを使用します。
 
 ```bash
 # Redis Production Secrets（Stagingと同じ値を使用）
@@ -1765,6 +1896,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep REDIS_PROD
 ```
 
 **確認:**
+
 - [x] `REDIS_PROD_REST_URL`が登録されている（Staging値と同じ）
 - [x] `REDIS_PROD_REST_TOKEN`が登録されている（Staging値と同じ）
 
@@ -1785,6 +1917,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep LANGFUSE_PROD
 ```
 
 **確認:**
+
 - [x] `LANGFUSE_PROD_PUBLIC_KEY`が登録されている（オプション）
 - [x] `LANGFUSE_PROD_SECRET_KEY`が登録されている（オプション）
 
@@ -1812,6 +1945,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep CLOUDFLARE
 ```
 
 **確認:**
+
 - [x] `CLOUDFLARE_API_TOKEN`が登録されている
 - [x] `CLOUDFLARE_ACCOUNT_ID`が登録されている
 
@@ -1834,34 +1968,36 @@ echo "登録済みSecrets数: $SECRET_COUNT"
 
 **期待されるSecrets一覧:**
 
-| Secret名 | 環境 | サービス |
-|---------|------|---------|
-| `STAGING_CLERK_PUBLIC_KEY` | Staging | Clerk認証 |
-| `STAGING_CLERK_SECRET_KEY` | Staging | Clerk認証 |
-| `PROD_CLERK_PUBLIC_KEY` | Production | Clerk認証 |
-| `PROD_CLERK_SECRET_KEY` | Production | Clerk認証 |
-| `TURSO_STAGING_DATABASE_URL` | Staging | Tursoデータベース |
-| `TURSO_STAGING_AUTH_TOKEN` | Staging | Tursoデータベース |
-| `TURSO_PROD_DATABASE_URL` | Production | Tursoデータベース |
-| `TURSO_PROD_AUTH_TOKEN` | Production | Tursoデータベース |
-| `OPENAI_STAGING_API_KEY` | Staging | OpenAI LLM |
-| `OPENAI_PROD_API_KEY` | Production | OpenAI LLM |
-| `ANTHROPIC_STAGING_API_KEY` | Staging | Anthropic LLM |
-| `ANTHROPIC_PROD_API_KEY` | Production | Anthropic LLM |
-| `REDIS_STAGING_REST_URL` | Staging | Redis（REST API） |
-| `REDIS_STAGING_REST_TOKEN` | Staging | Redis（REST API） |
-| `REDIS_PROD_REST_URL` | Production | Redis（REST API） |
-| `REDIS_PROD_REST_TOKEN` | Production | Redis（REST API） |
-| `CLOUDFLARE_API_TOKEN` | 共通 | Cloudflareデプロイ |
-| `CLOUDFLARE_ACCOUNT_ID` | 共通 | Cloudflareデプロイ |
+| Secret名                     | 環境       | サービス           |
+| ---------------------------- | ---------- | ------------------ |
+| `STAGING_CLERK_PUBLIC_KEY`   | Staging    | Clerk認証          |
+| `STAGING_CLERK_SECRET_KEY`   | Staging    | Clerk認証          |
+| `PROD_CLERK_PUBLIC_KEY`      | Production | Clerk認証          |
+| `PROD_CLERK_SECRET_KEY`      | Production | Clerk認証          |
+| `TURSO_STAGING_DATABASE_URL` | Staging    | Tursoデータベース  |
+| `TURSO_STAGING_AUTH_TOKEN`   | Staging    | Tursoデータベース  |
+| `TURSO_PROD_DATABASE_URL`    | Production | Tursoデータベース  |
+| `TURSO_PROD_AUTH_TOKEN`      | Production | Tursoデータベース  |
+| `OPENAI_STAGING_API_KEY`     | Staging    | OpenAI LLM         |
+| `OPENAI_PROD_API_KEY`        | Production | OpenAI LLM         |
+| `ANTHROPIC_STAGING_API_KEY`  | Staging    | Anthropic LLM      |
+| `ANTHROPIC_PROD_API_KEY`     | Production | Anthropic LLM      |
+| `REDIS_STAGING_REST_URL`     | Staging    | Redis（REST API）  |
+| `REDIS_STAGING_REST_TOKEN`   | Staging    | Redis（REST API）  |
+| `REDIS_PROD_REST_URL`        | Production | Redis（REST API）  |
+| `REDIS_PROD_REST_TOKEN`      | Production | Redis（REST API）  |
+| `CLOUDFLARE_API_TOKEN`       | 共通       | Cloudflareデプロイ |
+| `CLOUDFLARE_ACCOUNT_ID`      | 共通       | Cloudflareデプロイ |
 
 **オプション（LangFuse使用時）:**
+
 - `LANGFUSE_STAGING_PUBLIC_KEY`
 - `LANGFUSE_STAGING_SECRET_KEY`
 - `LANGFUSE_PROD_PUBLIC_KEY`
 - `LANGFUSE_PROD_SECRET_KEY`
 
 **確認:**
+
 - [x] 必須Secrets 18個が登録されている
 - [x] オプションSecretsが必要に応じて登録されている
 
@@ -1877,8 +2013,9 @@ cat ~/turso-keys.txt | grep TURSO_STAGING_DATABASE_URL | cut -d'=' -f2 | cut -c1
 ```
 
 **確認:**
+
 - [x] すべてのSecretsが正しい形式で登録されている
-- [x] プレフィックス（pk_test_, sk_test_, libsql://等）が正しい
+- [x] プレフィックス（pk*test*, sk*test*, libsql://等）が正しい
 
 ---
 
@@ -1887,6 +2024,7 @@ cat ~/turso-keys.txt | grep TURSO_STAGING_DATABASE_URL | cut -d'=' -f2 | cut -c1
 以下の設定が完了しましたか？
 
 ### Staging環境Secrets（9個）
+
 - [x] `STAGING_CLERK_PUBLIC_KEY`
 - [x] `STAGING_CLERK_SECRET_KEY`
 - [x] `TURSO_STAGING_DATABASE_URL`
@@ -1898,6 +2036,7 @@ cat ~/turso-keys.txt | grep TURSO_STAGING_DATABASE_URL | cut -d'=' -f2 | cut -c1
 - [x] `LANGFUSE_STAGING_*`（オプション）
 
 ### Production環境Secrets（9個）
+
 - [x] `PROD_CLERK_PUBLIC_KEY`
 - [x] `PROD_CLERK_SECRET_KEY`
 - [x] `TURSO_PROD_DATABASE_URL`
@@ -1909,10 +2048,12 @@ cat ~/turso-keys.txt | grep TURSO_STAGING_DATABASE_URL | cut -d'=' -f2 | cut -c1
 - [x] `LANGFUSE_PROD_*`（オプション）
 
 ### Cloudflare Secrets（2個）
+
 - [x] `CLOUDFLARE_API_TOKEN`
 - [x] `CLOUDFLARE_ACCOUNT_ID`
 
 ### 次のPhase Dに進む前に
+
 - [x] `gh secret list`で全Secretsが表示される
 - [x] 一時保存ファイル（~/\*-keys.txt）を安全に保管
 - [x] GitHubリポジトリAdmin権限がある
@@ -1921,9 +2062,11 @@ cat ~/turso-keys.txt | grep TURSO_STAGING_DATABASE_URL | cut -d'=' -f2 | cut -c1
 
 ## Phase D: 環境変数ファイル作成
 
-このPhaseでは、ローカル開発用の環境変数ファイル（.env）を作成し、Phase Eでのローカル動作確認を準備します。
+このPhaseでは、ローカル開発用の環境変数ファイル（.env）を作成し、Phase
+Eでのローカル動作確認を準備します。
 
 ### ⏱️ 所要時間: 30分
+
 ### 🎯 達成目標: ローカル開発環境の環境変数設定完了
 
 ---
@@ -1997,6 +2140,7 @@ cat .env.development | sed 's/=.*/=***REDACTED***/g'
 ```
 
 **確認:**
+
 - [x] `.env.development`ファイルが作成された
 - [x] ファイル権限が600（所有者のみ読み書き可能）
 - [x] すべての環境変数が設定されている
@@ -2019,6 +2163,7 @@ fi
 ```
 
 **確認:**
+
 - [x] `.env*`が.gitignoreに含まれている
 - [x] `.env.example`は除外されている（!.env.example）
 
@@ -2083,6 +2228,7 @@ cat .env.local | sed 's/=.*/=***REDACTED***/g'
 ```
 
 **確認:**
+
 - [x] `.env.local`ファイルが作成された
 - [x] ファイル権限が600（所有者のみ読み書き可能）
 - [x] Clerk Public/Secret Keyが設定されている
@@ -2104,6 +2250,7 @@ fi
 ```
 
 **確認:**
+
 - [x] `.env.local`が.gitignoreに含まれている
 - [x] 秘密情報がGitにコミットされない
 
@@ -2160,6 +2307,7 @@ EOF
 ```
 
 **期待される出力:**
+
 ```
 ==================================================
 バックエンド環境変数検証
@@ -2177,6 +2325,7 @@ EOF
 ```
 
 **確認:**
+
 - [x] すべての必須環境変数が設定されている
 - [x] 各キーが正しいプレフィックスで始まっている
 
@@ -2221,6 +2370,7 @@ EOF
 ```
 
 **期待される出力:**
+
 ```
 ==================================================
 フロントエンド環境変数検証
@@ -2234,8 +2384,9 @@ EOF
 ```
 
 **確認:**
+
 - [x] すべての必須環境変数が設定されている
-- [x] NEXT_PUBLIC_プレフィックスが正しい
+- [x] NEXT*PUBLIC*プレフィックスが正しい
 
 ---
 
@@ -2244,23 +2395,27 @@ EOF
 以下の設定が完了しましたか？
 
 ### バックエンド環境変数
+
 - [x] `backend/.env.development`が作成されている
 - [x] Clerk, Turso, LLM, Redisの全環境変数が設定されている
 - [x] ファイル権限が600に設定されている
 - [x] Python dotenvで読み込みテスト成功
 
 ### フロントエンド環境変数
+
 - [x] `frontend/.env.local`が作成されている
 - [x] Clerk認証とAPI URLが設定されている
 - [x] Turbopack設定が有効化されている
 - [x] Node.jsで読み込みテスト成功
 
 ### セキュリティ確認
+
 - [x] 両方の環境変数ファイルが.gitignoreに含まれている
 - [x] 秘密情報がGitにコミットされない
 - [x] ファイル権限が適切に制限されている
 
 ### 次のPhase Eに進む前に
+
 - [x] 環境変数検証が全て成功している
 - [x] 一時保存ファイル（~/\*-keys.txt）を安全な場所にバックアップ
 - [x] Docker環境が起動済み（`docker-compose ps`で確認）
@@ -2272,6 +2427,7 @@ EOF
 このPhaseでは、作成した環境変数を使ってローカル開発環境を起動し、すべてのサービスが正常に動作することを確認します。
 
 ### ⏱️ 所要時間: 1-2時間
+
 ### 🎯 達成目標: バックエンド・フロントエンド・DB接続確認完了
 
 ---
@@ -2302,6 +2458,7 @@ pip list | grep -E "fastapi|pydantic|sqlalchemy"
 ```
 
 **期待される出力:**
+
 ```
 fastapi                  0.116.1
 pydantic                 2.x.x
@@ -2309,6 +2466,7 @@ sqlalchemy              2.0.32
 ```
 
 **確認:**
+
 - [x] Python 3.13仮想環境が作成されている
 - [x] FastAPI、Pydantic v2がインストールされている
 - [x] 開発用依存関係がすべてインストールされている
@@ -2347,11 +2505,13 @@ EOF
 ```
 
 **期待される出力:**
+
 ```
 ✅ Turso接続成功！
 ```
 
 **確認:**
+
 - [x] Tursoデータベースに接続できた
 - [x] SQLクエリが正常に実行された
 
@@ -2373,6 +2533,7 @@ curl "$(echo $REDIS_REST_URL)/get/test:connection" \
 ```
 
 **確認:**
+
 - [x] Redis REST APIで書き込みが成功した（{"result":"OK"}）
 - [x] Redis REST APIで読み取りが成功した
 
@@ -2393,6 +2554,7 @@ uvicorn src.main:app \
 ```
 
 **期待される出力（uvicorn起動時）:**
+
 ```
 INFO:     Will watch for changes in these directories: ['/Users/dm/dev/dev/個人開発/AutoForgeNexus/backend']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
@@ -2403,6 +2565,7 @@ INFO:     Application startup complete.
 ```
 
 **確認:**
+
 - [x] FastAPIサーバーが起動した
 - [x] ポート8000でリッスンしている
 - [x] リロード機能が有効化されている
@@ -2429,6 +2592,7 @@ curl http://localhost:8000/openapi.json | jq '.info'
 ```
 
 **確認:**
+
 - [x] `/health`エンドポイントが正常応答
 - [x] データベース接続が確認された
 - [x] Redis接続が確認された
@@ -2459,6 +2623,7 @@ pnpm list next react react-dom @clerk/nextjs
 ```
 
 **確認:**
+
 - [x] Next.js 15.5.4がインストールされている
 - [x] React 19.0.0がインストールされている
 - [x] Clerk Next.js SDKがインストールされている
@@ -2478,6 +2643,7 @@ pnpm dev --turbo
 ```
 
 **確認:**
+
 - [x] Turbopackが有効化されている
 - [x] ポート3000でリッスンしている
 - [x] 起動時間が2秒以内（Turbopackの恩恵）
@@ -2500,6 +2666,7 @@ open http://localhost:3000
 ```
 
 **確認:**
+
 - [x] トップページが表示される
 - [x] Clerk認証UIが表示される
 - [x] ログイン後にダッシュボードにリダイレクトされる
@@ -2520,6 +2687,7 @@ fetch('http://localhost:8000/health')
 ```
 
 **確認:**
+
 - [x] フロントエンドからバックエンドAPIに接続できた
 - [x] CORS設定が正しい（`http://localhost:3000`が許可されている）
 
@@ -2551,6 +2719,7 @@ fetch('http://localhost:8000/health')
 ```
 
 **確認:**
+
 - [x] 新規ユーザー登録が成功した
 - [x] ログアウトが正常に動作した
 - [x] ログインが成功した
@@ -2582,6 +2751,7 @@ curl http://localhost:8000/api/prompts | jq '.'
 ```
 
 **期待される出力:**
+
 ```json
 [
   {
@@ -2600,6 +2770,7 @@ curl http://localhost:8000/api/prompts | jq '.'
 ```
 
 **確認:**
+
 - [x] Turso DBにテーブルが作成された
 - [x] テストデータが挿入された
 - [x] APIでデータ取得が成功した
@@ -2623,6 +2794,7 @@ curl http://localhost:8000/api/cache/get/test:prompt:1 | jq '.'
 ```
 
 **確認:**
+
 - [x] Redisにキャッシュが書き込まれた
 - [x] Redisからキャッシュが読み取れた
 - [x] TTL（有効期限）が正しく設定された
@@ -2650,6 +2822,7 @@ time pnpm build --turbo
 ```
 
 **確認:**
+
 - [x] ビルドが成功した
 - [x] ビルド時間が60秒以内
 - [x] 最適化された本番ビルドが生成された
@@ -2672,6 +2845,7 @@ npx @lhci/cli@latest autorun \
 ```
 
 **確認:**
+
 - [x] Performance スコアが90以上
 - [x] LCP（Largest Contentful Paint）が2.5秒未満
 - [x] FID（First Input Delay）が100ms未満
@@ -2692,6 +2866,7 @@ ab -n 100 -c 10 http://localhost:8000/health
 ```
 
 **確認:**
+
 - [x] 100リクエストすべて成功（Failed requests: 0）
 - [x] 秒間500リクエスト以上処理できた
 - [x] 平均応答時間が20ms未満
@@ -2703,6 +2878,7 @@ ab -n 100 -c 10 http://localhost:8000/health
 以下の動作確認が完了しましたか？
 
 ### バックエンド動作確認
+
 - [x] Python 3.13仮想環境が作成されている
 - [x] FastAPIサーバーが起動した（ポート8000）
 - [x] Tursoデータベース接続確認完了
@@ -2710,22 +2886,26 @@ ab -n 100 -c 10 http://localhost:8000/health
 - [x] `/health`エンドポイントが正常応答
 
 ### フロントエンド動作確認
+
 - [x] Next.js 15.5.4 Turbopack起動成功（ポート3000）
 - [x] React 19.0.0が動作している
 - [x] Clerk認証フローが動作している
 - [x] バックエンドAPIに接続できた
 
 ### 統合動作確認
+
 - [x] 認証フロー（登録→ログアウト→ログイン）成功
 - [x] データベース操作（作成→挿入→取得）成功
 - [x] Redisキャッシュ（書き込み→読み取り）成功
 
 ### パフォーマンス確認
+
 - [x] フロントエンドビルド時間が60秒以内
 - [x] Core Web Vitals基準をクリア（LCP < 2.5s）
 - [x] API負荷テスト成功（500+ req/s）
 
 ### 次のPhase Fに進む前に
+
 - [x] すべてのサービスが正常起動している
 - [x] 統合テストがすべて成功している
 - [x] パフォーマンス基準をクリアしている
@@ -2735,9 +2915,11 @@ ab -n 100 -c 10 http://localhost:8000/health
 
 ## Phase F: Staging デプロイ
 
-このPhaseでは、Phase Eで確認したローカル環境をCloudflare（Workers/Pages）にデプロイし、Staging環境を構築します。
+このPhaseでは、Phase
+Eで確認したローカル環境をCloudflare（Workers/Pages）にデプロイし、Staging環境を構築します。
 
 ### ⏱️ 所要時間: 1時間
+
 ### 🎯 達成目標: Staging環境デプロイ完了、動作確認完了
 
 ---
@@ -2764,6 +2946,7 @@ fi
 ```
 
 **確認:**
+
 - [x] Wranglerでログイン済み
 - [x] Account IDが表示される
 - [x] `CLOUDFLARE_ACCOUNT_ID`と一致する
@@ -2790,6 +2973,7 @@ cat wrangler.toml | grep -A 10 "\[env.staging\]"
 ```
 
 **確認:**
+
 - [x] `backend/wrangler.toml`が存在する
 - [x] `[env.staging]`設定が含まれている
 - [x] `name = "autoforgenexus-backend-staging"`が設定されている
@@ -2838,6 +3022,7 @@ wrangler secret list --env staging
 ```
 
 **確認:**
+
 - [x] 7つのSecretsが登録されている
 - [x] `wrangler secret list`で一覧表示される
 
@@ -2856,8 +3041,10 @@ wrangler deploy --env staging
 ```
 
 **確認:**
+
 - [x] デプロイが成功した
-- [x] Workers URLが発行された（`https://autoforgenexus-backend-staging.*.workers.dev`）
+- [x] Workers
+      URLが発行された（`https://autoforgenexus-backend-staging.*.workers.dev`）
 - [x] Deployment IDが発行された
 
 ##### ステップ3: Workers動作確認
@@ -2882,6 +3069,7 @@ curl $STAGING_WORKERS_URL/openapi.json | jq '.info'
 ```
 
 **確認:**
+
 - [x] `/health`エンドポイントが正常応答
 - [x] データベース接続が確認された
 - [x] Redis接続が確認された
@@ -2918,6 +3106,7 @@ NEXT_PUBLIC_APP_ENV=staging
 ```
 
 **または、Wrangler CLIで設定（非推奨 - Pages非対応の場合あり）:**
+
 ```bash
 # wrangler pages環境変数設定（実験的機能）
 # 注: 2025年10月時点では、DashboardのGUI推奨
@@ -2927,6 +3116,7 @@ wrangler pages project list
 ```
 
 **確認:**
+
 - [x] Clerk認証の環境変数が設定された
 - [x] API URLがStaging Workers URLに設定された
 - [x] `NEXT_PUBLIC_APP_ENV=staging`が設定された
@@ -2951,17 +3141,20 @@ gh run watch
 ```
 
 **期待される出力（wrangler pages deploy）:**
+
 ```
 ✨ Success! Deployed to https://staging.autoforgenexus.pages.dev
 ```
 
 **または、GitHub Actions自動デプロイ成功:**
+
 ```
 ✅ Deploy to Cloudflare Pages - staging
    Deployed to: https://staging-xxxxx.autoforgenexus.pages.dev
 ```
 
 **確認:**
+
 - [x] Pagesデプロイが成功した
 - [x] Staging URLが発行された
 - [x] GitHub Actionsが成功した（自動デプロイの場合）
@@ -2985,6 +3178,7 @@ open $STAGING_PAGES_URL
 ```
 
 **確認:**
+
 - [x] トップページが表示される（HTTP 200）
 - [x] Clerk認証UIが表示される
 - [x] バックエンドAPIに接続できる
@@ -3013,6 +3207,7 @@ open $STAGING_PAGES_URL
 ```
 
 **確認:**
+
 - [x] Staging環境でClerk認証が動作している
 - [x] サインアップ→リダイレクトが正常
 - [x] ログイン→ダッシュボード遷移が正常
@@ -3040,6 +3235,7 @@ fetch('$STAGING_WORKERS_URL/api/prompts', {
 ```
 
 **確認:**
+
 - [x] Staging バックエンドAPIに接続できた
 - [x] Clerk認証トークンが取得できた
 - [x] 認証付きAPIリクエストが成功した
@@ -3051,23 +3247,27 @@ fetch('$STAGING_WORKERS_URL/api/prompts', {
 以下のデプロイが完了しましたか？
 
 ### バックエンドStaging デプロイ
+
 - [x] Cloudflare Workers Secretsが設定された（7個）
 - [x] Workers デプロイが成功した
 - [x] Workers URLが発行された
 - [x] `/health`エンドポイントが正常応答
 
 ### フロントエンドStaging デプロイ
+
 - [x] Cloudflare Pages環境変数が設定された
 - [x] Pagesデプロイが成功した
 - [x] Staging URLが発行された
 - [x] トップページが表示される
 
 ### Staging環境統合確認
+
 - [x] Clerk認証フローが動作している
 - [x] バックエンドAPI接続が成功している
 - [x] 認証付きAPIリクエストが成功している
 
 ### デプロイ情報記録
+
 ```bash
 # 以下の情報を記録（次のPhaseで使用）
 echo "STAGING_WORKERS_URL=$STAGING_WORKERS_URL" >> ~/staging-urls.txt
@@ -3076,6 +3276,7 @@ chmod 600 ~/staging-urls.txt
 ```
 
 ### 次のPhase Gに進む前に
+
 - [x] Staging環境がすべて正常動作している
 - [x] Production用のAPI Keyが準備されている（Phase A完了時）
 - [x] Production用のCloudflare設定が準備されている
@@ -3088,6 +3289,7 @@ chmod 600 ~/staging-urls.txt
 このPhaseでは、Staging環境で確認した設定を本番環境にデプロイし、Production環境を構築します。
 
 ### ⏱️ 所要時間: 30分
+
 ### 🎯 達成目標: Production環境デプロイ完了、本番稼働開始
 
 ---
@@ -3114,6 +3316,7 @@ gh secret list --repo daishiman/AutoForgeNexus | grep PROD
 ```
 
 **確認:**
+
 - [x] 8つのProduction Secretsが登録されている
 - [x] すべて`PROD_`プレフィックスが付いている
 
@@ -3131,6 +3334,7 @@ turso db show autoforgenexus-production
 ```
 
 **確認:**
+
 - [x] Production DBが作成されている
 - [x] 東京リージョン（nrt）に配置されている
 - [x] URLが`TURSO_PROD_DATABASE_URL`と一致する
@@ -3178,6 +3382,7 @@ wrangler secret list --env production
 ```
 
 **確認:**
+
 - [x] 7つのSecretsが登録されている（Production環境）
 - [x] Staging環境と別のSecretsが設定されている
 
@@ -3196,6 +3401,7 @@ wrangler deploy --env production
 ```
 
 **確認:**
+
 - [x] Production デプロイが成功した
 - [x] Production Workers URLが発行された
 - [x] `workers_dev = false`設定が反映されている
@@ -3219,6 +3425,7 @@ curl $PROD_WORKERS_URL/health | jq '.'
 ```
 
 **確認:**
+
 - [x] Production `/health`が正常応答
 - [x] `environment: "production"`が返される
 - [x] Production DBとRedisに接続している
@@ -3244,6 +3451,7 @@ NEXT_PUBLIC_APP_ENV=production
 ```
 
 **確認:**
+
 - [x] Production環境変数が設定された
 - [x] Production Clerk Keyが設定された
 - [x] API URLがProduction Workers URLに設定された
@@ -3272,6 +3480,7 @@ gh run watch
 ```
 
 **確認:**
+
 - [x] mainブランチへのマージが成功した
 - [x] GitHub Actionsが自動実行された
 - [x] Cloudflare Pagesデプロイが成功した
@@ -3295,6 +3504,7 @@ open $PROD_PAGES_URL
 ```
 
 **確認:**
+
 - [x] Production トップページが表示される
 - [x] Clerk認証UIが表示される
 - [x] Production APIに接続できる
@@ -3323,6 +3533,7 @@ open $PROD_PAGES_URL
 ```
 
 **確認:**
+
 - [x] Production環境でClerk認証が動作している
 - [x] Staging環境とは別のユーザーDBが使用されている
 - [x] すべてのリダイレクトが正常
@@ -3346,6 +3557,7 @@ fetch('$PROD_WORKERS_URL/health')
 ```
 
 **確認:**
+
 - [x] Production バックエンドAPIが正常応答
 - [x] Production DBに接続している
 - [x] Production Redisに接続している
@@ -3379,6 +3591,7 @@ cat ~/production-urls.txt
 ```
 
 **確認:**
+
 - [x] Production URL情報が記録された
 - [x] ファイル権限が600に設定された
 
@@ -3389,23 +3602,27 @@ cat ~/production-urls.txt
 以下のProduction デプロイが完了しましたか？
 
 ### バックエンドProduction デプロイ
+
 - [x] Cloudflare Workers Secrets（Production）が設定された（7個）
 - [x] Workers Production デプロイが成功した
 - [x] Production Workers URLが発行された
 - [x] `/health`が`environment: "production"`を返す
 
 ### フロントエンドProduction デプロイ
+
 - [x] Cloudflare Pages Production環境変数が設定された
 - [x] mainブランチへのマージが完了した
 - [x] GitHub Actions自動デプロイが成功した
 - [x] Production Pages URLが稼働している
 
 ### Production環境確認
+
 - [x] Clerk認証が正常動作している
 - [x] Production DBに接続している
 - [x] Production APIが正常応答している
 
 ### 本番稼働準備
+
 - [x] Production URL情報が記録された
 - [x] Staging/Production環境が分離されている
 - [x] すべてのSecretsが環境別に設定されている
@@ -3418,11 +3635,11 @@ cat ~/production-urls.txt
 
 ### 📊 構築した環境
 
-| 環境 | URL | データベース | 用途 |
-|------|-----|-------------|------|
-| **Local** | http://localhost:3000 | Staging DB | ローカル開発 |
-| **Staging** | https://staging.autoforgenexus.pages.dev | Staging DB | テスト環境 |
-| **Production** | https://autoforgenexus.pages.dev | Production DB | 本番環境 |
+| 環境           | URL                                      | データベース  | 用途         |
+| -------------- | ---------------------------------------- | ------------- | ------------ |
+| **Local**      | http://localhost:3000                    | Staging DB    | ローカル開発 |
+| **Staging**    | https://staging.autoforgenexus.pages.dev | Staging DB    | テスト環境   |
+| **Production** | https://autoforgenexus.pages.dev         | Production DB | 本番環境     |
 
 ### 🔐 セキュリティ確認
 
@@ -3449,16 +3666,19 @@ cat ~/production-urls.txt
 #### 問題1: GitHub Secrets登録エラー
 
 **症状:**
+
 ```bash
 gh secret set STAGING_CLERK_PUBLIC_KEY ...
 # Error: HTTP 403: Resource not accessible by integration
 ```
 
 **原因:**
+
 - GitHubリポジトリのAdmin権限がない
 - Personal Access Token（PAT）の権限不足
 
 **解決策:**
+
 ```bash
 # 1. リポジトリAdmin権限確認
 gh repo view daishiman/AutoForgeNexus --json permissions
@@ -3478,16 +3698,19 @@ gh secret set STAGING_CLERK_PUBLIC_KEY --body "..."
 #### 問題2: Turso接続エラー
 
 **症状:**
+
 ```bash
 turso db shell autoforgenexus
 # Error: database not found
 ```
 
 **原因:**
+
 - データベース名が間違っている
 - Turso認証が切れている
 
 **解決策:**
+
 ```bash
 # 1. Turso再認証
 turso auth login
@@ -3507,16 +3730,19 @@ turso db tokens create <DB名> --expiration 90d
 #### 問題3: Wrangler デプロイエラー
 
 **症状:**
+
 ```bash
 wrangler deploy --env staging
 # Error: No account_id found
 ```
 
 **原因:**
+
 - `wrangler.toml`に`account_id`が設定されていない
 - Wrangler認証が切れている
 
 **解決策:**
+
 ```bash
 # 1. Wrangler再認証
 wrangler login
@@ -3536,13 +3762,16 @@ wrangler deploy --env staging
 #### 問題4: Cloudflare Pages環境変数エラー
 
 **症状:**
+
 - フロントエンドで`process.env.NEXT_PUBLIC_API_URL`が`undefined`
 
 **原因:**
+
 - Pages環境変数が設定されていない
 - ビルド時に環境変数が読み込まれていない
 
 **解決策:**
+
 ```bash
 # 1. Cloudflare Dashboard → Pages → Settings → Environment variables確認
 
@@ -3564,14 +3793,17 @@ git push origin main
 #### 問題5: Clerk認証エラー
 
 **症状:**
+
 - ログインボタンをクリックしても反応しない
 - `Clerk: Missing publishableKey`エラー
 
 **原因:**
+
 - Clerk Public Keyが設定されていない
 - 環境変数名が間違っている
 
 **解決策:**
+
 ```bash
 # 1. フロントエンド環境変数確認
 cat frontend/.env.local | grep CLERK
@@ -3595,16 +3827,19 @@ pnpm dev --turbo
 #### 問題6: Redis接続エラー
 
 **症状:**
+
 ```bash
 curl https://xxx.upstash.io/ping -H "Authorization: Bearer TOKEN"
 # Error: Unauthorized
 ```
 
 **原因:**
+
 - Redis REST Tokenが間違っている
 - TokenとPasswordを混同している
 
 **解決策:**
+
 ```bash
 # 1. Upstash Dashboard → Details → REST Token確認
 # REST Token（AURsAAInc...で始まる）を使用
@@ -3624,16 +3859,19 @@ curl https://xxx.upstash.io/ping \
 #### 問題7: OpenAI/Anthropic API制限エラー
 
 **症状:**
+
 ```bash
 curl https://api.openai.com/v1/models -H "Authorization: Bearer sk-..."
 # Error: You exceeded your current quota
 ```
 
 **原因:**
+
 - API利用制限に達した
 - クレジットカード未登録
 
 **解決策:**
+
 ```bash
 # 1. OpenAI Dashboard → Billing → Usage確認
 
@@ -3655,16 +3893,19 @@ curl https://api.openai.com/v1/models -H "Authorization: Bearer sk-..."
 #### 問題8: Docker Composeエラー
 
 **症状:**
+
 ```bash
 docker-compose up -d
 # ERROR: The Compose file is invalid
 ```
 
 **原因:**
+
 - `docker-compose.dev.yml`の構文エラー
 - Dockerデーモンが起動していない
 
 **解決策:**
+
 ```bash
 # 1. Docker起動確認
 docker ps
@@ -3686,16 +3927,19 @@ docker-compose -f docker-compose.dev.yml up -d
 #### 問題9: pnpm installエラー
 
 **症状:**
+
 ```bash
 pnpm install
 # ERR_PNPM_NO_MATCHING_VERSION  No matching version found for next@15.5.4
 ```
 
 **原因:**
+
 - pnpmバージョンが古い
 - Node.jsバージョンが古い
 
 **解決策:**
+
 ```bash
 # 1. Node.js/pnpmバージョン確認
 node --version  # 20.0+必須
@@ -3717,14 +3961,17 @@ pnpm install
 #### 問題10: GitHub Actions失敗
 
 **症状:**
+
 - GitHub Actionsワークフローが失敗する
 - `Error: Process completed with exit code 1`
 
 **原因:**
+
 - GitHub Secretsが設定されていない
 - ワークフロー構文エラー
 
 **解決策:**
+
 ```bash
 # 1. GitHub Actions ログ確認
 gh run view --log-failed
@@ -3773,7 +4020,8 @@ gh run rerun <run-id>
 
 ### 推奨学習リソース
 
-1. **Cloudflare Workers Python**: https://developers.cloudflare.com/workers/languages/python
+1. **Cloudflare Workers Python**:
+   https://developers.cloudflare.com/workers/languages/python
 2. **Next.js 15.5 Turbopack**: https://nextjs.org/docs/architecture/turbopack
 3. **React 19.0.0新機能**: https://react.dev/blog/2024/12/05/react-19
 4. **Clerk認証ベストプラクティス**: https://clerk.com/docs/security/overview
@@ -3782,6 +4030,4 @@ gh run rerun <run-id>
 
 **このガイドで、AutoForgeNexusのデプロイメントが完了しました！🎉**
 
-**作成日**: 2025年10月5日
-**最終更新**: 2025年10月5日
-**バージョン**: 1.0.0
+**作成日**: 2025年10月5日 **最終更新**: 2025年10月5日 **バージョン**: 1.0.0

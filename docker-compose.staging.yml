@@ -43,7 +43,7 @@ services:
     volumes:
       - backend-staging-data:/app/data
       - backend-staging-logs:/app/logs
-      - ./backend:/app:ro  # Read-only mount for code updates
+      - ./backend:/app:ro # Read-only mount for code updates
     depends_on:
       redis:
         condition: service_healthy
@@ -82,7 +82,7 @@ services:
       # Enable error reporting in staging
       - NEXT_PUBLIC_SENTRY_DSN=${SENTRY_STAGING_DSN}
     volumes:
-      - ./frontend:/app:ro  # Read-only mount for code inspection
+      - ./frontend:/app:ro # Read-only mount for code inspection
     depends_on:
       backend:
         condition: service_healthy
@@ -150,9 +150,9 @@ services:
       - ./monitoring/prometheus.staging.yml:/etc/prometheus/prometheus.yml
       - prometheus-staging-data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=7d'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
     networks:
       - autoforge-staging-network
     restart: unless-stopped

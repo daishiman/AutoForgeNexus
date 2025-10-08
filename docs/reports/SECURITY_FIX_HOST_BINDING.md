@@ -10,6 +10,7 @@
 ## 🎯 問題の概要
 
 ### 検出された脆弱性
+
 - **検出ツール**: Bandit v1.8.6
 - **テストID**: B104 (hardcoded_bind_all_interfaces)
 - **CWE**: CWE-605 (Multiple Binds to the Same Port)
@@ -17,6 +18,7 @@
 - **コード**: `host: str = Field(default="0.0.0.0")`
 
 ### リスク評価
+
 ```
 CVSS Score: 5.3 (Medium)
 影響: すべてのネットワークインターフェースでサービスが公開される
@@ -32,11 +34,13 @@ CVSS Score: 5.3 (Medium)
 **ファイル**: `src/core/config/settings.py`
 
 #### 修正前
+
 ```python
 host: str = Field(default="0.0.0.0")
 ```
 
 #### 修正後
+
 ```python
 # Security: 0.0.0.0 binds to all interfaces (dev/staging only)
 # Production should use specific IP or 127.0.0.1 with reverse proxy
@@ -47,28 +51,29 @@ host: str = Field(default="0.0.0.0")  # nosec B104: Controlled by environment
 def validate_host_binding(cls, v: str, info: ValidationInfo) -> str:
     """
     ホストバインディングのセキュリティ検証
-    
+
     - 本番環境: 0.0.0.0 は警告（リバースプロキシ必須）
     - 開発/Staging: 0.0.0.0 許可
     """
     app_env = info.data.get("app_env", "local")
-    
+
     # 本番環境で全インターフェースバインディングを使用している場合は警告
     all_interfaces = "0.0.0.0"  # nosec B104: Validation check only
     if v == all_interfaces and app_env == "production":  # nosec B104
         import warnings
-        
+
         warnings.warn(
             "⚠️  Security Warning: Binding to all interfaces in production. "
             "Ensure reverse proxy (nginx/Cloudflare) is properly configured.",
             UserWarning,
             stacklevel=2,
         )
-    
+
     return v
 ```
 
 **効果**:
+
 - 開発環境: `0.0.0.0` 許可（Docker, ローカルネットワークアクセス必要）
 - 本番環境: `0.0.0.0` 使用時に警告を発行（運用者へのアラート）
 - セキュリティベストプラクティスを強制
@@ -95,7 +100,7 @@ CORS_ALLOW_CREDENTIALS=true
 
 ```ini
 [bandit]
-skips = 
+skips =
 exclude_dirs = /tests/,/venv/,/.venv/,/__pycache__/
 confidence = MEDIUM
 severity = MEDIUM
@@ -106,6 +111,7 @@ severity = MEDIUM
 **ファイル**: `docs/security/HOST_BINDING_SECURITY.md`
 
 内容:
+
 - リスク分析（CWE-605, CVSS 5.3）
 - 環境別推奨設定
 - 本番環境ベストプラクティス
@@ -117,6 +123,7 @@ severity = MEDIUM
 ## ✅ 検証結果
 
 ### ローカル検証
+
 ```bash
 $ bandit -r src/
 Test results: No issues identified.
@@ -131,6 +138,7 @@ All checks passed!
 ```
 
 ### CI/CD パイプライン検証
+
 ```bash
 $ python3 .github/scripts/convert-bandit-to-github-annotations.py bandit-report.json
 ✅ Banditセキュリティスキャン: 問題は検出されませんでした
@@ -151,7 +159,7 @@ $ python3 .github/scripts/convert-bandit-to-github-annotations.py bandit-report.
 ### 本番環境での推奨構成
 
 ```
-[Internet] 
+[Internet]
     ↓ HTTPS/TLS
 [Cloudflare Workers/nginx] (リバースプロキシ)
     ↓ HTTP (内部ネットワーク)
@@ -159,6 +167,7 @@ $ python3 .github/scripts/convert-bandit-to-github-annotations.py bandit-report.
 ```
 
 **利点**:
+
 - SSL/TLS 終端をプロキシで処理
 - アプリケーションは内部ネットワークのみ公開
 - DDoS 対策、WAF、レート制限をエッジで実装
@@ -190,6 +199,7 @@ $ python3 .github/scripts/convert-bandit-to-github-annotations.py bandit-report.
 ## 📊 影響範囲
 
 - **変更ファイル**: 4ファイル
+
   - `src/core/config/settings.py` (修正)
   - `.env.production.example` (新規)
   - `.bandit` (新規)

@@ -1,20 +1,27 @@
 # Phase 3: バックエンド環境構築ガイド（プロンプト管理機能特化版）
+
 ## AutoForgeNexus プロンプトドメイン特化アーキテクチャ
 
 ### 📋 ドキュメント概要
 
-本ドキュメントは、**Phase 3でプロンプト管理機能のみに特化**したAutoForgeNexusバックエンド環境構築ガイドです。
+本ドキュメントは、**Phase
+3でプロンプト管理機能のみに特化**したAutoForgeNexusバックエンド環境構築ガイドです。
 
-**重要**: Phase 3では**認証なしの最小限実装**で、プロンプトCRUD操作、バージョニング、改善提案機能のみを実装します。他のドメイン（評価・LLM統合・ワークフロー・認証）はIssue #40-44で将来実装予定です。
+**重要**: Phase
+3では**認証なしの最小限実装**で、プロンプトCRUD操作、バージョニング、改善提案機能のみを実装します。他のドメイン（評価・LLM統合・ワークフロー・認証）はIssue
+#40-44で将来実装予定です。
 
 **DDD準拠の基本原則:**
-1. **境界づけられたコンテキスト（Bounded Context）**: 各ドメインは独立したコンテキスト
+
+1. **境界づけられたコンテキスト（Bounded
+   Context）**: 各ドメインは独立したコンテキスト
 2. **集約（Aggregate）**: ドメインオブジェクトの一貫性境界
 3. **ドメインイベント**: 各ドメインが自身のイベントを所有
 4. **依存性逆転**: ドメイン層は外部依存を持たない
 5. **ユビキタス言語**: 各コンテキスト内での一貫した用語使用
 
 **Phase 3範囲（プロンプトドメインのみ）:**
+
 - プロンプトコンテキストのみのDDD設計
 - プロンプト特化Clean Architectureレイヤー
 - プロンプトCRUD API実装
@@ -23,6 +30,7 @@
 - シンプルなプロンプト改善提案（LangChain最小限）
 
 **Phase 3範囲外（将来実装）:**
+
 - 認証・認可機能（Issue #40）
 - 評価システム（Issue #41）
 - LLM統合機能（Issue #42）
@@ -30,12 +38,14 @@
 - ワークフロー管理（Issue #44）
 
 #### 対象読者
+
 - DDD実践者・システムアーキテクト
 - domain-modellerr Agent使用者
 - Clean Architecture実装者
 - Python/FastAPI + DDD開発者
 
 #### 前提条件
+
 - Phase 1（Git開発環境基盤）および Phase 2（インフラ）が完了済み
 - DDD戦略的設計・戦術的設計の深い理解
 - Clean Architectureパターンの実践経験
@@ -44,22 +54,27 @@
 ### 🎯 Phase 3 の目標（プロンプト管理機能特化版）
 
 #### 主要目標
+
 1. **プロンプト管理機能のみの実装**
+
    - プロンプト作成・保存・更新・改善提案の基本CRUD
    - バージョニング機能
    - 認証なし・最小限実装
 
 2. **最小限バックエンドAPI構築**
+
    - FastAPI 0.116.1 による REST API（プロンプトエンドポイントのみ）
    - レート制限・セキュリティヘッダーは将来実装
    - WebSocket は将来実装
 
 3. **シンプルなデータ管理**
+
    - SQLite/Turso による基本データベース
    - Redis はキャッシング将来実装
    - Vector 検索は将来実装
 
 4. **AI統合は最小限**
+
    - プロンプト改善提案機能のみ（LangChain最小限）
    - LangGraph、LangFuse は将来実装
 
@@ -71,24 +86,28 @@
 #### 技術スタック詳細
 
 **コア技術:**
+
 - **言語:** Python 3.13 (JIT実験機能、10-15%性能向上、Eager Task Factory対応)
 - **Webフレームワーク:** FastAPI 0.116.1 (最新lifespan context manager対応)
 - **ORM:** SQLAlchemy 2.0.32 (async/await, エンベデッドレプリカ対応)
 - **バリデーション:** Pydantic v2 (高速バリデーション、完全型安全性)
 
 **データ層:**
+
 - **プライマリDB:** Turso (libSQL) - DiskANN実装、3x-8x空間効率改善
 - **キャッシング:** Redis 7.0 (Pub/Sub、セッション管理統合)
 - **ベクター検索:** libSQL Vector (ネイティブサポート、圧縮最適化)
 - **マイグレーション:** Alembic (Tursoブランチング戦略)
 
 **AI/ML統合:**
+
 - **LLMオーケストレーション:** LangChain 0.3.27 (1.0アルファ準拠)
 - **ワークフロー:** LangGraph 0.6.7 (本番対応、ステートフル実行)
 - **プロバイダー統合:** LiteLLM 1.76.1 (100+プロバイダー対応)
 - **観測・トレーシング:** LangFuse (分散トレーシング、評価メトリクス)
 
 **開発・運用:**
+
 - **コンテナ:** Docker + Docker Compose (マルチステージ最適化)
 - **品質管理:** Ruff 0.7.4, mypy 1.13.0 (strict), pre-commit 4.0.1
 - **テスト:** pytest 8.3.3 + pytest-asyncio 0.24.0 (Python 3.13最適化)
@@ -97,6 +116,7 @@
 #### DDD戦略的設計：境界づけられたコンテキスト
 
 **AutoForgeNexus コンテキストマップ（Phase 3: プロンプトドメインのみ）**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                AutoForgeNexus Phase 3 システム                     │
@@ -133,6 +153,7 @@
 ```
 
 **Phase 3: プロンプトドメイン特化アーキテクチャ**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Presentation Layer                         │
@@ -203,6 +224,7 @@
 ```
 
 **DDD戦術的パターンの適用**
+
 1. **エンティティ**: ライフサイクルを持つドメインオブジェクト
 2. **値オブジェクト**: 不変の概念的整合性を持つオブジェクト
 3. **集約**: トランザクション境界とビジネスルール境界
@@ -214,18 +236,21 @@
 ### 📊 成功指標
 
 #### 技術的指標
+
 - [ ] テストカバレッジ 80% 以上
 - [ ] API レスポンス時間 < 200ms (P95)
 - [ ] 型チェックエラー 0 件
 - [ ] セキュリティ脆弱性 0 件（High/Critical）
 
 #### アーキテクチャ指標
+
 - [ ] ドメイン境界の明確な定義
 - [ ] 循環依存なし
 - [ ] インターフェース分離原則の遵守
 - [ ] 単一責任原則の徹底
 
 #### 運用指標
+
 - [ ] Docker 環境での正常起動
 - [ ] データベースマイグレーション自動化
 - [ ] CI/CD パイプライン正常実行
@@ -239,14 +264,14 @@
 
 ### 📊 プロンプト管理特化エージェント選定マトリクス
 
-| ステップ | 主担当エージェント | 協力エージェント | 最適コマンド |
-|---------|-------------------|------------------|--------------|
-| 3.1 プロンプトアーキテクチャ設計 | domain-modellerr | backend-developer | `/ai:development:implement` |
-| 3.2 Python/FastAPI環境 | backend-developer | test-automation-engineer | `/ai:development:implement` |
-| 3.3 プロンプトドメイン層 | domain-modellerr | backend-developer | `/ai:development:implement` |
-| 3.4 プロンプトアプリケーション層 | backend-developer | domain-modellerr | `/ai:development:implement` |
-| 3.5 データベース層 | database-administrator | backend-developer | `/ai:development:implement` |
-| 3.6 プロンプトAPI層 | api-designer | backend-developer | `/ai:development:implement` |
+| ステップ                         | 主担当エージェント     | 協力エージェント         | 最適コマンド                |
+| -------------------------------- | ---------------------- | ------------------------ | --------------------------- |
+| 3.1 プロンプトアーキテクチャ設計 | domain-modellerr       | backend-developer        | `/ai:development:implement` |
+| 3.2 Python/FastAPI環境           | backend-developer      | test-automation-engineer | `/ai:development:implement` |
+| 3.3 プロンプトドメイン層         | domain-modellerr       | backend-developer        | `/ai:development:implement` |
+| 3.4 プロンプトアプリケーション層 | backend-developer      | domain-modellerr         | `/ai:development:implement` |
+| 3.5 データベース層               | database-administrator | backend-developer        | `/ai:development:implement` |
+| 3.6 プロンプトAPI層              | api-designer           | backend-developer        | `/ai:development:implement` |
 
 ### 🔄 プロンプト管理特化エージェント連携フロー
 
@@ -264,83 +289,100 @@
 ## 📋 Step 3.1: プロンプト管理アーキテクチャ設計（最小限実装）
 
 ### 🎯 目的
+
 プロンプト管理機能のみに特化した、シンプルなバックエンドアーキテクチャの設計と実装。将来の拡張性を考慮したDDD基盤を構築。
 
 ### 📚 背景
-Phase 3では認証なしの開発環境で、プロンプトのCRUD操作、バージョニング、改善提案機能のみを実装。他のドメイン（評価・LLM統合・ワークフロー）は将来実装。
+
+Phase
+3では認証なしの開発環境で、プロンプトのCRUD操作、バージョニング、改善提案機能のみを実装。他のドメイン（評価・LLM統合・ワークフロー）は将来実装。
 
 ### 👥 担当エージェント
 
 **主担当: domain-modellerr Agent**
+
 - プロンプトドメインの境界と集約設計
 - DDD戦術的パターンの適用
 - 将来拡張へのアーキテクチャ基盤構築
 
 **協力者:**
+
 - **backend-developer Agent**: プロンプトエンティティ実装、APIサービス実装
 - **test-automation-engineer Agent**: プロンプトドメインテスト設計
 
 ### 📋 実行ステップ
 
 #### 3.1.1 プロンプトドメインアーキテクチャ確立
+
 ```bash
 # domain-modellerr Agentによるプロンプトドメイン特化設計
 /ai:development:implement --agent=domain-modellerr --task="プロンプトドメインDDDアーキテクチャ設計"
 ```
 
 **詳細タスク:**
+
 - [ ] プロンプトコンテキストの境界定義（他ドメインとの獨立性確保）
 - [ ] プロンプト特化レイヤー設計（Domain/Application/Infrastructure/API）
 - [ ] プロンプトエンティティと集約ルート設計
 - [ ] 将来拡張へのインターフェース設計
 
 **成果物:**
+
 - `docs/architecture/prompt_domain_architecture.md`
 - `backend/src/domain/prompt/`（ディレクトリ構造）
 - `backend/src/domain/shared/`（共通基盤）
 
 #### 3.1.2 プロンプトドメインモデル設計（Phase 3特化）
+
 ```bash
 # domain-modellerr Agentによるプロンプトドメインのみ設計
 /ai:development:implement --agent=domain-modellerr --task="プロンプト管理ドメインモデリング（認証なし・最小限）"
 ```
 
 **詳細タスク:**
+
 - [ ] プロンプトコンテキストのみ特定（認証・評価・LLM統合は除外）
 - [ ] Prompt集約ルートの設計（ID、コンテンツ、バージョニング）
 - [ ] プロンプトエンティティと値オブジェクトの定義
 - [ ] プロンプト改善サービスの抽出（最小限LLM統合）
 
 **成果物:**
+
 - `backend/src/domain/prompt/entities/`（プロンプトエンティティ）
 - `backend/src/domain/prompt/values/`（値オブジェクト）
 - `backend/src/domain/shared/`（共通基盤クラス）
 - `docs/domain/prompt_ubiquitous_language.md`
 
 #### 3.1.3 プロンプトイベント設計（簡素化）
+
 ```bash
 # プロンプトドメインイベントのみ設計（将来拡張準備）
 /ai:development:implement --agent=domain-modellerr --task="プロンプトドメインイベント基盤設計"
 ```
 
 **詳細タスク:**
+
 - [ ] プロンプト関連ドメインイベントの定義（作成、更新、バージョニング）
 - [ ] シンプルなイベントバス設計（Redis Streamsは将来実装）
 - [ ] メモリ内イベント処理パターン
 - [ ] 将来の分散イベント処理への移行準備
 
 **成果物:**
+
 - `backend/src/domain/prompt/events/`（プロンプトイベント定義）
 - `backend/src/domain/shared/event_bus.py`（シンプルイベントバス）
 
 #### 3.1.4 基本セキュリティ設定（認証なし・開発環境用）
+
 ```bash
 # 認証なし環境での基本セキュリティ設定のみ
 /ai:development:implement --agent=backend-developer --task="基本セキュリティヘッダー設定"
 ```
 
 **詳細タスク:**
+
 - [ ] **基本セキュリティ設定構築**（認証機能は除外）
+
   ```bash
   # 基本セキュリティ設定ファイル作成
   mkdir -p backend/src/core/security
@@ -407,7 +449,9 @@ Phase 3では認証なしの開発環境で、プロンプトのCRUD操作、バ
       return app
   EOF
   ```
+
 - [ ] **認証基盤設定準備**
+
   ```bash
   # Clerk認証統合設定
   cat > backend/src/core/security/clerk_auth.py << 'EOF'
@@ -470,7 +514,9 @@ Phase 3では認証なしの開発環境で、プロンプトのCRUD操作、バ
       return wrapper
   EOF
   ```
+
 - [ ] **暗号化・ハッシュ設定**
+
   ```bash
   # 暗号化ユーティリティ作成
   cat > backend/src/core/security/crypto.py << 'EOF'
@@ -526,7 +572,9 @@ Phase 3では認証なしの開発環境で、プロンプトのCRUD操作、バ
   crypto_manager = CryptoManager()
   EOF
   ```
+
 - [ ] **セキュリティ監視・ログ設定**
+
   ```bash
   # セキュリティログ設定
   cat > backend/src/core/security/logging.py << 'EOF'
@@ -631,6 +679,7 @@ Phase 3では認証なしの開発環境で、プロンプトのCRUD操作、バ
   ```
 
 **環境構築成果物:**
+
 - `backend/src/core/security/config.py` (完全なセキュリティ設定)
 - `backend/src/core/security/clerk_auth.py` (Clerk認証統合)
 - `backend/src/core/security/crypto.py` (暗号化・ハッシュ機能)
@@ -638,6 +687,7 @@ Phase 3では認証なしの開発環境で、プロンプトのCRUD操作、バ
 - `backend/.env.example` (セキュリティ関連環境変数完全版)
 
 ### ✅ 完了基準
+
 - [ ] アーキテクチャドキュメント承認完了
 - [ ] ドメインモデル検証済み
 - [ ] イベントスキーマ定義済み
@@ -645,38 +695,49 @@ Phase 3では認証なしの開発環境で、プロンプトのCRUD操作、バ
 - [ ] 技術スタック確定済み
 
 ### 🔗 次のステップ
-Step 3.1完了後、確定したアーキテクチャに基づいてStep 3.2（Python環境とFastAPIセットアップ）に進む。
+
+Step 3.1完了後、確定したアーキテクチャに基づいてStep
+3.2（Python環境とFastAPIセットアップ）に進む。
 
 ---
 
 ## 📋 Step 3.2: Python環境とFastAPIセットアップ
 
 ### 🎯 目的
-Python 3.13とFastAPI 0.116.1による高パフォーマンスな非同期Web APIの開発環境構築と基本的なプロジェクト構造の確立
+
+Python 3.13とFastAPI 0.116.1による高パフォーマンスな非同期Web
+APIの開発環境構築と基本的なプロジェクト構造の確立
 
 ### 📚 背景
-Step 3.1で設計されたアーキテクチャを実装するための技術基盤を構築。Docker化された開発環境で品質ゲートを組み込んだ現代的な開発ワークフローを確立。
+
+Step
+3.1で設計されたアーキテクチャを実装するための技術基盤を構築。Docker化された開発環境で品質ゲートを組み込んだ現代的な開発ワークフローを確立。
 
 ### 👥 担当エージェント
 
 **主担当: backend-developer Agent**
+
 - FastAPIとPython 3.13を駆使した実装
 - 高性能で保守性の高いAPIとビジネスロジック実装
 
 **協力者:**
+
 - **devops-coordinator Agent**: Docker環境構築、CI/CD基盤設定
 - **test-automation-engineer Agent**: テストフレームワーク設定、品質ゲート構築
 
 ### 📋 実行ステップ
 
 #### 3.2.1 Python開発環境構築
+
 ```bash
 # backend-developer AgentとdevOps-coordinator Agentの連携
 /ai:development:implement --agent=backend-developer --task="Python3.13開発環境セットアップ"
 ```
 
 **詳細タスク:**
+
 - [ ] **Python 3.13 仮想環境セットアップ**
+
   ```bash
   # Python 3.13インストール確認
   python3.13 --version  # 3.13.0以上を確認
@@ -693,7 +754,9 @@ Step 3.1で設計されたアーキテクチャを実装するための技術基
   # pip最新化
   pip install --upgrade pip setuptools wheel
   ```
+
 - [ ] **Python 3.13最適化設定**
+
   ```bash
   # Eager Task Factory有効化（2-5x性能向上）
   export PYTHONOPTIMIZE=2
@@ -705,7 +768,9 @@ Step 3.1で設計されたアーキテクチャを実装するための技術基
   # asyncio最適化設定
   export PYTHONASYNCIODEBUG=0  # 本番環境
   ```
+
 - [ ] **依存関係管理設定**
+
   ```bash
   # pyproject.toml作成
   cat > backend/pyproject.toml << 'EOF'
@@ -768,7 +833,9 @@ Step 3.1で設計されたアーキテクチャを実装するための技術基
   addopts = "--cov=src --cov-report=term-missing --cov-report=html"
   EOF
   ```
+
 - [ ] **開発ツール基本設定**
+
   ```bash
   # 開発依存関係インストール
   pip install -e ".[dev]"
@@ -794,25 +861,28 @@ Step 3.1で設計されたアーキテクチャを実装するための技術基
   ```
 
 **環境構築成果物:**
+
 - `backend/pyproject.toml` (完全な依存関係・ツール設定)
 - `backend/.pre-commit-config.yaml` (品質ゲート設定)
 - `backend/venv/` (Python 3.13仮想環境)
 - `backend/.env.example` (環境変数テンプレート)
 
 #### 3.2.2 FastAPIプロジェクト構造構築
+
 ```bash
 # backend-developer Agentによる実装
 /ai:development:implement --agent=backend-developer --task="DDDアーキテクチャベースのFastAPIプロジェクト作成"
 ```
 
 **詳細タスク:**
+
 - [ ] **FastAPIアプリケーション基本構造作成**
   - main.pyテンプレート作成
   - FastAPI基本設定
   - lifespan context manager設定準備
 - [ ] **DDDアーキテクチャディレクトリ構造作成**
   - domain/、application/、infrastructure/、presentation/フォルダ作成
-  - 各レイヤーの__init__.pyファイル作成
+  - 各レイヤーの**init**.pyファイル作成
   - Clean Architectureに従った構造設定
 - [ ] **設定管理・ログ基盤設定**
   - Pydantic Settings設定クラス作成
@@ -820,45 +890,53 @@ Step 3.1で設計されたアーキテクチャを実装するための技術基
   - 環境別設定ファイル準備
 
 **環境構築成果物:**
+
 - `backend/src/` (プロジェクト基本構造)
 - `backend/src/main.py` (FastAPIアプリテンプレート)
 - `backend/src/config.py` (設定管理テンプレート)
 
 #### 3.2.3 Docker開発環境
+
 ```bash
 # devops-coordinator Agentによる構築
 /ai:development:implement --agent=devops-coordinator --task="Docker開発環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] マルチステージDockerfile作成
 - [ ] docker-compose.dev.yml設定
 - [ ] 開発用データベース（Turso）設定
 - [ ] Redis設定
 
 **成果物:**
+
 - `backend/Dockerfile`
 - `docker-compose.dev.yml`
 - `backend/docker/dev/`（開発用設定）
 
 #### 3.2.4 品質ゲートとテスト基盤
+
 ```bash
 # test-automation-engineer Agentによる設定
 /ai:development:implement --agent=test-automation-engineer --task="TDD品質ゲート構築"
 ```
 
 **詳細タスク:**
+
 - [ ] pytest + async テスト設定
 - [ ] テストカバレッジ設定（coverage.py）
 - [ ] CI/CD用テストスイート
 - [ ] 型チェック自動化（mypy）
 
 **成果物:**
+
 - `backend/tests/` （テストディレクトリ構造）
 - `backend/pytest.ini`
 - `.github/workflows/backend-tests.yml`
 
 ### ✅ 完了基準
+
 - [ ] Python 3.13 + FastAPI 0.116.1 正常起動
 - [ ] Docker開発環境 正常起動
 - [ ] 全品質ゲート通過（lint、type-check、test）
@@ -866,6 +944,7 @@ Step 3.1で設計されたアーキテクチャを実装するための技術基
 - [ ] アーキテクチャ構造の実装完了
 
 ### 🔗 次のステップ
+
 Step 3.2完了後、確立した開発環境でStep 3.3（ドメイン層実装）に進む。
 
 ---
@@ -873,15 +952,19 @@ Step 3.2完了後、確立した開発環境でStep 3.3（ドメイン層実装�
 ## 📋 Step 3.3: DDD境界づけられたコンテキスト構造構築
 
 ### 🎯 目的
+
 **厳密なDDD原則に基づく境界づけられたコンテキスト構造**の構築。各ドメインが完全に独立し、自身のエンティティ、値オブジェクト、ドメインイベント、リポジトリインターフェースを所有する構造を設計。
 
 ### 📚 背景
+
 **現在の問題点を解決**:
+
 1. ❌ `domain/events/prompt` → ✅ `domain/prompt/events/`
 2. ❌ 集約がイベントを所有していない → ✅ 各集約が自身のイベントを所有
 3. ❌ ドメイン境界が不明確 → ✅ Bounded Context毎の完全分離
 
 **DDD戦略的設計原則の徹底**:
+
 - 各Bounded Contextは独立したディレクトリ構造
 - ドメインイベントは発生元コンテキストが所有
 - 共有要素は明確にShared Kernelとして分離
@@ -890,16 +973,19 @@ Step 3.2完了後、確立した開発環境でStep 3.3（ドメイン層実装�
 ### 👥 担当エージェント
 
 **主担当: domain-modellerr Agent**
+
 - 境界づけられたコンテキスト構造設計
 - 各ドメインの独立性確保とユビキタス言語定義
 
 **協力者:**
+
 - **system-architect Agent**: コンテキスト間関係設計とACL定義
 - **backend-developer Agent**: ドメイン基底クラステンプレート作成
 
 ### 📋 正しいDDDディレクトリ構造
 
 #### 🏗️ 完全なBounded Context構造
+
 ```
 backend/src/domain/
 ├── prompt/                     # Prompt Bounded Context
@@ -1076,12 +1162,14 @@ backend/src/domain/
 ### 📋 実行ステップ
 
 #### 3.3.1 Shared Kernel構築
+
 ```bash
 # domain-modellerr Agentによる実行
 /ai:development:implement --agent=domain-modellerr --task="DDD Shared Kernel基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **共通基底クラス作成**
   - `backend/src/domain/shared/base_entity.py` 作成
   - `backend/src/domain/shared/base_value_object.py` 作成
@@ -1097,17 +1185,20 @@ backend/src/domain/
   - `backend/src/domain/shared/constants.py` 作成
 
 **環境構築成果物:**
+
 - `backend/src/domain/shared/` (完全なShared Kernel構造)
 - 各基底クラステンプレート
 - 共通型定義とインターフェース
 
 #### 3.3.2 エンティティ基底テンプレート作成
+
 ```bash
 # domain-modellerr Agentによる実行
 /ai:development:implement --agent=domain-modellerr --task="エンティティ基底クラステンプレート作成"
 ```
 
 **詳細タスク:**
+
 - [ ] **基底エンティティクラステンプレート**
   - BaseEntity抽象クラステンプレート作成
   - ID管理テンプレート準備
@@ -1117,17 +1208,20 @@ backend/src/domain/
   - バリデーションエラー定義テンプレート
 
 **環境構築成果物:**
+
 - `backend/src/domain/entities/base.py` (基底エンティティテンプレート)
 - `backend/src/domain/common/validation.py` (バリデーション基盤)
 - `backend/src/domain/common/exceptions.py` (ドメイン例外テンプレート)
 
 #### 3.3.3 値オブジェクト基底テンプレート作成
+
 ```bash
 # domain-modellerr Agentによる実行
 /ai:development:implement --agent=domain-modellerr --task="値オブジェクト基底テンプレート作成"
 ```
 
 **詳細タスク:**
+
 - [ ] **値オブジェクト基底クラス**
   - BaseValueObject抽象クラステンプレート
   - 不変性保証テンプレート
@@ -1137,16 +1231,19 @@ backend/src/domain/
   - 基本型値オブジェクトテンプレート
 
 **環境構築成果物:**
+
 - `backend/src/domain/value_objects/base.py` (基底値オブジェクト)
 - `backend/src/domain/common/types.py` (共通型定義)
 
 #### 3.3.4 ドメインサービス基盤設定
+
 ```bash
 # backend-developer Agentによる実行
 /ai:development:implement --agent=backend-developer --task="ドメインサービス基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **ドメインサービス基底クラス**
   - BaseDomainService抽象クラステンプレート
   - ドメインロジック実装ガイドライン
@@ -1155,16 +1252,19 @@ backend/src/domain/
   - インターフェース定義テンプレート
 
 **環境構築成果物:**
+
 - `backend/src/domain/services/base.py` (基底サービスクラス)
 - `backend/src/domain/interfaces/` (インターフェース基盤構造)
 
 #### 3.3.5 ドメインイベント基盤設定
+
 ```bash
 # domain-modellerr Agentによる実行
 /ai:development:implement --agent=domain-modellerr --task="ドメインイベント基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **ドメインイベント基底クラス**
   - BaseDomainEvent抽象クラステンプレート
   - イベントメタデータテンプレート
@@ -1173,16 +1273,19 @@ backend/src/domain/
   - イベントハンドラーインターフェーステンプレート
 
 **環境構築成果物:**
+
 - `backend/src/domain/events/base.py` (基底イベントクラス)
 - `backend/src/domain/events/handlers.py` (ハンドラー基盤テンプレート)
 
 #### 3.3.6 ドメインテスト基盤設定
+
 ```bash
 # test-automation-engineer Agentによる実行
 /ai:development:implement --agent=test-automation-engineer --task="ドメイン層テスト基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **ドメインテスト構造作成**
   - ドメインテスト用ディレクトリ構造作成
   - テストベースクラステンプレート作成
@@ -1192,11 +1295,13 @@ backend/src/domain/
   - テストデータビルダー基盤
 
 **環境構築成果物:**
+
 - `backend/tests/domain/` (ドメインテスト基盤構造)
 - `backend/tests/domain/conftest.py` (ドメインテスト設定)
 - `backend/tests/helpers/domain_helpers.py` (テストヘルパー)
 
 ### ✅ 完了基準
+
 - [ ] ドメイン層ディレクトリ構造構築完了
 - [ ] 基底クラステンプレート作成完了
 - [ ] 設定ファイル・テンプレート準備完了
@@ -1205,23 +1310,29 @@ backend/src/domain/
 - [ ] 将来実装フェーズでの開発基盤準備完了
 
 ### 🔗 次のステップ
-Step 3.3完了後、ドメイン層基盤を活用してStep 3.4（アプリケーション層環境構築）に進む。
+
+Step 3.3完了後、ドメイン層基盤を活用してStep
+3.4（アプリケーション層環境構築）に進む。
 
 ---
 
 ## 📋 Step 3.4: DDD Application Layer (CQRS/Event-Driven)
 
 ### 🎯 目的
+
 **境界づけられたコンテキスト対応のCQRS**と**ドメイン駆動イベント処理**基盤構築。各ドメインコンテキストが独立したコマンド・クエリ・ハンドラーを持つアプリケーション層の設計。
 
 ### 📚 背景
+
 **DDD Application Layer原則の徹底**:
+
 - 各Bounded Contextが独立したコマンド・クエリを持つ
 - Application Serviceがドメインサービスを調整
 - ドメインイベントはApplication層で処理
 - インフラ層への依存は抽象化（依存性逆転）
 
 **現在の問題を解決**:
+
 - ❌ ドメイン横断的なコマンド・クエリ → ✅ コンテキスト別分離
 - ❌ 技術寄りのイベント処理 → ✅ ドメインイベント駆動処理
 - ❌ 複雑な相互依存 → ✅ 明確なアプリケーションサービス境界
@@ -1229,16 +1340,19 @@ Step 3.3完了後、ドメイン層基盤を活用してStep 3.4（アプリケ�
 ### 👥 担当エージェント
 
 **主担当: backend-developer Agent**
+
 - Bounded Context対応CQRS設計
 - Application Serviceパターン実装
 
 **協力者:**
+
 - **event-bus-manager Agent**: ドメインイベント駆動基盤設定
 - **domain-modellerr Agent**: ドメイン・アプリケーション境界定義
 
 ### 📋 正しいDDD Application Layer構造
 
 #### 🏗️ Bounded Context別アプリケーション層
+
 ```
 backend/src/application/
 ├── prompt/                     # Prompt Application Layer
@@ -1400,12 +1514,14 @@ backend/src/application/
 ### 📋 実行ステップ
 
 #### 3.4.1 Shared Application Components構築
+
 ```bash
 # backend-developer Agentによる実行
 /ai:development:implement --agent=backend-developer --task="DDD Application Shared Components構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **CQRS基盤クラス作成**
   - `backend/src/application/shared/base_command.py` 作成
   - `backend/src/application/shared/base_query.py` 作成
@@ -1421,17 +1537,20 @@ backend/src/application/
   - `backend/src/application/shared/decorators.py` 作成
 
 **環境構築成果物:**
+
 - `backend/src/application/shared/` (完全なApplication共通基盤)
 - CQRS基底クラステンプレート
 - Application Service基盤クラス
 
 #### 3.4.2 コマンド・クエリ基底テンプレート作成
+
 ```bash
 # backend-developer Agentによる実行
 /ai:development:implement --agent=backend-developer --task="CQRS基底クラステンプレート作成"
 ```
 
 **詳細タスク:**
+
 - [ ] **コマンド基底テンプレート**
   - BaseCommand抽象クラステンプレート
   - コマンドバリデーション基盤テンプレート
@@ -1442,17 +1561,20 @@ backend/src/application/
   - クエリハンドラー基底テンプレート
 
 **環境構築成果物:**
+
 - `backend/src/application/commands/base.py` (基底コマンドクラス)
 - `backend/src/application/queries/base.py` (基底クエリクラス)
 - `backend/src/application/handlers/base.py` (基底ハンドラークラス)
 
 #### 3.4.3 イベント処理基盤設定
+
 ```bash
 # event-bus-manager Agentによる実行
 /ai:development:implement --agent=event-bus-manager --task="イベントハンドラー基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **イベントハンドラー基盤設定**
   - イベントハンドラーディレクトリ構造作成
   - BaseEventHandler抽象クラステンプレート
@@ -1463,17 +1585,20 @@ backend/src/application/
   - イベント失敗処理基盤設定
 
 **環境構築成果物:**
+
 - `backend/src/application/handlers/events/` (イベントハンドラー構造)
 - `backend/src/application/events/base.py` (基底イベントハンドラー)
 - `backend/src/application/events/config.py` (イベント設定テンプレート)
 
 #### 3.4.4 ワークフロー基盤環境設定
+
 ```bash
 # workflow-orchestrator Agentによる実行
 /ai:development:implement --agent=workflow-orchestrator --task="LangGraphワークフロー基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **ワークフローディレクトリ構造**
   - ワークフロー用ディレクトリ構造作成
   - LangGraph設定テンプレート準備
@@ -1484,17 +1609,20 @@ backend/src/application/
   - ワークフローテスト基盤設定
 
 **環境構築成果物:**
+
 - `backend/src/application/workflows/` (ワークフロー基盤構造)
 - `backend/src/application/workflows/base.py` (基底ワークフロークラス)
 - `backend/src/application/workflows/config.py` (ワークフロー設定)
 
 #### 3.4.5 アプリケーションサービス基盤設定
+
 ```bash
 # backend-developer Agentによる実行
 /ai:development:implement --agent=backend-developer --task="アプリケーションサービス基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **アプリケーションサービス基底クラス**
   - BaseApplicationService抽象クラステンプレート
   - サービス依存性注入設定準備
@@ -1504,17 +1632,20 @@ backend/src/application/
   - サービス間通信設定テンプレート
 
 **環境構築成果物:**
+
 - `backend/src/application/services/base.py` (基底サービスクラス)
 - `backend/src/application/config.py` (アプリケーション層設定)
 - `backend/src/application/di/` (依存性注入設定構造)
 
 #### 3.4.6 アプリケーションテスト基盤設定
+
 ```bash
 # test-automation-engineer Agentによる実行
 /ai:development:implement --agent=test-automation-engineer --task="アプリケーション層テスト基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **アプリケーションテスト構造作成**
   - アプリケーションテスト用ディレクトリ構造
   - テストベースクラステンプレート作成
@@ -1524,11 +1655,13 @@ backend/src/application/
   - ワークフローテスト基盤設定
 
 **環境構築成果物:**
+
 - `backend/tests/application/` (アプリケーションテスト基盤構造)
 - `backend/tests/application/conftest.py` (アプリケーションテスト設定)
 - `backend/tests/helpers/application_helpers.py` (テストヘルパー)
 
 ### ✅ 完了基準
+
 - [ ] アプリケーション層ディレクトリ構造構築完了
 - [ ] CQRS基底テンプレート作成完了
 - [ ] イベント処理基盤設定完了
@@ -1538,23 +1671,30 @@ backend/src/application/
 - [ ] 将来実装フェーズでの開発基盤準備完了
 
 ### 🔗 次のステップ
-Step 3.4完了後、アプリケーション層基盤を活用してStep 3.5（インフラストラクチャ層環境構築）に進む。
+
+Step 3.4完了後、アプリケーション層基盤を活用してStep
+3.5（インフラストラクチャ層環境構築）に進む。
 
 ---
 
 ## 📋 Step 3.5: DDD Infrastructure Layer (依存性逆転実装)
 
 ### 🎯 目的
-**ドメイン・アプリケーション層のインターフェースを実装する**Infrastructure層構築。各Bounded Contextのリポジトリ実装、外部サービス統合、技術基盤の設定。依存性逆転原則を厳守した設計。
+
+**ドメイン・アプリケーション層のインターフェースを実装する**Infrastructure層構築。各Bounded
+Contextのリポジトリ実装、外部サービス統合、技術基盤の設定。依存性逆転原則を厳守した設計。
 
 ### 📚 背景
+
 **DDD Infrastructure Layer原則の徹底**:
+
 - ドメイン層で定義されたリポジトリインターフェースの実装
 - アプリケーション層で定義された外部サービスインターフェースの実装
 - 技術的関心事の隔離と抽象化
 - 各Bounded Context別の実装分離
 
 **依存性逆転の実現**:
+
 - ❌ ドメイン→Infrastructure依存 → ✅ Infrastructure→ドメイン依存
 - ❌ 技術詳細の漏出 → ✅ 抽象化による隔離
 - ❌ 横断的なインフラ実装 → ✅ コンテキスト別分離実装
@@ -1562,16 +1702,19 @@ Step 3.4完了後、アプリケーション層基盤を活用してStep 3.5（�
 ### 👥 担当エージェント
 
 **主担当: database-administrator Agent**
+
 - Bounded Context別リポジトリ実装
 - Turso/Redis統合の技術基盤構築
 
 **協力者:**
+
 - **vector-database-specialist Agent**: libSQL Vector統合実装
 - **devops-coordinator Agent**: インフラ自動化・監視統合
 
 ### 📋 正しいDDD Infrastructure Layer構造
 
 #### 🏗️ Bounded Context別Infrastructure実装
+
 ```
 backend/src/infrastructure/
 ├── prompt/                   # Prompt Infrastructure Implementation
@@ -1738,13 +1881,16 @@ backend/src/infrastructure/
 ### 📋 実行ステップ
 
 #### 3.5.1 データベース基盤環境設定
+
 ```bash
 # edge-database-administrator Agentによる実行
 /ai:development:implement --agent=edge-database-administrator --task="Turso/libSQL基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **Turso CLIセットアップ**
+
   ```bash
   # Turso CLIインストール
   curl -sSfL https://get.tur.so/install.sh | bash
@@ -1768,7 +1914,9 @@ backend/src/infrastructure/
   turso db tokens create autoforge-nexus-db
   turso db tokens create autoforge-nexus-dev
   ```
+
 - [ ] **環境変数設定**
+
   ```bash
   # .env.example作成
   cat > backend/.env.example << 'EOF'
@@ -1793,7 +1941,9 @@ backend/src/infrastructure/
   VECTOR_METRIC="cosine"
   EOF
   ```
+
 - [ ] **SQLAlchemy基盤設定**
+
   ```bash
   # データベース設定ファイル作成
   mkdir -p backend/src/infrastructure/database
@@ -1839,7 +1989,9 @@ backend/src/infrastructure/
   )
   EOF
   ```
+
 - [ ] **Alembicマイグレーション設定**
+
   ```bash
   # Alembic初期化
   cd backend
@@ -1964,18 +2116,21 @@ backend/src/infrastructure/
   ```
 
 **環境構築成果物:**
+
 - `backend/.env.example` (Turso接続設定完全版)
 - `backend/src/infrastructure/database/config.py` (完全なDB設定)
 - `backend/alembic/` (実行可能マイグレーション設定)
 - `backend/src/infrastructure/database/session.py` (セッション管理)
 
 #### 3.5.2 リポジトリ基盤環境設定
+
 ```bash
 # edge-database-administrator Agentによる実行
 /ai:development:implement --agent=edge-database-administrator --task="リポジトリパターン基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **リポジトリ基盤構造作成**
   - リポジトリディレクトリ構造作成
   - BaseRepository抽象クラステンプレート
@@ -1986,17 +2141,21 @@ backend/src/infrastructure/
   - エラーハンドリング基盤設定
 
 **環境構築成果物:**
+
 - `backend/src/infrastructure/repositories/base.py` (基底リポジトリクラス)
-- `backend/src/infrastructure/repositories/interfaces/` (リポジトリインターフェース)
+- `backend/src/infrastructure/repositories/interfaces/`
+  (リポジトリインターフェース)
 - `backend/src/infrastructure/repositories/config.py` (リポジトリ設定)
 
 #### 3.5.3 ベクトルデータベース基盤設定
+
 ```bash
 # vector-database-specialist Agentによる実行
 /ai:development:implement --agent=vector-database-specialist --task="libSQLVector基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **libSQL Vector基本設定**
   - libSQL Vector接続設定テンプレート
   - ベクトルデータベース設定ファイル作成
@@ -2011,17 +2170,20 @@ backend/src/infrastructure/
   - ベクトルデータ管理基盤設定
 
 **環境構築成果物:**
+
 - `backend/src/infrastructure/vector/config.py` (ベクトルDB設定)
 - `backend/src/infrastructure/vector/base.py` (ベクトル検索基底クラス)
 - `backend/alembic/vector_migrations/` (ベクトルテーブルマイグレーション構造)
 
 #### 3.5.4 LLM統合基盤環境設定
+
 ```bash
 # backend-developer Agentによる実行
 /ai:development:implement --agent=backend-developer --task="LLMプロバイダー統合基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **LLM統合基盤設定**
   - LiteLLM基本設定テンプレート
   - プロバイダー管理設定準備
@@ -2036,17 +2198,20 @@ backend/src/infrastructure/
   - メトリクス収集基盤設定
 
 **環境構築成果物:**
+
 - `backend/src/infrastructure/llm/config.py` (LLM設定テンプレート)
 - `backend/src/infrastructure/llm/base.py` (LLM基底クラス)
 - `backend/src/infrastructure/observability/config.py` (観測設定)
 
 #### 3.5.5 キャッシング基盤環境設定
+
 ```bash
 # edge-database-administrator Agentによる実行
 /ai:development:implement --agent=edge-database-administrator --task="Redis基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **Redis基本設定**
   - Redis接続設定テンプレート
   - キャッシュ戦略設定準備
@@ -2057,17 +2222,20 @@ backend/src/infrastructure/
   - レート制限基盤設定
 
 **環境構築成果物:**
+
 - `backend/src/infrastructure/cache/config.py` (Redis設定テンプレート)
 - `backend/src/infrastructure/cache/base.py` (キャッシング基底クラス)
 - `backend/src/infrastructure/cache/strategies.py` (キャッシング戦略設定)
 
 #### 3.5.6 インフラテスト基盤設定
+
 ```bash
 # test-automation-engineer Agentによる実行
 /ai:development:implement --agent=test-automation-engineer --task="インフラ層テスト基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] **インフラテスト構造作成**
   - インフラテスト用ディレクトリ構造
   - テストベースクラステンプレート
@@ -2079,11 +2247,13 @@ backend/src/infrastructure/
   - キャッシュテスト基盤
 
 **環境構築成果物:**
+
 - `backend/tests/infrastructure/` (インフラテスト基盤構造)
 - `backend/tests/infrastructure/conftest.py` (インフラテスト設定)
 - `backend/tests/helpers/infrastructure_helpers.py` (テストヘルパー)
 
 ### ✅ 完了基準
+
 - [ ] データベース基盤環境設定完了
 - [ ] リポジトリ基盤環境設定完了
 - [ ] ベクトルデータベース基盤設定完了
@@ -2094,37 +2264,46 @@ backend/src/infrastructure/
 - [ ] 将来実装フェーズでの開発基盤準備完了
 
 ### 🔗 次のステップ
-Step 3.5完了後、インフラ基盤を活用してStep 3.6（プレゼンテーション層環境構築）に進む。
+
+Step 3.5完了後、インフラ基盤を活用してStep
+3.6（プレゼンテーション層環境構築）に進む。
 
 ---
 
 ## 📋 Step 3.6: プレゼンテーション層（API）環境構築
 
 ### 🎯 目的
-FastAPI による REST API、WebSocket 接続の環境構築。外部システムとユーザーインターフェースに向けたAPI基盤環境を準備。
+
+FastAPI による REST
+API、WebSocket 接続の環境構築。外部システムとユーザーインターフェースに向けたAPI基盤環境を準備。
 
 ### 📚 背景
+
 これまで構築されたドメイン、アプリケーション、インフラ層を統合し、外部システムからアクセス可能なAPIとして公開。セキュリティ、パフォーマンス、拡張性を考慮した設計。
 
 ### 👥 担当エージェント
 
 **主担当: api-designer Agent**
+
 - RESTful APIの基盤設計と環境構築
 - OpenAPI仕様テンプレートの作成
 
 **協力者:**
+
 - **backend-developer Agent**: API実装とビジネスロジック統合
 - **security-architect Agent**: API認証・認可とセキュリティ実装
 
 ### 📋 実行ステップ
 
 #### 3.6.1 REST API エンドポイント実装
+
 ```bash
 # api-designer AgentとBackend-developer Agentの連携
 /ai:development:implement --agent=api-designer --task="RESTfulAPI設計実装"
 ```
 
 **詳細タスク:**
+
 - [ ] **FastAPI基本設定とルーティング構造**
   - APIルーター基本構造設定
   - バージョニング対応（v1ディレクトリ構造）
@@ -2143,77 +2322,91 @@ FastAPI による REST API、WebSocket 接続の環境構築。外部システ�
   - ログ出力設定
 
 **環境構築成果物:**
+
 - `backend/src/presentation/api/v1/` (APIルーター構造)
 - `backend/src/presentation/schemas/` (Pydantic基本スキーマ)
 - `backend/src/presentation/middleware/` (ミドルウェア設定)
 - `docs/api/openapi_config.md` (OpenAPI設定ガイド)
 
 #### 3.6.2 WebSocket リアルタイム機能基盤設定
+
 ```bash
 # backend-developer Agentによる実装
 /ai:development:implement --agent=backend-developer --task="WebSocket基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] WebSocket 基本設定
 - [ ] FastAPI WebSocketルーター設定
 - [ ] 接続管理基盤設定
 - [ ] WebSocket認証基盤設定
 
 **環境構築成果物:**
+
 - `backend/src/presentation/websocket/` (WebSocket基盤構造)
 - `backend/src/presentation/websocket/config.py` (WebSocket設定)
 
 #### 3.6.3 認証・認可基盤構築
+
 ```bash
 # security-architect Agentによる実装
 /ai:development:implement --agent=security-architect --task="認証・認可基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] Clerk統合設定
 - [ ] JWT設定テンプレート
 - [ ] 認証ミドルウェア基盤設定
 - [ ] セキュリティ設定テンプレート
 
 **環境構築成果物:**
+
 - `backend/src/presentation/auth/` (認証基盤構造)
 - `backend/src/presentation/middleware/` (認証ミドルウェア設定)
 - `.env.example` (認証設定テンプレート)
 
 #### 3.6.4 OpenAPI設定とドキュメント基盤
+
 ```bash
 # api-designer Agentによる実装
 /ai:development:implement --agent=api-designer --task="OpenAPI設定とドキュメント基盤構築"
 ```
 
 **詳細タスク:**
+
 - [ ] FastAPI OpenAPI設定
 - [ ] Swagger UI、ReDoc設定
 - [ ] APIドキュメント構造設定
 - [ ] 開発環境API探索設定
 
 **環境構築成果物:**
+
 - `docs/api/` (API文書基盤構造)
 - `backend/src/core/openapi_config.py` (OpenAPI設定)
 
 #### 3.6.5 API テスト基盤構築
+
 ```bash
 # test-automation-engineer Agentによる実装
 /ai:development:implement --agent=test-automation-engineer --task="API テスト基盤環境構築"
 ```
 
 **詳細タスク:**
+
 - [ ] pytest-asyncio設定（API用）
 - [ ] FastAPI TestClient設定
 - [ ] テスト用データベース設定
 - [ ] APIテストヘルパー設定
 
 **環境構築成果物:**
+
 - `backend/tests/api/` (APIテスト基盤構造)
 - `backend/tests/conftest.py` (pytest設定)
 
 ### ✅ 完了基準
+
 - [ ] REST API 基盤環境構築完了
 - [ ] WebSocket 基盤設定完了
 - [ ] 認証・認可基盤設定完了
@@ -2223,6 +2416,7 @@ FastAPI による REST API、WebSocket 接続の環境構築。外部システ�
 - [ ] 開発環境でのAPI動作確認
 
 ### 🔗 次のステップ
+
 Step 3.6完了後、全体システムの検証と最終調整を行う。
 
 ---
@@ -2233,19 +2427,20 @@ Step 3.6完了後、全体システムの検証と最終調整を行う。
 
 #### ❌ 現在の問題構造 → ✅ 正しいDDD構造
 
-| 現在の実装 | 問題点 | 正しいDDD構造 | 修正優先度 |
-|-----------|--------|--------------|-----------|
-| `domain/events/prompt/` | イベントが技術的分類 | `domain/prompt/events/` | 🔴 High |
-| `domain/shared/events/domain_event.py` | 共有イベント混在 | 各ドメインが独自イベント所有 | 🔴 High |
-| `application/shared/events/` | Application層にイベント混在 | Domain層にイベント移動 | 🔴 High |
-| `infrastructure/events/` | Infrastructure層にイベント | EventStore/Busのみインフラ | 🟡 Medium |
-| `domain/evaluation/exceptions.py` | 個別例外ファイル | 各コンテキスト内例外管理 | 🟢 Low |
+| 現在の実装                             | 問題点                      | 正しいDDD構造                | 修正優先度 |
+| -------------------------------------- | --------------------------- | ---------------------------- | ---------- |
+| `domain/events/prompt/`                | イベントが技術的分類        | `domain/prompt/events/`      | 🔴 High    |
+| `domain/shared/events/domain_event.py` | 共有イベント混在            | 各ドメインが独自イベント所有 | 🔴 High    |
+| `application/shared/events/`           | Application層にイベント混在 | Domain層にイベント移動       | 🔴 High    |
+| `infrastructure/events/`               | Infrastructure層にイベント  | EventStore/Busのみインフラ   | 🟡 Medium  |
+| `domain/evaluation/exceptions.py`      | 個別例外ファイル            | 各コンテキスト内例外管理     | 🟢 Low     |
 
 ### 🛠️ 具体的修正アクション
 
 #### 🔴 最優先修正（Phase 3.3 完了前に実施）
 
 **1. ドメインイベント構造修正**
+
 ```bash
 # 現在の構造を修正
 # ❌ 削除対象
@@ -2266,6 +2461,7 @@ mv backend/src/domain/prompt/events/prompt_updated.py backend/src/domain/prompt/
 ```
 
 **2. Shared Kernel再構築**
+
 ```bash
 # 純粋なShared Kernelのみ残す
 backend/src/domain/shared/
@@ -2284,6 +2480,7 @@ rm backend/src/domain/shared/events/event_store.py    # → infrastructure/share
 ```
 
 **3. Application層構造修正**
+
 ```bash
 # 現在のshared構造を分散
 # ❌ 修正前
@@ -2301,6 +2498,7 @@ backend/src/application/shared/  # 純粋な共通基盤のみ
 #### 🟡 中優先修正（Phase 3.4 完了前に実施）
 
 **4. CQRS構造の境界づけられたコンテキスト対応**
+
 ```bash
 # 各ドメインに独立したCQRS構造作成
 for domain in prompt evaluation llm_integration user_interaction workflow; do
@@ -2309,6 +2507,7 @@ done
 ```
 
 **5. Infrastructure層の依存性逆転確認**
+
 ```bash
 # 各リポジトリ実装でドメインインターフェースを実装しているか確認
 # 例：PromptRepository（ドメイン）← TursoPromptRepository（インフラ）
@@ -2317,6 +2516,7 @@ done
 #### 🟢 低優先修正（Phase 3.5-3.6 で実施）
 
 **6. 例外処理の統一**
+
 ```bash
 # 各ドメインの例外を統一的に管理
 backend/src/domain/prompt/exceptions.py
@@ -2325,6 +2525,7 @@ backend/src/domain/evaluation/exceptions.py
 ```
 
 **7. Presentationレイヤーの境界づけられたコンテキスト対応**
+
 ```bash
 # API層も各ドメイン別に分離
 backend/src/presentation/api/v1/prompt/
@@ -2384,6 +2585,7 @@ echo "🎯 DDD Compliance Score: [計算結果]"
 ### 📊 総合テスト戦略
 
 #### 🤖 LLM特化テストピラミッド
+
 ```
                 🔺 LLM System Tests (3%)
             🔺🔺 E2E Tests (7%)
@@ -2393,56 +2595,63 @@ echo "🎯 DDD Compliance Score: [計算結果]"
 ```
 
 #### 🧪 LLM対応テスト環境設定
+
 **1. LLM テスト基盤設定**
+
 - RAGAS ライブラリ統合設定
 - LLM品質評価用テストフレームワーク設定
 - テスト用LLMプロバイダー設定
 
 **2. 非決定的テスト環境設定**
+
 - LLM出力テスト用モック設定
 - 再実行戦略設定（pytest-rerunfailures）
 - タイムアウト管理設定
 
 **3. LLM統合テスト環境**
+
 - LLM API統合テスト設定
 - テスト用APIキー管理
 - LLMレスポンス検証基盤設定
 
 ### 品質メトリクス (強化版)
 
-| カテゴリ | 指標 | 目標値 | 測定方法 | 優先度 |
-|----------|------|--------|----------|--------|
-| **テスト品質** | 総合カバレッジ | 80%+ | pytest-cov | 🔴 |
-| | LLM品質テスト | faithfulness >0.8 | RAGAS + LangSmith | 🔴 |
-| | フレーキーテスト率 | <2% | CI/CD統計 | 🟡 |
-| **型安全性** | mypy strict エラー | 0件 | mypy 1.13.0 | 🔴 |
-| | Pydantic バリデーション | 100%適用 | 設計レビュー | 🟡 |
-| **コード品質** | Ruff品質スコア | A評価 | ruff 0.7.4 | 🟡 |
-| | 循環複雑度 | <10 | radon | 🟡 |
-| **パフォーマンス** | API レスポンス時間 | <200ms (P95) | 負荷テスト | 🔴 |
-| | ベクトル検索時間 | <50ms (P95) | libSQL Vector | 🔴 |
-| | Python 3.13最適化 | 10-15%向上 | ベンチマーク | 🟡 |
-| **セキュリティ** | 脆弱性 (High/Critical) | 0件 | bandit + semgrep | 🔴 |
-| | ゼロトラスト準拠 | NIST SP 800-207 | セキュリティ監査 | 🔴 |
-| | データ暗号化 | AES-256-GCM | 設計検証 | 🔴 |
-| **アーキテクチャ** | Clean Architecture準拠 | 依存関係ルール遵守 | 静的解析 | 🟡 |
-| | DDD境界コンテキスト | 明確に定義済み | ドメイン分析 | 🟡 |
+| カテゴリ           | 指標                    | 目標値             | 測定方法          | 優先度 |
+| ------------------ | ----------------------- | ------------------ | ----------------- | ------ |
+| **テスト品質**     | 総合カバレッジ          | 80%+               | pytest-cov        | 🔴     |
+|                    | LLM品質テスト           | faithfulness >0.8  | RAGAS + LangSmith | 🔴     |
+|                    | フレーキーテスト率      | <2%                | CI/CD統計         | 🟡     |
+| **型安全性**       | mypy strict エラー      | 0件                | mypy 1.13.0       | 🔴     |
+|                    | Pydantic バリデーション | 100%適用           | 設計レビュー      | 🟡     |
+| **コード品質**     | Ruff品質スコア          | A評価              | ruff 0.7.4        | 🟡     |
+|                    | 循環複雑度              | <10                | radon             | 🟡     |
+| **パフォーマンス** | API レスポンス時間      | <200ms (P95)       | 負荷テスト        | 🔴     |
+|                    | ベクトル検索時間        | <50ms (P95)        | libSQL Vector     | 🔴     |
+|                    | Python 3.13最適化       | 10-15%向上         | ベンチマーク      | 🟡     |
+| **セキュリティ**   | 脆弱性 (High/Critical)  | 0件                | bandit + semgrep  | 🔴     |
+|                    | ゼロトラスト準拠        | NIST SP 800-207    | セキュリティ監査  | 🔴     |
+|                    | データ暗号化            | AES-256-GCM        | 設計検証          | 🔴     |
+| **アーキテクチャ** | Clean Architecture準拠  | 依存関係ルール遵守 | 静的解析          | 🟡     |
+|                    | DDD境界コンテキスト     | 明確に定義済み     | ドメイン分析      | 🟡     |
 
 ### システム統合検証
 
 #### パフォーマンステスト
+
 - [ ] 同時接続数テスト（1000+ WebSocket）
 - [ ] スループットテスト（1000 req/sec）
 - [ ] レスポンス時間測定（P50, P95, P99）
 - [ ] リソース使用量測定（CPU, Memory）
 
 #### セキュリティテスト
+
 - [ ] 認証・認可テスト
 - [ ] SQL インジェクション対策検証
 - [ ] CORS 設定検証
 - [ ] レート制限テスト
 
 #### 可用性テスト
+
 - [ ] データベース障害時復旧テスト
 - [ ] Redis 障害時フォールバックテスト
 - [ ] LLM プロバイダー障害時処理テスト
@@ -2451,12 +2660,14 @@ echo "🎯 DDD Compliance Score: [計算結果]"
 ### 🎯 最終成功基準
 
 **技術的指標**
+
 - [ ] 全自動テストスイート PASS
 - [ ] Docker環境での完全起動
 - [ ] CI/CD パイプライン成功
 - [ ] セキュリティスキャン クリア
 
 **DDD準拠指標**
+
 - [ ] **境界づけられたコンテキスト独立性**: 各ドメインが完全に独立
 - [ ] **ドメインイベント所有**: 各コンテキストが自身のイベントを所有
 - [ ] **依存性逆転原則**: ドメイン→インフラ依存なし
@@ -2467,6 +2678,7 @@ echo "🎯 DDD Compliance Score: [計算結果]"
 - [ ] **Application Service境界**: ドメインサービス調整の明確化
 
 **業務指標**
+
 - [ ] 主要ユースケースの動作確認
 - [ ] プロンプト最適化機能検証
 - [ ] 評価エンジン動作確認
@@ -2477,18 +2689,21 @@ echo "🎯 DDD Compliance Score: [計算結果]"
 ## 📝 実装時の注意点
 
 ### 🎯 エージェント連携原則
+
 1. **明確な責任分離**: 各エージェントの専門領域を尊重
 2. **品質ゲート必須**: 各ステップで品質基準をクリア
 3. **ドキュメント優先**: コードと同時にドキュメント更新
 4. **テスト駆動**: 実装前にテスト設計
 
 ### ⚡ パフォーマンス重視
+
 - **非同期処理**: FastAPIの非同期機能フル活用
 - **データベース最適化**: インデックス設計とクエリ最適化
 - **キャッシング戦略**: Redis活用による高速化
 - **ベクトル検索最適化**: libSQL Vector の効率的利用
 
 ### 🔒 セキュリティファースト
+
 - **ゼロトラスト原則**: 全API呼び出しで認証・認可確認
 - **データ暗号化**: 保存・転送時の暗号化
 - **入力検証**: Pydantic による厳密なバリデーション
@@ -2501,6 +2716,7 @@ echo "🎯 DDD Compliance Score: [計算結果]"
 Phase 3完了時点で、以下の状態が達成されている：
 
 ### 📋 成果物チェックリスト
+
 - [ ] **アーキテクチャドキュメント**: 設計原則と実装指針
 - [ ] **ドメイン層**: ビジネスロジックの完全実装
 - [ ] **アプリケーション層**: CQRS + イベント処理
@@ -2513,21 +2729,25 @@ Phase 3完了時点で、以下の状態が達成されている：
 - [ ] **セキュリティ**: 認証・認可・暗号化実装
 
 ### 🚀 次フェーズへの準備
+
 Phase 3完了により、以下の基盤が整備される：
 
 **技術基盤**
+
 - エンタープライズグレードのバックエンドアーキテクチャ
 - 高パフォーマンスなAPI基盤
 - スケーラブルなデータ管理システム
 - 包括的な品質保証体制
 
 **開発体制**
+
 - エージェント連携による効率的開発フロー
 - 自動化された品質ゲート
 - 継続的インテグレーション・デプロイメント
 - 包括的なテスト戦略
 
-これらの基盤の上に、Phase 4以降でフロントエンド統合、高度なAI機能、運用監視機能を構築していく準備が整います。
+これらの基盤の上に、Phase
+4以降でフロントエンド統合、高度なAI機能、運用監視機能を構築していく準備が整います。
 
 ---
 
@@ -2535,21 +2755,21 @@ Phase 3完了により、以下の基盤が整備される：
 
 ### 🚀 パフォーマンス向上予測
 
-| 改善領域 | 改善前 | 改善後 | 向上率 | 主要因 |
-|----------|--------|--------|--------|--------|
-| **API応答速度** | ~300ms | <200ms (P95) | 33%+ | Python 3.13 + Eager Task Factory |
-| **ベクトル検索** | ~200ms | <50ms (P95) | 75%+ | libSQL Vector DiskANN + 圧縮最適化 |
-| **テスト実行** | 10分 | 5分 | 50%+ | 並列実行 + フレーキーテスト対策 |
-| **開発速度** | ベースライン | +40% | 40%+ | 現代的ツール + 型安全性 |
+| 改善領域         | 改善前       | 改善後       | 向上率 | 主要因                             |
+| ---------------- | ------------ | ------------ | ------ | ---------------------------------- |
+| **API応答速度**  | ~300ms       | <200ms (P95) | 33%+   | Python 3.13 + Eager Task Factory   |
+| **ベクトル検索** | ~200ms       | <50ms (P95)  | 75%+   | libSQL Vector DiskANN + 圧縮最適化 |
+| **テスト実行**   | 10分         | 5分          | 50%+   | 並列実行 + フレーキーテスト対策    |
+| **開発速度**     | ベースライン | +40%         | 40%+   | 現代的ツール + 型安全性            |
 
 ### 🛡️ 品質・信頼性向上
 
-| 品質指標 | 改善前 | 改善後 | 効果 |
-|----------|--------|--------|------|
-| **セキュリティ脆弱性** | 未対応 | ゼロトラスト準拠 | 90%+リスク削減 |
-| **LLM出力品質** | 未測定 | faithfulness >0.8 | 信頼性向上 |
-| **運用トラブル** | 頻発 | 予防的監視 | 70%削減 |
-| **デバッグ時間** | 長時間 | 構造化ログ | 60%短縮 |
+| 品質指標               | 改善前 | 改善後            | 効果           |
+| ---------------------- | ------ | ----------------- | -------------- |
+| **セキュリティ脆弱性** | 未対応 | ゼロトラスト準拠  | 90%+リスク削減 |
+| **LLM出力品質**        | 未測定 | faithfulness >0.8 | 信頼性向上     |
+| **運用トラブル**       | 頻発   | 予防的監視        | 70%削減        |
+| **デバッグ時間**       | 長時間 | 構造化ログ        | 60%短縮        |
 
 ### 💰 運用コスト最適化
 
@@ -2562,15 +2782,17 @@ Phase 3完了により、以下の基盤が整備される：
 
 ## 🏆 最終評価：エンタープライズグレード準拠確認
 
-✅ **技術的卓越性**: 最新技術スタック + モダンアーキテクチャ
-✅ **セキュリティ・コンプライアンス**: NIST準拠ゼロトラスト実装
-✅ **スケーラビリティ**: マイクロサービス対応アーキテクチャ
-✅ **運用性**: 包括的観測可能性 + 自動化CI/CD
-✅ **品質保証**: 80%+テストカバレッジ + LLM特化テスト
-✅ **パフォーマンス**: <200ms API応答 + <50msベクトル検索
+✅ **技術的卓越性**: 最新技術スタック + モダンアーキテクチャ ✅
+**セキュリティ・コンプライアンス**: NIST準拠ゼロトラスト実装✅
+**スケーラビリティ**: マイクロサービス対応アーキテクチャ ✅
+**運用性**: 包括的観測可能性 + 自動化CI/CD ✅ **品質保証**:
+80%+テストカバレッジ + LLM特化テスト✅ **パフォーマンス**: <200ms API応答 +
+<50msベクトル検索
 
-**総合評価**: **A+ グレード** - 2025年のエンタープライズAIシステム開発環境基盤として最適
+**総合評価**: **A+ グレード** -
+2025年のエンタープライズAIシステム開発環境基盤として最適
 
-**重要:** 本環境構築完了後、実装フェーズでは詳細な要件定義を実施し、具体的なAPIやビジネスロジックを設計・実装します。
+**重要:**
+本環境構築完了後、実装フェーズでは詳細な要件定義を実施し、具体的なAPIやビジネスロジックを設計・実装します。
 
 **次フェーズ準備完了**: 環境基盤整備により、効率的な実装フェーズへの移行が可能

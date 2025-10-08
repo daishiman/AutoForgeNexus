@@ -2,17 +2,17 @@ name: Frontend CI/CD Pipeline - Optimized
 
 on:
   push:
-    branches: [main, develop, 'feature/autoforge-*']
+    branches: [main, develop, "feature/autoforge-*"]
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
-      - 'package.json'
-      - 'pnpm-workspace.yaml'
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
   pull_request:
     branches: [main, develop]
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
 
 # Global optimization settings
 concurrency:
@@ -27,8 +27,8 @@ permissions:
   checks: write
 
 env:
-  NODE_VERSION: '22'
-  PNPM_VERSION: '9'
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
 
 jobs:
   # Shared setup for all jobs
@@ -36,10 +36,10 @@ jobs:
     name: 🔧 Setup Environment
     uses: ./.github/workflows/shared-setup-node.yml
     with:
-      node-version: '22'
-      pnpm-version: '9'
-      working-directory: './frontend'
-      cache-key-suffix: '-frontend'
+      node-version: "22"
+      pnpm-version: "9"
+      working-directory: "./frontend"
+      cache-key-suffix: "-frontend"
       install-playwright: true
 
   # Parallel quality checks with matrix strategy
@@ -55,17 +55,17 @@ jobs:
         check-type: [lint, type-check, build-check]
         include:
           - check-type: lint
-            command: 'pnpm lint'
-            name: 'ESLint Analysis'
+            command: "pnpm lint"
+            name: "ESLint Analysis"
           - check-type: format
-            command: 'pnpm prettier --check .'
-            name: 'Prettier Format Check'
+            command: "pnpm prettier --check ."
+            name: "Prettier Format Check"
           - check-type: type-check
-            command: 'pnpm type-check'
-            name: 'TypeScript Type Check'
+            command: "pnpm type-check"
+            name: "TypeScript Type Check"
           - check-type: build-check
-            command: 'pnpm build && npx size-limit || true'
-            name: 'Build & Bundle Size Check'
+            command: "pnpm build && npx size-limit || true"
+            name: "Build & Bundle Size Check"
 
     defaults:
       run:
@@ -77,17 +77,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 📦 Setup pnpm  # 必要最小限のセットアップ
+      - name: 📦 Setup pnpm # 必要最小限のセットアップ
         uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: 🟢 Setup Node.js  # 必要最小限のセットアップ
+      - name: 🟢 Setup Node.js # 必要最小限のセットアップ
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: './frontend/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: 📦 Install dependencies
         run: |
@@ -114,13 +114,13 @@ jobs:
         test-type: [unit, e2e]
         include:
           - test-type: unit
-            command: 'pnpm test:ci --coverage'
-            coverage-flag: 'unit'
-            artifacts: 'coverage/'
+            command: "pnpm test:ci --coverage"
+            coverage-flag: "unit"
+            artifacts: "coverage/"
           - test-type: e2e
-            command: 'pnpm build && pnpm test:e2e:ci'
-            coverage-flag: 'e2e'
-            artifacts: 'playwright-report/ test-results/'
+            command: "pnpm build && pnpm test:e2e:ci"
+            coverage-flag: "e2e"
+            artifacts: "playwright-report/ test-results/"
 
     defaults:
       run:
@@ -132,17 +132,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 📦 Setup pnpm  # 必要最小限のセットアップ
+      - name: 📦 Setup pnpm # 必要最小限のセットアップ
         uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: 🟢 Setup Node.js  # 必要最小限のセットアップ
+      - name: 🟢 Setup Node.js # 必要最小限のセットアップ
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: './frontend/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: 📦 Install dependencies
         run: |
@@ -182,9 +182,9 @@ jobs:
       !failure() &&
       (vars.CURRENT_PHASE >= 3 || github.event_name == 'workflow_dispatch')
     with:
-      build-type: 'frontend'
-      working-directory: './frontend'
-      build-command: 'pnpm build'
+      build-type: "frontend"
+      working-directory: "./frontend"
+      build-command: "pnpm build"
       artifact-paths: |
         frontend/.next/
         frontend/out/
@@ -240,7 +240,7 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           runs: 3
-          configPath: './lighthouse.ci.json'
+          configPath: "./lighthouse.ci.json"
 
       - name: 📊 Bundle analysis
         run: |

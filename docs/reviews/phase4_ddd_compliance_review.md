@@ -1,9 +1,8 @@
 # Phase 4 DDD Compliance Review
 
-**プロジェクト**: AutoForgeNexus
-**レビュー実施日**: 2025-10-01
-**レビュー対象**: Phase 4 データベース実装 (Backend)
-**レビュアー**: domain-modeller Agent (Claude Opus 4.1)
+**プロジェクト**: AutoForgeNexus **レビュー実施日**: 2025-10-01
+**レビュー対象**: Phase 4 データベース実装 (Backend) **レビュアー**:
+domain-modeller Agent (Claude Opus 4.1)
 
 ---
 
@@ -11,9 +10,11 @@
 
 ### 🎯 総合評価: **C+ (65/100点)**
 
-AutoForgeNexusのPhase 4実装は、**DDD準拠を主張しているものの、実装レベルでは多くの重要な原則が欠如または不完全**です。
+AutoForgeNexusのPhase
+4実装は、**DDD準拠を主張しているものの、実装レベルでは多くの重要な原則が欠如または不完全**です。
 
 **重大な発見**:
+
 - ✅ ドメインモデルとインフラストラクチャの物理的分離は達成
 - ⚠️ 集約ルート（Aggregate Root）の概念が未実装
 - ⚠️ リポジトリパターンが完全に欠落
@@ -21,7 +22,8 @@ AutoForgeNexusのPhase 4実装は、**DDD準拠を主張しているものの、
 - ⚠️ アンチコラプションレイヤーが存在しない
 - ✅ 値オブジェクトは適切に実装されている
 
-**結論**: 現在の実装は「DDDスタイルのレイヤード・アーキテクチャ」に近く、真のDomain-Driven Designとは言えない。Phase 5移行前に構造的リファクタリングが必須。
+**結論**: 現在の実装は「DDDスタイルのレイヤード・アーキテクチャ」に近く、真のDomain-Driven
+Designとは言えない。Phase 5移行前に構造的リファクタリングが必須。
 
 ---
 
@@ -32,6 +34,7 @@ AutoForgeNexusのPhase 4実装は、**DDD準拠を主張しているものの、
 #### ✅ 強み
 
 **物理的なディレクトリ構造による分離**:
+
 ```
 backend/src/domain/
 ├── prompt/              # Prompt Context (コアドメイン)
@@ -43,6 +46,7 @@ backend/src/domain/
 ```
 
 **メモリに記録された明確なコンテキスト定義**:
+
 - Prompt Context: プロンプト作成・編集・バージョン管理
 - Evaluation Context: 多層評価メトリクス・A/Bテスト
 - LLM Integration Context: マルチプロバイダー管理（100+）
@@ -52,6 +56,7 @@ backend/src/domain/
 #### ⚠️ 問題点
 
 **1. コンテキストマップの欠如**
+
 ```diff
 - コンテキスト間の関係性が文書化されていない
 - Upstream/Downstream関係が不明
@@ -59,6 +64,7 @@ backend/src/domain/
 ```
 
 **2. ユビキタス言語の文書化不足**
+
 ```python
 # 現状: コード内に散在
 class Prompt:  # "Prompt"の定義が曖昧
@@ -74,6 +80,7 @@ Ubiquitous Language - Prompt Context:
 ```
 
 **3. インフラ層でのコンテキスト分離が不完全**
+
 ```python
 # backend/src/infrastructure/prompt/models/prompt_model.py
 # backend/src/infrastructure/evaluation/models/evaluation_model.py
@@ -89,36 +96,41 @@ class EvaluationModel:
 
 #### 📊 コンテキスト分離スコア
 
-| 観点 | スコア | 備考 |
-|------|--------|------|
-| 物理的分離 | 9/10 | ディレクトリ構造は適切 |
-| 論理的独立性 | 7/10 | 一部で依存関係が強い |
-| ユビキタス言語 | 6/10 | 暗黙的に存在、文書化不足 |
-| コンテキストマップ | 3/10 | 存在しない |
+| 観点               | スコア | 備考                     |
+| ------------------ | ------ | ------------------------ |
+| 物理的分離         | 9/10   | ディレクトリ構造は適切   |
+| 論理的独立性       | 7/10   | 一部で依存関係が強い     |
+| ユビキタス言語     | 6/10   | 暗黙的に存在、文書化不足 |
+| コンテキストマップ | 3/10   | 存在しない               |
 
 #### 🔧 改善推奨
 
 **推奨1: Context Mapping Canvasの作成**
+
 ```markdown
 # docs/architecture/context_map.md
 
 ## Prompt Context (コアドメイン)
+
 - Upstream: なし
 - Downstream: Evaluation Context, LLM Integration Context
 - 関係性: Open Host Service (REST API公開)
 
 ## Evaluation Context (コアドメイン)
+
 - Upstream: Prompt Context
 - Downstream: なし
 - 関係性: Customer/Supplier (プロンプトIDで参照)
 
 ## LLM Integration Context (サポートドメイン)
+
 - Upstream: Prompt Context
 - Downstream: なし
 - 関係性: Anti-Corruption Layer必須（外部API統合）
 ```
 
 **推奨2: Ubiquitous Language Glossaryの整備**
+
 ```yaml
 # .claude/ubiquitous_language.yml
 prompt_context:
@@ -158,6 +170,7 @@ class Prompt:  # ❌ 単なるエンティティ、集約ルートではない
 ```
 
 **期待される集約ルート実装**:
+
 ```python
 from abc import ABC
 from src.domain.shared.base_entity import AggregateRoot
@@ -204,6 +217,7 @@ class PromptAggregate(AggregateRoot):
 #### ⚠️ 集約境界の問題
 
 **1. トランザクション境界が不明確**
+
 ```python
 # 現状: 集約境界なしの自由なデータアクセス
 prompt = session.query(PromptModel).get(prompt_id)
@@ -218,6 +232,7 @@ evaluation_repo.save(evaluation_aggregate)  # ✅ 別トランザクション
 ```
 
 **2. 集約サイズのガイドラインなし**
+
 ```python
 # backend/src/domain/prompt/entities/prompt.py
 class Prompt:
@@ -227,6 +242,7 @@ class Prompt:
 ```
 
 **期待される設計**:
+
 ```python
 class PromptAggregate(AggregateRoot):
     MAX_HISTORY_IN_MEMORY = 10  # 最新10件のみメモリ保持
@@ -238,17 +254,18 @@ class PromptAggregate(AggregateRoot):
 
 #### 📊 集約設計スコア
 
-| 観点 | スコア | 備考 |
-|------|--------|------|
-| 集約ルート識別 | 2/10 | 概念が欠落 |
-| トランザクション境界 | 4/10 | 暗黙的に分離されているが保証なし |
-| 不変条件維持 | 5/10 | 一部の値オブジェクトで実装 |
-| 集約サイズ管理 | 3/10 | ガイドラインなし |
-| イベント駆動設計 | 6/10 | イベント定義はあるが活用されていない |
+| 観点                 | スコア | 備考                                 |
+| -------------------- | ------ | ------------------------------------ |
+| 集約ルート識別       | 2/10   | 概念が欠落                           |
+| トランザクション境界 | 4/10   | 暗黙的に分離されているが保証なし     |
+| 不変条件維持         | 5/10   | 一部の値オブジェクトで実装           |
+| 集約サイズ管理       | 3/10   | ガイドラインなし                     |
+| イベント駆動設計     | 6/10   | イベント定義はあるが活用されていない |
 
 #### 🔧 改善推奨
 
 **推奨1: AggregateRoot基底クラスの実装**
+
 ```python
 # backend/src/domain/shared/base_entity.py
 
@@ -295,6 +312,7 @@ class AggregateRoot(ABC, Generic[T]):
 ```
 
 **推奨2: Prompt集約の再設計**
+
 ```python
 # backend/src/domain/prompt/aggregates/prompt_aggregate.py
 
@@ -407,6 +425,7 @@ class PromptAggregate(AggregateRoot[PromptId]):
 ```
 
 **推奨3: Evaluation集約の定義**
+
 ```python
 # backend/src/domain/evaluation/aggregates/evaluation_aggregate.py
 
@@ -472,6 +491,7 @@ class EvaluationAggregate(AggregateRoot[EvaluationId]):
 #### ✅ 強み
 
 **適切な不変性実装**:
+
 ```python
 # backend/src/domain/prompt/value_objects/prompt_content.py
 
@@ -498,6 +518,7 @@ class PromptContent:
 ```
 
 **構造的等価性**:
+
 ```python
 # dataclass(frozen=True)により自動実装
 content1 = PromptContent(template="Hello {name}", variables=["name"])
@@ -510,6 +531,7 @@ assert content1 is not content2  # ✅ 異なるオブジェクト
 #### ⚠️ 問題点
 
 **1. 一部の値オブジェクトが可変**
+
 ```python
 # backend/src/domain/prompt/value_objects/prompt_metadata.py
 
@@ -536,6 +558,7 @@ class UserInput:  # ❌ dataclass(frozen=True)がない
 ```
 
 **期待される実装**:
+
 ```python
 @dataclass(frozen=True)
 class UserInput:
@@ -552,6 +575,7 @@ class UserInput:
 ```
 
 **2. ドメイン固有の値オブジェクトが不足**
+
 ```python
 # 現状: プリミティブ型を直接使用
 class Prompt:
@@ -591,17 +615,18 @@ class UserId:
 
 #### 📊 値オブジェクトスコア
 
-| 観点 | スコア | 備考 |
-|------|--------|------|
-| 不変性実装 | 9/10 | PromptContent, PromptMetadataは適切 |
-| バリデーション | 8/10 | __post_init__で実装 |
-| ビジネスロジック | 7/10 | format()などのメソッドあり |
-| ドメイン固有型 | 5/10 | ID系が未実装 |
-| 構造的等価性 | 10/10 | dataclassで自動実装 |
+| 観点             | スコア | 備考                                |
+| ---------------- | ------ | ----------------------------------- |
+| 不変性実装       | 9/10   | PromptContent, PromptMetadataは適切 |
+| バリデーション   | 8/10   | **post_init**で実装                 |
+| ビジネスロジック | 7/10   | format()などのメソッドあり          |
+| ドメイン固有型   | 5/10   | ID系が未実装                        |
+| 構造的等価性     | 10/10  | dataclassで自動実装                 |
 
 #### 🔧 改善推奨
 
 **推奨1: ID系値オブジェクトの実装**
+
 ```python
 # backend/src/domain/shared/value_objects/identifiers.py
 
@@ -651,6 +676,7 @@ def get_prompt(prompt_id: PromptId) -> PromptAggregate:
 ```
 
 **推奨2: Money Patternの適用**
+
 ```python
 # backend/src/domain/shared/value_objects/money.py
 
@@ -705,6 +731,7 @@ print(total_cost)  # "0.0100 USD"
 #### ✅ 強み
 
 **基本的なイベント構造は実装済み**:
+
 ```python
 # backend/src/domain/shared/events/domain_event.py
 
@@ -739,6 +766,7 @@ class DomainEvent:
 ```
 
 **具体的なイベント定義**:
+
 ```python
 # backend/src/domain/prompt/events/prompt_created.py
 
@@ -767,6 +795,7 @@ class PromptCreatedEvent(DomainEvent):
 ```
 
 **EventStoreインターフェース定義**:
+
 ```python
 # backend/src/domain/shared/events/event_store.py
 
@@ -789,6 +818,7 @@ class EventStore(ABC):
 #### ❌ 致命的な問題
 
 **1. イベント駆動アーキテクチャが機能していない**
+
 ```python
 # 現状: イベント定義はあるが、使用されていない
 
@@ -815,6 +845,7 @@ class PromptAggregate(AggregateRoot):
 ```
 
 **2. EventBus実装が空**
+
 ```python
 # backend/src/domain/shared/events/event_bus.py
 
@@ -834,6 +865,7 @@ class EventBus(ABC):
 ```
 
 **期待される実装**:
+
 ```python
 # backend/src/infrastructure/events/redis_event_bus.py
 
@@ -881,6 +913,7 @@ class RedisEventBus(EventBus):
 ```
 
 **3. Event Sourcing実装が不完全**
+
 ```python
 # backend/src/domain/shared/events/event_store.py
 
@@ -900,6 +933,7 @@ class InMemoryEventStore(EventStore):
 ```
 
 **期待される実装**:
+
 ```python
 # backend/src/infrastructure/events/turso_event_store.py
 
@@ -992,18 +1026,19 @@ class PromptAggregate(AggregateRoot):
 
 #### 📊 イベント駆動設計スコア
 
-| 観点 | スコア | 備考 |
-|------|--------|------|
-| イベント定義 | 8/10 | 基本構造は適切 |
-| イベント発行 | 2/10 | エンティティから発行されていない |
-| EventBus実装 | 0/10 | インターフェースのみ |
-| EventStore実装 | 3/10 | InMemoryのみ、本番用なし |
-| Event Sourcing | 4/10 | 再構成メソッドなし |
-| 非同期処理 | 0/10 | 未実装 |
+| 観点           | スコア | 備考                             |
+| -------------- | ------ | -------------------------------- |
+| イベント定義   | 8/10   | 基本構造は適切                   |
+| イベント発行   | 2/10   | エンティティから発行されていない |
+| EventBus実装   | 0/10   | インターフェースのみ             |
+| EventStore実装 | 3/10   | InMemoryのみ、本番用なし         |
+| Event Sourcing | 4/10   | 再構成メソッドなし               |
+| 非同期処理     | 0/10   | 未実装                           |
 
 #### 🔧 改善推奨
 
 **推奨1: 集約からのイベント発行パターン**
+
 ```python
 # backend/src/domain/prompt/aggregates/prompt_aggregate.py
 
@@ -1030,6 +1065,7 @@ class PromptAggregate(AggregateRoot):
 ```
 
 **推奨2: リポジトリでのイベント永続化**
+
 ```python
 # backend/src/infrastructure/prompt/repositories/prompt_repository.py
 
@@ -1074,6 +1110,7 @@ class PromptRepository:
 ```
 
 **推奨3: イベントハンドラー登録**
+
 ```python
 # backend/src/application/prompt/event_handlers/prompt_event_handlers.py
 
@@ -1150,6 +1187,7 @@ backend/src/domain/shared/base_repository.py # ❌ 空ファイル
 ```
 
 **テストコードでのデータアクセスパターン**:
+
 ```python
 # backend/tests/integration/database/test_database_connection.py
 
@@ -1170,6 +1208,7 @@ def test_read_prompt(self, db_session):
 ```
 
 **問題点**:
+
 1. ドメイン層がインフラ層（SQLAlchemy）に依存
 2. テスタビリティが低い（モック困難）
 3. データアクセスロジックが散在
@@ -1177,17 +1216,18 @@ def test_read_prompt(self, db_session):
 
 #### 📊 リポジトリパターンスコア
 
-| 観点 | スコア | 備考 |
-|------|--------|------|
-| インターフェース定義 | 0/10 | 存在しない |
-| 実装クラス | 0/10 | 存在しない |
-| 集約単位アクセス | 0/10 | 直接クエリ |
-| テスタビリティ | 2/10 | モック困難 |
-| ドメイン/インフラ分離 | 3/10 | 混在している |
+| 観点                  | スコア | 備考         |
+| --------------------- | ------ | ------------ |
+| インターフェース定義  | 0/10   | 存在しない   |
+| 実装クラス            | 0/10   | 存在しない   |
+| 集約単位アクセス      | 0/10   | 直接クエリ   |
+| テスタビリティ        | 2/10   | モック困難   |
+| ドメイン/インフラ分離 | 3/10   | 混在している |
 
 #### 🔧 改善推奨（最優先）
 
 **推奨1: リポジトリインターフェース定義**
+
 ```python
 # backend/src/domain/prompt/repositories/prompt_repository.py
 
@@ -1274,6 +1314,7 @@ class PromptRepository(ABC):
 ```
 
 **推奨2: SQLAlchemy実装**
+
 ```python
 # backend/src/infrastructure/prompt/repositories/sqlalchemy_prompt_repository.py
 
@@ -1461,6 +1502,7 @@ class RepositoryError(Exception):
 ```
 
 **推奨3: アプリケーション層での使用**
+
 ```python
 # backend/src/application/prompt/command_handlers/create_prompt_handler.py
 
@@ -1513,6 +1555,7 @@ class CreatePromptHandler:
 ```
 
 **推奨4: テストでのモック使用**
+
 ```python
 # backend/tests/unit/application/test_create_prompt_handler.py
 
@@ -1560,6 +1603,7 @@ def test_create_prompt_handler():
 #### ✅ 強み
 
 **コード内での一貫した用語使用**:
+
 ```python
 # ドメイン層での用語統一
 Prompt, PromptContent, PromptMetadata  # ✅ "Prompt"で統一
@@ -1568,6 +1612,7 @@ UserInput, UserId                       # ✅ "User"で統一
 ```
 
 **日本語ドキュメント**:
+
 ```python
 """
 Promptエンティティ
@@ -1581,6 +1626,7 @@ Promptエンティティ
 #### ⚠️ 問題点
 
 **1. 用語の定義が文書化されていない**
+
 ```diff
 - Promptとは何か？（テンプレート？指示？会話？）
 - Versionとは？（Git風？セマンティック？タイムスタンプ？）
@@ -1588,6 +1634,7 @@ Promptエンティティ
 ```
 
 **2. コンテキストごとの用語の違いが不明**
+
 ```python
 # Prompt Context
 class Prompt:
@@ -1602,6 +1649,7 @@ class EvaluationModel:
 ```
 
 **3. 英語/日本語の混在**
+
 ```python
 # コード: 英語
 class PromptAggregate:
@@ -1618,16 +1666,17 @@ class PromptAggregate:
 
 #### 📊 ユビキタス言語スコア
 
-| 観点 | スコア | 備考 |
-|------|--------|------|
-| 用語の一貫性 | 8/10 | コード内は統一されている |
-| 用語の定義 | 5/10 | 暗黙的、文書化不足 |
-| ドキュメント整備 | 6/10 | コメントはあるが用語集なし |
-| ステークホルダー共有 | 4/10 | 技術用語のみ |
+| 観点                 | スコア | 備考                       |
+| -------------------- | ------ | -------------------------- |
+| 用語の一貫性         | 8/10   | コード内は統一されている   |
+| 用語の定義           | 5/10   | 暗黙的、文書化不足         |
+| ドキュメント整備     | 6/10   | コメントはあるが用語集なし |
+| ステークホルダー共有 | 4/10   | 技術用語のみ               |
 
 #### 🔧 改善推奨
 
 **推奨1: Ubiquitous Language Glossaryの作成**
+
 ```yaml
 # docs/ubiquitous_language.yml
 
@@ -1655,8 +1704,7 @@ prompt_context:
 
     - term: Template (テンプレート)
       definition: >
-        {{変数名}}プレースホルダーを含むプロンプト本文。
-        Jinja2風の記法を採用。
+        {{変数名}}プレースホルダーを含むプロンプト本文。 Jinja2風の記法を採用。
       code: PromptContent.template
 
     - term: User Input (ユーザー入力)
@@ -1685,8 +1733,7 @@ evaluation_context:
 
     - term: Test Result (テスト結果)
       definition: >
-        単一テストケースの実行結果。
-        入力、期待出力、実際の出力、スコアを含む。
+        単一テストケースの実行結果。 入力、期待出力、実際の出力、スコアを含む。
       code: TestResult
       belongs_to: EvaluationAggregate
 
@@ -1707,8 +1754,7 @@ shared_kernel:
   terms:
     - term: Domain Event (ドメインイベント)
       definition: >
-        ドメイン内で発生した重要な出来事。
-        過去形で命名（例: PromptCreated）。
+        ドメイン内で発生した重要な出来事。 過去形で命名（例: PromptCreated）。
       code: DomainEvent
 
     - term: Aggregate Root (集約ルート)
@@ -1722,6 +1768,7 @@ shared_kernel:
 ```
 
 **推奨2: コンテキストマップでの用語マッピング**
+
 ```markdown
 # docs/architecture/context_mapping.md
 
@@ -1729,17 +1776,17 @@ shared_kernel:
 
 ### Prompt Context → Evaluation Context
 
-| Prompt Context | Evaluation Context | 変換ルール |
-|----------------|-------------------|----------|
-| Prompt (プロンプト) | Test Target (テスト対象) | prompt_id で参照 |
-| PromptVersion | Evaluated Version | version 番号で特定 |
+| Prompt Context      | Evaluation Context       | 変換ルール         |
+| ------------------- | ------------------------ | ------------------ |
+| Prompt (プロンプト) | Test Target (テスト対象) | prompt_id で参照   |
+| PromptVersion       | Evaluated Version        | version 番号で特定 |
 
 ### Evaluation Context → LLM Integration Context
 
-| Evaluation Context | LLM Context | 変換ルール |
-|-------------------|-------------|----------|
-| Evaluation Request | Generation Request | prompt + parameters |
-| Test Result | Generation Response | response + metadata |
+| Evaluation Context | LLM Context         | 変換ルール          |
+| ------------------ | ------------------- | ------------------- |
+| Evaluation Request | Generation Request  | prompt + parameters |
+| Test Result        | Generation Response | response + metadata |
 ```
 
 ---
@@ -1764,6 +1811,7 @@ response = openai.ChatCompletion.create(...)  # OpenAI固有の構造
 ```
 
 **期待される設計**:
+
 ```python
 # backend/src/domain/llm_integration/services/llm_service.py
 
@@ -1855,16 +1903,17 @@ class OpenAIAdapter(LLMService):
 
 #### 📊 ACLスコア
 
-| 観点 | スコア | 備考 |
-|------|--------|------|
-| 外部API隔離 | 0/10 | 直接呼び出し |
-| モデル変換 | 2/10 | 変換層なし |
-| エラーハンドリング | 3/10 | ドメイン例外なし |
-| テスタビリティ | 2/10 | モック困難 |
+| 観点               | スコア | 備考             |
+| ------------------ | ------ | ---------------- |
+| 外部API隔離        | 0/10   | 直接呼び出し     |
+| モデル変換         | 2/10   | 変換層なし       |
+| エラーハンドリング | 3/10   | ドメイン例外なし |
+| テスタビリティ     | 2/10   | モック困難       |
 
 #### 🔧 改善推奨
 
 **推奨1: LLMプロバイダーACLの実装**
+
 ```python
 # backend/src/domain/llm_integration/services/llm_service.py
 
@@ -2004,6 +2053,7 @@ class LiteLLMAdapter(LLMService):
 ```
 
 **推奨2: Clerkアダプター（認証ACL）**
+
 ```python
 # backend/src/infrastructure/auth/adapters/clerk_adapter.py
 
@@ -2069,39 +2119,41 @@ class ClerkAdapter(AuthService):
 
 ### 🎯 DDD成熟度モデル
 
-| レベル | 説明 | 現状 | 目標 |
-|--------|------|------|------|
-| Level 0 | Transaction Script | | |
-| Level 1 | レイヤードアーキテクチャ | ✅ **ここ** | |
-| Level 2 | ドメインモデル + リポジトリ | | 🎯 Phase 5 |
-| Level 3 | 集約 + イベント駆動 | | 🎯 Phase 6 |
-| Level 4 | CQRS + Event Sourcing | | 🎯 将来 |
-| Level 5 | マイクロサービス + DDD | | 🎯 将来 |
+| レベル  | 説明                        | 現状        | 目標       |
+| ------- | --------------------------- | ----------- | ---------- |
+| Level 0 | Transaction Script          |             |            |
+| Level 1 | レイヤードアーキテクチャ    | ✅ **ここ** |            |
+| Level 2 | ドメインモデル + リポジトリ |             | 🎯 Phase 5 |
+| Level 3 | 集約 + イベント駆動         |             | 🎯 Phase 6 |
+| Level 4 | CQRS + Event Sourcing       |             | 🎯 将来    |
+| Level 5 | マイクロサービス + DDD      |             | 🎯 将来    |
 
 ### 📊 DDD原則遵守スコア詳細
 
-| DDD原則 | 評価 | スコア | 重大度 | 状態 |
-|---------|------|--------|--------|------|
-| 1. Bounded Contexts分離 | B | 80/100 | 🟡 中 | 構造的には分離、文書化不足 |
-| 2. Aggregate Roots | D | 45/100 | 🔴 高 | 概念欠落、要再設計 |
-| 3. Value Objects | B+ | 85/100 | 🟢 低 | 適切な実装 |
-| 4. Domain Events | C | 60/100 | 🟡 中 | 定義のみ、活用されず |
-| 5. Repository Pattern | F | 20/100 | 🔴 高 | 完全に欠落 |
-| 6. Ubiquitous Language | C+ | 70/100 | 🟡 中 | 暗黙的、要文書化 |
-| 7. Anti-Corruption Layer | F | 15/100 | 🔴 高 | 外部統合が直接的 |
-| **総合スコア** | **C+** | **65/100** | | **Phase 5前に要リファクタリング** |
+| DDD原則                  | 評価   | スコア     | 重大度 | 状態                              |
+| ------------------------ | ------ | ---------- | ------ | --------------------------------- |
+| 1. Bounded Contexts分離  | B      | 80/100     | 🟡 中  | 構造的には分離、文書化不足        |
+| 2. Aggregate Roots       | D      | 45/100     | 🔴 高  | 概念欠落、要再設計                |
+| 3. Value Objects         | B+     | 85/100     | 🟢 低  | 適切な実装                        |
+| 4. Domain Events         | C      | 60/100     | 🟡 中  | 定義のみ、活用されず              |
+| 5. Repository Pattern    | F      | 20/100     | 🔴 高  | 完全に欠落                        |
+| 6. Ubiquitous Language   | C+     | 70/100     | 🟡 中  | 暗黙的、要文書化                  |
+| 7. Anti-Corruption Layer | F      | 15/100     | 🔴 高  | 外部統合が直接的                  |
+| **総合スコア**           | **C+** | **65/100** |        | **Phase 5前に要リファクタリング** |
 
 ### 🚨 クリティカルな問題（Phase 5移行前に必須）
 
 #### ❌ BLOCKER（必須修正）
 
 1. **リポジトリパターン完全実装**
+
    - 優先度: 🔴 最高
    - 影響範囲: すべてのデータアクセス
    - 実装工数: 3-5日
    - リスク: テスト困難、データアクセスロジック散在
 
 2. **集約ルートの再設計**
+
    - 優先度: 🔴 最高
    - 影響範囲: ドメインモデル全体
    - 実装工数: 5-7日
@@ -2116,6 +2168,7 @@ class ClerkAdapter(AuthService):
 #### ⚠️ HIGH（推奨修正）
 
 4. **EventBus/EventStore実装**
+
    - 優先度: 🟡 高
    - 影響範囲: イベント駆動機能
    - 実装工数: 4-6日
@@ -2132,17 +2185,20 @@ class ClerkAdapter(AuthService):
 #### Week 1: リポジトリパターン実装（BLOCKER #1）
 
 **Day 1-2: インターフェース定義**
+
 - [ ] `PromptRepository` インターフェース作成
 - [ ] `EvaluationRepository` インターフェース作成
 - [ ] `UserRepository` インターフェース作成
 
 **Day 3-5: SQLAlchemy実装**
+
 - [ ] `SQLAlchemyPromptRepository` 実装
 - [ ] `SQLAlchemyEvaluationRepository` 実装
 - [ ] ドメインモデル ↔ SQLAlchemyモデル変換ロジック
 - [ ] 単体テスト（モックリポジトリ使用）
 
 **Day 6-7: 統合テスト**
+
 - [ ] 既存のデータアクセスコードをリポジトリ経由に書き換え
 - [ ] 統合テスト実行
 - [ ] パフォーマンステスト
@@ -2150,17 +2206,20 @@ class ClerkAdapter(AuthService):
 #### Week 2: 集約ルート再設計（BLOCKER #2）
 
 **Day 8-10: 集約設計**
+
 - [ ] `AggregateRoot` 基底クラス実装
 - [ ] `PromptAggregate` 再設計（集約境界明確化）
 - [ ] `EvaluationAggregate` 設計
 - [ ] ファクトリメソッド実装
 
 **Day 11-12: イベント統合**
+
 - [ ] 集約からのドメインイベント発行実装
 - [ ] `get_uncommitted_events()` 実装
 - [ ] リポジトリでのイベント永続化統合
 
 **Day 13-14: テストとリファクタリング**
+
 - [ ] 集約単体テスト
 - [ ] 既存コードの集約パターン適用
 - [ ] 不変条件テスト
@@ -2168,6 +2227,7 @@ class ClerkAdapter(AuthService):
 #### Week 3: ACL実装（BLOCKER #3）
 
 **Day 15-17: LLMプロバイダーACL**
+
 - [ ] `LLMService` インターフェース（ドメイン層）
 - [ ] `AnthropicAdapter` 実装
 - [ ] `OpenAIAdapter` 実装
@@ -2175,12 +2235,14 @@ class ClerkAdapter(AuthService):
 - [ ] エラーハンドリング統一
 
 **Day 18-19: ClerkアダプターACL**
+
 - [ ] `AuthService` インターフェース（ドメイン層）
 - [ ] `ClerkAdapter` 実装
 - [ ] トークン検証ロジック
 - [ ] ユーザーメタデータ変換
 
 **Day 20-21: Redis/TursoアダプターACL**
+
 - [ ] `CacheService` インターフェース
 - [ ] `RedisAdapter` 実装
 - [ ] EventStore Turso実装
@@ -2188,35 +2250,39 @@ class ClerkAdapter(AuthService):
 #### Week 4: イベント駆動とドキュメント（HIGH Priority）
 
 **Day 22-24: EventBus/EventStore実装**
+
 - [ ] `RedisEventBus` 実装（Redis Streams）
 - [ ] `TursoEventStore` 実装
 - [ ] イベントハンドラー登録機構
 - [ ] 非同期処理基盤
 
 **Day 25-27: Ubiquitous Language整備**
+
 - [ ] `ubiquitous_language.yml` 作成
 - [ ] コンテキストマップ作成
 - [ ] 用語集文書化
 - [ ] チーム共有ドキュメント整備
 
 **Day 28: 総合テストとレビュー**
+
 - [ ] E2Eテスト実行
 - [ ] DDDコンプライアンス再評価
 - [ ] Phase 5移行準備完了確認
 
 ### 📈 期待される改善効果
 
-| 指標 | 現状 | 改善後 | 改善率 |
-|------|------|--------|--------|
-| DDDコンプライアンス | 65/100 | 85/100 | +31% |
-| テストカバレッジ | 45% | 80% | +78% |
-| コード保守性 | 低 | 高 | 質的改善 |
-| 開発速度 | ベースライン | +20% | リポジトリ抽象化効果 |
-| バグ検出速度 | 遅い | 早い | 集約不変条件による |
+| 指標                | 現状         | 改善後 | 改善率               |
+| ------------------- | ------------ | ------ | -------------------- |
+| DDDコンプライアンス | 65/100       | 85/100 | +31%                 |
+| テストカバレッジ    | 45%          | 80%    | +78%                 |
+| コード保守性        | 低           | 高     | 質的改善             |
+| 開発速度            | ベースライン | +20%   | リポジトリ抽象化効果 |
+| バグ検出速度        | 遅い         | 早い   | 集約不変条件による   |
 
 ### ✅ Phase 5移行判定基準
 
 **必須条件（すべて達成必須）**:
+
 - [ ] リポジトリパターン実装完了（100%）
 - [ ] 集約ルート再設計完了（Prompt, Evaluation）
 - [ ] Anti-Corruption Layer実装完了（LLM, Clerk）
@@ -2224,6 +2290,7 @@ class ClerkAdapter(AuthService):
 - [ ] 統合テストすべてパス
 
 **推奨条件（80%以上達成推奨）**:
+
 - [ ] EventBus/EventStore実装
 - [ ] Ubiquitous Language Glossary整備
 - [ ] ドメインイベント活用開始
@@ -2236,10 +2303,12 @@ class ClerkAdapter(AuthService):
 ### 推奨書籍（domain-modeller Agent選定）
 
 1. **"Learning Domain-Driven Design" (2021) - Vlad Khononov**
+
    - 適用箇所: 集約設計、サブドメイン分析
    - 特に参考: Chapter 7 (Modeling the Dimension of Time)
 
 2. **"Architecture Modernization" (2024) - Nick Tune**
+
    - 適用箇所: コンテキストマップ、Independent Service Heuristics
    - 特に参考: Chapter 5 (Context Mapping)
 
@@ -2250,6 +2319,7 @@ class ClerkAdapter(AuthService):
 ### AutoForgeNexus固有のDDDパターン
 
 **1. プロンプトバージョニング集約**
+
 ```python
 # Git-likeバージョニングをドメインモデルに統合
 class PromptAggregate(AggregateRoot):
@@ -2263,6 +2333,7 @@ class PromptAggregate(AggregateRoot):
 ```
 
 **2. 評価メトリクス値オブジェクトの階層化**
+
 ```python
 # Compositeパターンによるメトリクス組み合わせ
 class CompositeMetric(EvaluationMetric):
@@ -2279,17 +2350,21 @@ class CompositeMetric(EvaluationMetric):
 
 ### 総合評価サマリー
 
-AutoForgeNexusのPhase 4実装は、**レイヤードアーキテクチャの物理的分離は達成しているが、DDDの核心的原則（集約、リポジトリ、ACL）が欠落しており、真のDomain-Driven Designとは言えない**。
+AutoForgeNexusのPhase
+4実装は、**レイヤードアーキテクチャの物理的分離は達成しているが、DDDの核心的原則（集約、リポジトリ、ACL）が欠落しており、真のDomain-Driven
+Designとは言えない**。
 
 現状は「DDDスタイルのディレクトリ構造」であり、「DDDアーキテクチャ」ではない。
 
 ### 即時アクション（3営業日以内）
 
 1. ✅ **このレビューレポートをチームで共有**
+
    - ステークホルダーへの説明
    - Phase 5移行リスクの認識共有
 
 2. ✅ **4週間リファクタリング計画の承認取得**
+
    - 工数: 約20人日
    - リスク: Phase 5移行遅延 vs 技術的負債累積
 
@@ -2303,6 +2378,7 @@ AutoForgeNexusのPhase 4実装は、**レイヤードアーキテクチャの物
 ## DDD Compliance Checklist (Phase 5移行前)
 
 ### BLOCKER（必須）
+
 - [ ] リポジトリパターン実装完了
   - [ ] PromptRepository (Interface + Implementation)
   - [ ] EvaluationRepository (Interface + Implementation)
@@ -2318,6 +2394,7 @@ AutoForgeNexusのPhase 4実装は、**レイヤードアーキテクチャの物
   - [ ] CacheService ACL (Redis)
 
 ### HIGH（推奨）
+
 - [ ] EventBus/EventStore実装
   - [ ] RedisEventBus (Redis Streams)
   - [ ] TursoEventStore (本番用)
@@ -2328,11 +2405,13 @@ AutoForgeNexusのPhase 4実装は、**レイヤードアーキテクチャの物
   - [ ] チーム共有ドキュメント
 
 ### テスト
+
 - [ ] 単体テストカバレッジ 80%以上
 - [ ] 統合テストすべてパス
 - [ ] E2Eテスト実行成功
 
 ### ドキュメント
+
 - [ ] アーキテクチャ決定記録（ADR）更新
 - [ ] API仕様書更新
 - [ ] デプロイ手順書更新
@@ -2342,19 +2421,21 @@ AutoForgeNexusのPhase 4実装は、**レイヤードアーキテクチャの物
 
 ## 📞 お問い合わせ
 
-**レビュー担当**: domain-modeller Agent (Claude Opus 4.1)
-**レビュー日**: 2025-10-01
-**次回レビュー予定**: Week 4完了後（4週間後）
+**レビュー担当**: domain-modeller Agent (Claude Opus 4.1) **レビュー日**:
+2025-10-01 **次回レビュー予定**: Week 4完了後（4週間後）
 
 ---
 
 **🎯 重要メッセージ**:
 
-> 現在の実装は「DDDスタイルのレイヤード・アーキテクチャ」であり、真のDomain-Driven Designではありません。
+> 現在の実装は「DDDスタイルのレイヤード・アーキテクチャ」であり、真のDomain-Driven
+> Designではありません。
 >
-> Phase 5（フロントエンド実装）に進む前に、**4週間のリファクタリング期間を確保し、集約・リポジトリ・ACLの3つのBLOCKERを解消することを強く推奨します**。
+> Phase
+> 5（フロントエンド実装）に進む前に、**4週間のリファクタリング期間を確保し、集約・リポジトリ・ACLの3つのBLOCKERを解消することを強く推奨します**。
 >
-> このまま進めると、Phase 5-6で「DDDアーキテクチャの恩恵を受けられず、むしろ複雑性だけが増大する」リスクがあります。
+> このまま進めると、Phase
+> 5-6で「DDDアーキテクチャの恩恵を受けられず、むしろ複雑性だけが増大する」リスクがあります。
 
 ---
 

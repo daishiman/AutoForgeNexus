@@ -1,9 +1,8 @@
 # GitHub Actions CI/CDパイプライン セキュリティ実装レポート
 
-**実装日**: 2025年10月7日
-**実装者**: DevOps Coordinator + Security Architect + Test Automation Engineer
-**対象コミット**: (次回コミット)
-**ベースレビュー**: `SECURITY_REVIEW_CI_CACHE_MIGRATION_20251006.md`
+**実装日**: 2025年10月7日 **実装者**: DevOps Coordinator + Security Architect +
+Test Automation Engineer **対象コミット**: (次回コミット) **ベースレビュー**:
+`SECURITY_REVIEW_CI_CACHE_MIGRATION_20251006.md`
 
 ---
 
@@ -11,12 +10,9 @@
 
 2025年10月6日のセキュリティレビューで指摘された4つの推奨緩和策を**すべて実装完了**しました。
 
-**実装完了スコア**: 4/4 (100%) ✅
-**新セキュリティスコア**: 95/100 (**+13点向上**)
-**Critical脆弱性**: 0件
-**High脆弱性**: 0件
-**Medium脆弱性**: 0件 (**-2件改善**)
-**Low脆弱性**: 0件 (**-1件改善**)
+**実装完了スコア**: 4/4 (100%) ✅ **新セキュリティスコア**: 95/100
+(**+13点向上**) **Critical脆弱性**: 0件 **High脆弱性**: 0件 **Medium脆弱性**:
+0件 (**-2件改善**) **Low脆弱性**: 0件 (**-1件改善**)
 
 **総合判定**: ✅ **本番デプロイ承認可能**
 
@@ -26,8 +22,7 @@
 
 ### 1.1 ✅ 推奨1: pip依存関係のハッシュ検証実装（MED-2025-002対応）
 
-**優先度**: Medium → **実装完了** ✅
-**実装工数**: 予想2-3時間 → **実際1.5時間**
+**優先度**: Medium → **実装完了** ✅ **実装工数**: 予想2-3時間 → **実際1.5時間**
 **対応する脆弱性**: MED-2025-002（サプライチェーン攻撃リスク）
 
 #### 実装内容
@@ -41,6 +36,7 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes --a
 ```
 
 **成果物**:
+
 - `backend/requirements.lock`: 2,771行のハッシュ付き依存関係ファイル
 - すべての直接依存関係と推移的依存関係のSHA-256ハッシュを記録
 
@@ -83,22 +79,21 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes --a
 
 #### セキュリティ効果
 
-| 項目 | 変更前 | 変更後 | 効果 |
-|------|--------|--------|------|
-| **パッケージ検証** | なし | SHA-256ハッシュ検証 | ✅ 改ざん検出 |
-| **サプライチェーン攻撃対策** | バージョンピンのみ | ハッシュ検証 | ✅ MITM攻撃防止 |
-| **PyPIパッケージ改ざん検出** | 不可能 | 可能 | ✅ 即座にエラー |
-| **SLSA Level** | Level 2 | Level 3 | ✅ 業界標準準拠 |
+| 項目                         | 変更前             | 変更後              | 効果            |
+| ---------------------------- | ------------------ | ------------------- | --------------- |
+| **パッケージ検証**           | なし               | SHA-256ハッシュ検証 | ✅ 改ざん検出   |
+| **サプライチェーン攻撃対策** | バージョンピンのみ | ハッシュ検証        | ✅ MITM攻撃防止 |
+| **PyPIパッケージ改ざん検出** | 不可能             | 可能                | ✅ 即座にエラー |
+| **SLSA Level**               | Level 2            | Level 3             | ✅ 業界標準準拠 |
 
-**CVSS 3.1スコア変化**: 4.8 (Medium) → **0.0 (None)** ✅
-**リスク削減**: 100%（完全に脆弱性を解消）
+**CVSS 3.1スコア変化**: 4.8 (Medium) → **0.0 (None)** ✅ **リスク削減**:
+100%（完全に脆弱性を解消）
 
 ---
 
 ### 1.2 ✅ 推奨2: キャッシュ整合性検証の実装（MED-2025-001対応）
 
-**優先度**: Medium → **実装完了** ✅
-**実装工数**: 予想1-2時間 → **実際1時間**
+**優先度**: Medium → **実装完了** ✅ **実装工数**: 予想1-2時間 → **実際1時間**
 **対応する脆弱性**: MED-2025-001（キャッシュポイズニング攻撃）
 
 #### 実装内容
@@ -106,6 +101,7 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes --a
 修正ファイル: `.github/workflows/backend-ci.yml`
 
 **適用ジョブ**:
+
 - `quality-checks`（品質チェック）
 - `test-suite`（テスト実行）
 - `build-artifacts`（成果物生成）
@@ -153,22 +149,21 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes --a
 
 #### セキュリティ効果
 
-| 項目 | 変更前 | 変更後 | 効果 |
-|------|--------|--------|------|
-| **キャッシュ破損検出** | なし | パッケージ数＋重要パッケージ確認 | ✅ 即座に検出 |
-| **キャッシュポイズニング検出** | なし | SHA-256ハッシュ記録 | ✅ 監査証跡 |
-| **汚染されたvenv使用防止** | なし | 自動再構築 | ✅ Fail-Fast |
-| **デバッグ容易性** | 低 | 高（詳細レポート） | ✅ 運用性向上 |
+| 項目                           | 変更前 | 変更後                           | 効果          |
+| ------------------------------ | ------ | -------------------------------- | ------------- |
+| **キャッシュ破損検出**         | なし   | パッケージ数＋重要パッケージ確認 | ✅ 即座に検出 |
+| **キャッシュポイズニング検出** | なし   | SHA-256ハッシュ記録              | ✅ 監査証跡   |
+| **汚染されたvenv使用防止**     | なし   | 自動再構築                       | ✅ Fail-Fast  |
+| **デバッグ容易性**             | 低     | 高（詳細レポート）               | ✅ 運用性向上 |
 
-**CVSS 3.1スコア変化**: 5.3 (Medium) → **2.1 (Low)** ✅
-**リスク削減**: 60%（GitHub Actionsのブランチ分離と組み合わせて十分な緩和）
+**CVSS 3.1スコア変化**: 5.3 (Medium) → **2.1 (Low)** ✅ **リスク削減**:
+60%（GitHub Actionsのブランチ分離と組み合わせて十分な緩和）
 
 ---
 
 ### 1.3 ✅ 推奨3: venv検証の強化（LOW-2025-001対応）
 
-**優先度**: Low → **実装完了** ✅
-**実装工数**: 予想30分 → **実際30分**
+**優先度**: Low → **実装完了** ✅ **実装工数**: 予想30分 → **実際30分**
 **対応する脆弱性**: LOW-2025-001（venv検証の不完全性）
 
 #### 実装内容
@@ -176,6 +171,7 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes --a
 修正ファイル: `.github/workflows/backend-ci.yml`（全3ジョブ）
 
 **追加検証項目**:
+
 1. ✅ venvディレクトリ存在確認（既存）
 2. ✅ venv/bin/activate存在確認（既存）
 3. ✅ **Python実行可能性検証（NEW）**
@@ -217,21 +213,20 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes --a
 
 #### セキュリティ効果
 
-| 項目 | 変更前 | 変更後 | 効果 |
-|------|--------|--------|------|
-| **破損venv検出** | ディレクトリ存在のみ | 実行可能性＋動作確認 | ✅ 早期検出 |
-| **部分的損傷検出** | 不可能 | 可能 | ✅ Pythonテスト |
-| **デバッグ情報** | 最小限 | 詳細（バージョン、パス） | ✅ 運用性向上 |
+| 項目               | 変更前               | 変更後                   | 効果            |
+| ------------------ | -------------------- | ------------------------ | --------------- |
+| **破損venv検出**   | ディレクトリ存在のみ | 実行可能性＋動作確認     | ✅ 早期検出     |
+| **部分的損傷検出** | 不可能               | 可能                     | ✅ Pythonテスト |
+| **デバッグ情報**   | 最小限               | 詳細（バージョン、パス） | ✅ 運用性向上   |
 
-**CVSS 3.1スコア変化**: 2.3 (Low) → **0.5 (Informational)** ✅
-**リスク削減**: 78%（実用的にゼロリスク）
+**CVSS 3.1スコア変化**: 2.3 (Low) → **0.5 (Informational)** ✅ **リスク削減**:
+78%（実用的にゼロリスク）
 
 ---
 
 ### 1.4 ✅ 推奨4: 権限の明示的定義（アクセス制御可視性向上）
 
-**優先度**: Low → **実装完了** ✅
-**実装工数**: 予想15分 → **実際15分**
+**優先度**: Low → **実装完了** ✅ **実装工数**: 予想15分 → **実際15分**
 **セキュリティ原則**: 最小権限原則（Principle of Least Privilege）
 
 #### 実装内容
@@ -239,6 +234,7 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes --a
 修正ファイル: `.github/workflows/backend-ci.yml`
 
 **適用ジョブ**:
+
 - `quality-checks`（品質チェック）
 - `test-suite`（テスト実行）
 - `build-artifacts`（成果物生成）
@@ -263,12 +259,12 @@ permissions:
 
 #### セキュリティ効果
 
-| 項目 | 変更前 | 変更後 | 効果 |
-|------|--------|--------|------|
-| **権限の可視性** | 暗黙的（デフォルト） | 明示的定義 | ✅ 監査容易性 |
-| **最小権限原則** | 未適用 | 適用 | ✅ セキュリティ向上 |
-| **権限スコープ** | write-all可能性 | 必要最小限 | ✅ 攻撃対象縮小 |
-| **コンプライアンス** | 不透明 | 透明 | ✅ 監査対応 |
+| 項目                 | 変更前               | 変更後     | 効果                |
+| -------------------- | -------------------- | ---------- | ------------------- |
+| **権限の可視性**     | 暗黙的（デフォルト） | 明示的定義 | ✅ 監査容易性       |
+| **最小権限原則**     | 未適用               | 適用       | ✅ セキュリティ向上 |
+| **権限スコープ**     | write-all可能性      | 必要最小限 | ✅ 攻撃対象縮小     |
+| **コンプライアンス** | 不透明               | 透明       | ✅ 監査対応         |
 
 **期待効果**: 権限昇格攻撃の防止、監査証跡の明確化
 
@@ -278,11 +274,11 @@ permissions:
 
 ### 2.1 脆弱性解消状況
 
-| 脆弱性ID | CVSS（変更前） | CVSS（変更後） | ステータス |
-|----------|---------------|---------------|-----------|
-| **MED-2025-001** | 5.3 (Medium) | 2.1 (Low) | ✅ 60%削減 |
-| **MED-2025-002** | 4.8 (Medium) | 0.0 (None) | ✅ 100%削減 |
-| **LOW-2025-001** | 2.3 (Low) | 0.5 (Info) | ✅ 78%削減 |
+| 脆弱性ID         | CVSS（変更前） | CVSS（変更後） | ステータス  |
+| ---------------- | -------------- | -------------- | ----------- |
+| **MED-2025-001** | 5.3 (Medium)   | 2.1 (Low)      | ✅ 60%削減  |
+| **MED-2025-002** | 4.8 (Medium)   | 0.0 (None)     | ✅ 100%削減 |
+| **LOW-2025-001** | 2.3 (Low)      | 0.5 (Info)     | ✅ 78%削減  |
 
 **総合リスク削減**: 79.3% ✅
 
@@ -308,21 +304,21 @@ permissions:
 
 ### 3.1 準拠状況（更新版）
 
-| OWASP脅威 | 変更前 | 変更後 | 改善内容 |
-|-----------|--------|--------|----------|
-| **CICD-SEC-1**: Flow Control | ✅ 合格 | ✅ 合格 | 変更なし |
-| **CICD-SEC-2**: Identity/Access Mgmt | ✅ 合格 | ✅ 合格 | 変更なし |
-| **CICD-SEC-3**: Dependency Chain Abuse | 🟡 改善余地 | ✅ **合格** | **ハッシュ検証実装** |
-| **CICD-SEC-4**: Poisoned Pipeline (PPE) | ✅ 合格 | ✅ 合格 | 変更なし |
-| **CICD-SEC-5**: PBAC | ✅ 合格 | ✅ 合格 | 変更なし |
-| **CICD-SEC-6**: Credential Hygiene | ✅ 合格 | ✅ 合格 | 変更なし |
-| **CICD-SEC-7**: System Configuration | ✅ 合格 | ✅ 合格 | 変更なし |
-| **CICD-SEC-8**: 3rd Party Services | ✅ 合格 | ✅ 合格 | 変更なし |
-| **CICD-SEC-9**: Artifact Integrity | 🟡 改善余地 | ✅ **合格** | **整合性検証実装** |
-| **CICD-SEC-10**: Logging/Visibility | ✅ 合格 | ✅ 合格 | 変更なし |
+| OWASP脅威                               | 変更前      | 変更後      | 改善内容             |
+| --------------------------------------- | ----------- | ----------- | -------------------- |
+| **CICD-SEC-1**: Flow Control            | ✅ 合格     | ✅ 合格     | 変更なし             |
+| **CICD-SEC-2**: Identity/Access Mgmt    | ✅ 合格     | ✅ 合格     | 変更なし             |
+| **CICD-SEC-3**: Dependency Chain Abuse  | 🟡 改善余地 | ✅ **合格** | **ハッシュ検証実装** |
+| **CICD-SEC-4**: Poisoned Pipeline (PPE) | ✅ 合格     | ✅ 合格     | 変更なし             |
+| **CICD-SEC-5**: PBAC                    | ✅ 合格     | ✅ 合格     | 変更なし             |
+| **CICD-SEC-6**: Credential Hygiene      | ✅ 合格     | ✅ 合格     | 変更なし             |
+| **CICD-SEC-7**: System Configuration    | ✅ 合格     | ✅ 合格     | 変更なし             |
+| **CICD-SEC-8**: 3rd Party Services      | ✅ 合格     | ✅ 合格     | 変更なし             |
+| **CICD-SEC-9**: Artifact Integrity      | 🟡 改善余地 | ✅ **合格** | **整合性検証実装**   |
+| **CICD-SEC-10**: Logging/Visibility     | ✅ 合格     | ✅ 合格     | 変更なし             |
 
-**準拠スコア**: 8/10 (80%) → **10/10 (100%)** ✅
-**改善項目**: 2項目（SEC-3, SEC-9）を完全解消
+**準拠スコア**: 8/10 (80%) → **10/10 (100%)** ✅ **改善項目**: 2項目（SEC-3,
+SEC-9）を完全解消
 
 ---
 
@@ -330,17 +326,17 @@ permissions:
 
 **SLSA (Supply-chain Levels for Software Artifacts)**
 
-| 要件 | Level 2 | Level 3 | 実装状況 |
-|------|---------|---------|----------|
-| **バージョン管理** | ✅ Git | ✅ Git | 既存 |
-| **ビルドサービス** | ✅ GitHub Actions | ✅ GitHub Actions | 既存 |
-| **ビルド定義** | ✅ YAML | ✅ YAML | 既存 |
-| **ビルド再現性** | ✅ pip freeze | ✅ requirements.lock | **NEW** |
-| **依存関係ハッシュ検証** | ❌ なし | ✅ SHA-256 | **NEW** |
-| **ビルド成果物の検証** | ⚠️ 部分的 | ✅ 完全 | **NEW** |
+| 要件                     | Level 2           | Level 3              | 実装状況 |
+| ------------------------ | ----------------- | -------------------- | -------- |
+| **バージョン管理**       | ✅ Git            | ✅ Git               | 既存     |
+| **ビルドサービス**       | ✅ GitHub Actions | ✅ GitHub Actions    | 既存     |
+| **ビルド定義**           | ✅ YAML           | ✅ YAML              | 既存     |
+| **ビルド再現性**         | ✅ pip freeze     | ✅ requirements.lock | **NEW**  |
+| **依存関係ハッシュ検証** | ❌ なし           | ✅ SHA-256           | **NEW**  |
+| **ビルド成果物の検証**   | ⚠️ 部分的         | ✅ 完全              | **NEW**  |
 
-**達成**: SLSA Level 3 完全準拠 ✅
-**業界標準**: Google、Microsoft、Linux Foundation推奨レベル達成
+**達成**: SLSA Level 3 完全準拠 ✅ **業界標準**: Google、Microsoft、Linux
+Foundation推奨レベル達成
 
 ---
 
@@ -375,6 +371,7 @@ graph TD
 #### 攻撃シナリオと防御
 
 **攻撃シナリオ1: PyPI MITM攻撃**
+
 ```
 攻撃者 → 偽PyPIサーバー → 改ざんパッケージ（マルウェア注入）
          ↓
@@ -385,6 +382,7 @@ GitHub Actions → pip install fastapi
 ```
 
 **攻撃シナリオ2: パッケージ名タイポスクワッティング**
+
 ```
 攻撃者 → pyproject.tomlを改ざん → "fastapi" → "fastapl" (悪意のあるパッケージ)
          ↓
@@ -414,6 +412,7 @@ graph TD
 #### 検出される脆弱性ケース
 
 **ケース1: 部分的なキャッシュ破損**
+
 ```bash
 # 状態: venv/bin/python は存在するが、一部パッケージが欠損
 $ ls venv/bin/python      # ✅ 存在
@@ -424,6 +423,7 @@ $ pip list | wc -l        # 15パッケージ（本来50+必要）
 ```
 
 **ケース2: キャッシュポイズニング（理論的攻撃）**
+
 ```bash
 # 攻撃者がPRでmalicious-packageを注入
 $ pip list
@@ -441,14 +441,14 @@ pytest==8.3.3
 
 ### 5.1 ビルド時間への影響
 
-| フェーズ | 変更前 | 変更後 | 差分 |
-|----------|--------|--------|------|
-| **キャッシュヒット時** | ~5秒 | ~8秒 | **+3秒** |
-| **キャッシュミス時** | ~120秒 | ~125秒 | **+5秒** |
-| **検証ステップ** | なし | ~3秒 | **+3秒** |
+| フェーズ               | 変更前 | 変更後 | 差分     |
+| ---------------------- | ------ | ------ | -------- |
+| **キャッシュヒット時** | ~5秒   | ~8秒   | **+3秒** |
+| **キャッシュミス時**   | ~120秒 | ~125秒 | **+5秒** |
+| **検証ステップ**       | なし   | ~3秒   | **+3秒** |
 
-**総合影響**: +3-5秒（全体の2-4%増加）
-**判定**: ✅ **許容範囲**（セキュリティ向上のトレードオフとして妥当）
+**総合影響**: +3-5秒（全体の2-4%増加） **判定**: ✅
+**許容範囲**（セキュリティ向上のトレードオフとして妥当）
 
 ### 5.2 CI/CDコスト影響
 
@@ -472,12 +472,14 @@ GitHub Actions使用量:
 ### 6.1 SLSA Level 3 完全準拠による効果
 
 **業界標準への対応**:
+
 - ✅ **Google Cloud Build**: SLSA Level 3要件準拠
 - ✅ **CNCF Projects**: 推奨セキュリティレベル達成
 - ✅ **SOC 2 Type II**: 供給チェーン管理要件満足
 - ✅ **ISO 27001**: ソフトウェア配布管理基準準拠
 
 **取引先・顧客への訴求力**:
+
 - エンタープライズ顧客: SLSA Level 3は調達要件
 - セキュリティ監査: 準拠証明により審査通過率向上
 - 保険適用: サイバーセキュリティ保険の保険料削減可能性
@@ -500,11 +502,11 @@ GitHub Actions使用量:
 
 ### 7.1 新しいリスクマトリックス
 
-| リスク | 可能性 | 影響 | リスクレベル | ステータス |
-|--------|--------|------|--------------|------------|
-| **MED-2025-001**: キャッシュポイズニング | Very Low | Low | **Informational** | ✅ 解消 |
-| **MED-2025-002**: サプライチェーン攻撃 | None | None | **None** | ✅ 完全解消 |
-| **LOW-2025-001**: venv検証不完全 | None | None | **None** | ✅ 完全解消 |
+| リスク                                   | 可能性   | 影響 | リスクレベル      | ステータス  |
+| ---------------------------------------- | -------- | ---- | ----------------- | ----------- |
+| **MED-2025-001**: キャッシュポイズニング | Very Low | Low  | **Informational** | ✅ 解消     |
+| **MED-2025-002**: サプライチェーン攻撃   | None     | None | **None**          | ✅ 完全解消 |
+| **LOW-2025-001**: venv検証不完全         | None     | None | **None**          | ✅ 完全解消 |
 
 **残存リスク**: ✅ **ゼロ**（すべての指摘事項を解消）
 
@@ -538,6 +540,7 @@ GitHub Actions使用量:
 ### 8.2 検証ログ例
 
 **キャッシュヒット時のログ出力**:
+
 ```
 🔐 Verify cache integrity
 📊 Cache Integrity Report:
@@ -548,6 +551,7 @@ GitHub Actions使用量:
 ```
 
 **キャッシュ破損検出時のログ出力**:
+
 ```
 🔐 Verify cache integrity
 📊 Cache Integrity Report:
@@ -567,11 +571,13 @@ Cache may be corrupted. Rebuilding...
 ### 9.1 開発者エクスペリエンス
 
 **ポジティブな影響**:
+
 - ✅ エラー検出の早期化（実行時エラー → ビルド時エラー）
 - ✅ 詳細なログ出力によるデバッグ効率向上
 - ✅ キャッシュ破損時の自動再構築
 
 **ネガティブな影響**:
+
 - ⚠️ ビルド時間+3-5秒（許容範囲）
 - ⚠️ requirements.lock管理の追加作業（自動化可能）
 
@@ -615,7 +621,7 @@ git commit -m "chore(deps): update requirements.lock with security patches"
 name: Update Requirements Lock
 on:
   schedule:
-    - cron: '0 0 * * 1'  # 毎週月曜日
+    - cron: '0 0 * * 1' # 毎週月曜日
   workflow_dispatch:
 
 jobs:
@@ -627,7 +633,7 @@ jobs:
       - run: pip-compile --generate-hashes --upgrade pyproject.toml
       - uses: peter-evans/create-pull-request@v5
         with:
-          title: "chore(deps): update requirements.lock"
+          title: 'chore(deps): update requirements.lock'
 ```
 
 ---
@@ -730,13 +736,14 @@ Cache may be corrupted. Rebuilding...
 **目的**: 依存関係の定期的な更新とセキュリティパッチ適用の自動化
 
 **実装方法**:
+
 ```yaml
 # .github/workflows/update-requirements-lock.yml
 name: Update Requirements Lock
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # 毎週月曜日 0:00 UTC
+    - cron: '0 0 * * 1' # 毎週月曜日 0:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -777,7 +784,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          title: "chore(deps): update requirements.lock [automated]"
+          title: 'chore(deps): update requirements.lock [automated]'
           body: |
             ## 📦 依存関係自動更新
 
@@ -799,6 +806,7 @@ jobs:
 ```
 
 **期待効果**:
+
 - 週次での依存関係更新チェック
 - セキュリティパッチの自動適用
 - 人間によるレビューを伴った安全な更新
@@ -810,42 +818,53 @@ jobs:
 **目的**: セキュリティ状態の可視化と継続的監視
 
 **実装方法**:
+
 ```yaml
 # Grafanaダッシュボード定義（monitoring/grafana/dashboards/security.json）
 {
-  "dashboard": {
-    "title": "CI/CD Security Metrics",
-    "panels": [
-      {
-        "title": "Cache Integrity Check Results",
-        "targets": [
+  'dashboard':
+    {
+      'title': 'CI/CD Security Metrics',
+      'panels':
+        [
           {
-            "expr": "rate(github_actions_cache_integrity_failures_total[1h])"
-          }
-        ]
-      },
-      {
-        "title": "Hash Verification Success Rate",
-        "targets": [
+            'title': 'Cache Integrity Check Results',
+            'targets':
+              [
+                {
+                  'expr': 'rate(github_actions_cache_integrity_failures_total[1h])',
+                },
+              ],
+          },
           {
-            "expr": "rate(github_actions_pip_hash_verification_success_total[1h]) / rate(github_actions_pip_install_total[1h])"
-          }
-        ]
-      },
-      {
-        "title": "venv Validation Failures",
-        "targets": [
+            'title': 'Hash Verification Success Rate',
+            'targets':
+              [
+                {
+                  'expr':
+                    'rate(github_actions_pip_hash_verification_success_total[1h])
+                    / rate(github_actions_pip_install_total[1h])',
+                },
+              ],
+          },
           {
-            "expr": "sum(github_actions_venv_validation_failures_total) by (job_name)"
-          }
-        ]
-      }
-    ]
-  }
+            'title': 'venv Validation Failures',
+            'targets':
+              [
+                {
+                  'expr':
+                    'sum(github_actions_venv_validation_failures_total) by
+                    (job_name)',
+                },
+              ],
+          },
+        ],
+    },
 }
 ```
 
 **期待効果**:
+
 - リアルタイムでのセキュリティ状態監視
 - 異常検知の自動アラート
 - トレンド分析による予防的対応
@@ -856,12 +875,12 @@ jobs:
 
 ### 12.1 解消された技術的負債
 
-| 項目 | 変更前の状態 | 解消内容 |
-|------|-------------|----------|
-| **依存関係の二重管理** | pyproject.toml + requirements.txt | requirements.lockに統一 |
-| **暗黙的なセキュリティ前提** | 検証なし | 明示的な検証ステップ |
-| **不透明な権限管理** | デフォルト依存 | 明示的権限定義 |
-| **手動セキュリティチェック** | レビュー時のみ | CI/CDで自動化 |
+| 項目                         | 変更前の状態                      | 解消内容                |
+| ---------------------------- | --------------------------------- | ----------------------- |
+| **依存関係の二重管理**       | pyproject.toml + requirements.txt | requirements.lockに統一 |
+| **暗黙的なセキュリティ前提** | 検証なし                          | 明示的な検証ステップ    |
+| **不透明な権限管理**         | デフォルト依存                    | 明示的権限定義          |
+| **手動セキュリティチェック** | レビュー時のみ                    | CI/CDで自動化           |
 
 **技術的負債削減効果**: ✅ **推定30時間/年の保守コスト削減**
 
@@ -899,6 +918,7 @@ graph LR
 ```
 
 **参加エージェント**:
+
 1. **security-architect**: 脆弱性評価、緩和策設計
 2. **devops-coordinator**: GitHub Actions実装、pip-tools統合
 3. **test-automation-engineer**: 検証ロジック実装、テストケース作成
@@ -910,11 +930,13 @@ graph LR
 ### 13.2 協調効果
 
 **実装速度**:
+
 - 予想: 4-6時間（シーケンシャル実行）
 - 実際: **3時間**（並列実行、エージェント協調）
 - 効率向上: **40-50%**
 
 **品質向上**:
+
 - 多角的レビュー（5エージェント）
 - 専門知識の統合（セキュリティ＋DevOps＋QA）
 - 一貫性のある実装（共有ワークフロー活用）
@@ -925,16 +947,16 @@ graph LR
 
 ### 14.1 承認基準チェックリスト
 
-| 基準 | 状態 | 詳細 |
-|------|------|------|
-| ✅ **Critical脆弱性ゼロ** | 合格 | 0件（変更なし） |
-| ✅ **High脆弱性ゼロ** | 合格 | 0件（変更なし） |
-| ✅ **Medium脆弱性解消** | 合格 | 2件 → 0件 (**完全解消**) |
-| ✅ **Low脆弱性解消** | 合格 | 1件 → 0件 (**完全解消**) |
-| ✅ **OWASP準拠** | 合格 | 10/10項目 (**100%**) |
-| ✅ **SLSA準拠** | 合格 | Level 3 (**完全準拠**) |
-| ✅ **パフォーマンス影響** | 合格 | +3-5秒（**許容範囲**） |
-| ✅ **コスト影響** | 合格 | +10.5分/月（**無料枠内**） |
+| 基準                      | 状態 | 詳細                       |
+| ------------------------- | ---- | -------------------------- |
+| ✅ **Critical脆弱性ゼロ** | 合格 | 0件（変更なし）            |
+| ✅ **High脆弱性ゼロ**     | 合格 | 0件（変更なし）            |
+| ✅ **Medium脆弱性解消**   | 合格 | 2件 → 0件 (**完全解消**)   |
+| ✅ **Low脆弱性解消**      | 合格 | 1件 → 0件 (**完全解消**)   |
+| ✅ **OWASP準拠**          | 合格 | 10/10項目 (**100%**)       |
+| ✅ **SLSA準拠**           | 合格 | Level 3 (**完全準拠**)     |
+| ✅ **パフォーマンス影響** | 合格 | +3-5秒（**許容範囲**）     |
+| ✅ **コスト影響**         | 合格 | +10.5分/月（**無料枠内**） |
 
 ---
 
@@ -943,6 +965,7 @@ graph LR
 **決定**: ✅ **本番デプロイ承認**（無条件）
 
 **承認理由**:
+
 1. すべての指摘事項を完全に解消
 2. SLSA Level 3完全準拠を達成
 3. OWASP CI/CD Top 10 100%準拠
@@ -950,9 +973,8 @@ graph LR
 5. パフォーマンス影響は許容範囲
 6. 技術的負債を削減
 
-**承認者**: Security Architect + DevOps Coordinator + QA Coordinator
-**承認日**: 2025年10月7日
-**有効期限**: 無期限（継続的監視を条件とする）
+**承認者**: Security Architect + DevOps Coordinator + QA Coordinator **承認日**:
+2025年10月7日 **有効期限**: 無期限（継続的監視を条件とする）
 
 ---
 
@@ -967,6 +989,7 @@ graph LR
 - [x] ドキュメント更新完了
 
 **デプロイ手順**:
+
 1. PRマージ承認（最低1名のレビュー）
 2. main/developブランチへのマージ
 3. GitHub Actions自動実行
@@ -978,24 +1001,24 @@ graph LR
 
 ### 15.1 四半期レビュースケジュール
 
-| 時期 | レビュー項目 | 担当エージェント |
-|------|------------|-----------------|
-| **2025年12月** | Q4セキュリティレビュー | security-architect |
-| **2026年3月** | Q1依存関係監査 | devops-coordinator |
-| **2026年6月** | Q2パフォーマンス評価 | performance-optimizer |
-| **2026年9月** | Q3コンプライアンス監査 | compliance-officer |
+| 時期           | レビュー項目           | 担当エージェント      |
+| -------------- | ---------------------- | --------------------- |
+| **2025年12月** | Q4セキュリティレビュー | security-architect    |
+| **2026年3月**  | Q1依存関係監査         | devops-coordinator    |
+| **2026年6月**  | Q2パフォーマンス評価   | performance-optimizer |
+| **2026年9月**  | Q3コンプライアンス監査 | compliance-officer    |
 
 ---
 
 ### 15.2 メトリクス目標（2026年Q1）
 
-| メトリクス | 現在値 | 目標値 |
-|-----------|--------|--------|
-| **セキュリティスコア** | 95/100 | 98/100 |
-| **SLSA Level** | Level 3 | Level 4 |
-| **ビルド時間** | 5分30秒 | 4分30秒 |
-| **キャッシュヒット率** | 85% | 90% |
-| **脆弱性検出時間** | 24時間 | 1時間 |
+| メトリクス             | 現在値  | 目標値  |
+| ---------------------- | ------- | ------- |
+| **セキュリティスコア** | 95/100  | 98/100  |
+| **SLSA Level**         | Level 3 | Level 4 |
+| **ビルド時間**         | 5分30秒 | 4分30秒 |
+| **キャッシュヒット率** | 85%     | 90%     |
+| **脆弱性検出時間**     | 24時間  | 1時間   |
 
 ---
 
@@ -1015,11 +1038,13 @@ graph LR
 ### 16.2 今後の展望
 
 **短期（1-3ヶ月）**:
+
 - requirements.lock自動更新ワークフローの実装
 - セキュリティメトリクスダッシュボードの構築
 - SLSA Level 4への移行準備
 
 **中長期（3-12ヶ月）**:
+
 - Sigstore署名統合（パッケージ署名検証）
 - SBOM（Software Bill of Materials）自動生成
 - 供給チェーン全体の可視化
@@ -1055,9 +1080,9 @@ graph LR
 
 ### 17.3 変更履歴
 
-| 日付 | バージョン | 変更内容 | 承認者 |
-|------|------------|----------|--------|
-| 2025-10-07 | 1.0 | 初版作成（実装レポート） | Security Architect + DevOps Coordinator + QA Coordinator |
+| 日付       | バージョン | 変更内容                 | 承認者                                                   |
+| ---------- | ---------- | ------------------------ | -------------------------------------------------------- |
+| 2025-10-07 | 1.0        | 初版作成（実装レポート） | Security Architect + DevOps Coordinator + QA Coordinator |
 
 ---
 

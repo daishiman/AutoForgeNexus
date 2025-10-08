@@ -1,7 +1,7 @@
 # Phase 5 フロントエンド実装移行チェックリスト
 
-**作成日**: 2025年10月8日
-**目的**: Phase 3 → Phase 5 移行時のCI/CD問題を事前に防止
+**作成日**: 2025年10月8日 **目的**: Phase 3 → Phase
+5 移行時のCI/CD問題を事前に防止
 
 ---
 
@@ -13,10 +13,11 @@
 # .github/workflows/integration-ci.yml
 # .github/workflows/frontend-ci.yml
 env:
-  CURRENT_PHASE: '5'  # '3' → '5' に更新
+  CURRENT_PHASE: '5' # '3' → '5' に更新
 ```
 
 **確認方法**:
+
 ```bash
 grep -r "CURRENT_PHASE:" .github/workflows/
 # すべて '5' になっていることを確認
@@ -51,6 +52,7 @@ pnpm test:ci
 ```
 
 **期待結果**:
+
 - ✅ TypeScript型エラー: 0件
 - ✅ ESLint警告: 0件
 - ✅ ビルド成功
@@ -76,6 +78,7 @@ gh run list --workflow=frontend-ci.yml --limit 1
 ```
 
 **確認項目**:
+
 - ✅ quality-checks: すべて合格
 - ✅ test-suite: unit/e2e合格
 - ✅ production-build: アーティファクト生成成功
@@ -120,6 +123,7 @@ curl http://localhost:3000
 ```
 
 **期待結果**:
+
 - ✅ Dockerfileが存在
 - ✅ イメージビルド成功
 - ✅ コンテナ起動成功
@@ -142,6 +146,7 @@ grep "CURRENT_PHASE" .github/workflows/integration-ci.yml
 ```
 
 **確認項目**:
+
 - ✅ バックエンド起動（localhost:8000）
 - ✅ フロントエンド起動（localhost:3000）
 - ✅ 両方のヘルスチェック成功
@@ -211,13 +216,13 @@ wrangler pages deploy frontend/out
 
 ## 🚨 Phase 5移行時の既知のリスク
 
-| リスク | 影響度 | 対策 |
-|--------|--------|------|
-| **依存関係エラー** | 高 | Phase 4完了時にpnpm installテスト |
-| **型エラー大量発生** | 中 | 段階的型定義追加 |
-| **E2Eテスト失敗** | 中 | Playwright設定見直し |
-| **ビルド時間超過** | 低 | Turbopack最適化 |
-| **アーティファクトサイズ超過** | 低 | .dockerignore最適化 |
+| リスク                         | 影響度 | 対策                              |
+| ------------------------------ | ------ | --------------------------------- |
+| **依存関係エラー**             | 高     | Phase 4完了時にpnpm installテスト |
+| **型エラー大量発生**           | 中     | 段階的型定義追加                  |
+| **E2Eテスト失敗**              | 中     | Playwright設定見直し              |
+| **ビルド時間超過**             | 低     | Turbopack最適化                   |
+| **アーティファクトサイズ超過** | 低     | .dockerignore最適化               |
 
 ---
 
@@ -248,6 +253,7 @@ wrangler pages deploy frontend/out
 ### 今すぐ実施可能（リスク低減）
 
 1. **最小限のフロントエンド検証**
+
 ```bash
 cd frontend
 pnpm install  # 依存関係インストール
@@ -255,12 +261,14 @@ pnpm type-check  # 型チェック（エラー確認）
 ```
 
 2. **CI/CD手動テスト**
+
 ```bash
 # workflow_dispatch で手動実行
 gh workflow run frontend-ci.yml
 ```
 
 3. **ドキュメント確認**
+
 ```bash
 # Phase 5実装要件の再確認
 cat docs/setup/PHASE5_*.md
@@ -271,10 +279,12 @@ cat docs/setup/PHASE5_*.md
 ## 🎯 結論
 
 **現在のPhase判定ロジック**:
+
 - ✅ Phase 3では問題なし（すべてスキップ）
 - ⚠️ Phase 5移行時に一斉有効化されるリスク
 
 **推奨対応**:
+
 1. **Phase 4完了時**: フロントエンド依存関係の事前検証
 2. **Phase 5着手前**: CI/CD手動テスト実行
 3. **Phase 5実装中**: 段階的ジョブ有効化

@@ -1,8 +1,7 @@
 # バックエンドコア実装 セキュリティレビューレポート
 
-**レビュー日**: 2025年10月8日
-**レビュー対象**: Backend Core Implementation (Phase 3 - 40%完了時点)
-**レビュー担当**: Security Engineer Agent
+**レビュー日**: 2025年10月8日 **レビュー対象**: Backend Core Implementation
+(Phase 3 - 40%完了時点) **レビュー担当**: Security Engineer Agent
 **レビュースコープ**: 設定管理、ドメインモデル、イベントシステム、データベース接続、監視ミドルウェア
 
 ---
@@ -11,26 +10,23 @@
 
 ### 総合評価
 
-**セキュリティスコア**: **78/100** (Good - 良好)
-**OWASP Top 10 準拠**: **8/10項目** (80%)
-**Critical脆弱性**: **0件** ✅
-**High脆弱性**: **0件** ✅
-**Medium脆弱性**: **3件** ⚠️
-**Low脆弱性**: **4件** 🔍
-**Informational**: **3件** 📘
+**セキュリティスコア**: **78/100** (Good - 良好) **OWASP Top 10 準拠**:
+**8/10項目** (80%) **Critical脆弱性**: **0件** ✅ **High脆弱性**: **0件** ✅
+**Medium脆弱性**: **3件** ⚠️ **Low脆弱性**: **4件** 🔍 **Informational**:
+**3件** 📘
 
 ### デプロイ判定
 
-**判定**: ✅ **開発環境デプロイ承認可能**（条件付き）
-**本番環境**: ⚠️ **Medium脆弱性の解消後に承認**
+**判定**: ✅ **開発環境デプロイ承認可能**（条件付き） **本番環境**: ⚠️
+**Medium脆弱性の解消後に承認**
 
 ### 優先対応が必要な脆弱性
 
-| ID | 深刻度 | 脆弱性 | CVSS | 推定工数 |
-|------|--------|--------|------|----------|
-| **MED-2025-003** | Medium | 秘密情報のログ出力リスク | 5.8 | 2時間 |
-| **MED-2025-004** | Medium | データベース接続文字列の平文管理 | 5.3 | 1.5時間 |
-| **MED-2025-005** | Medium | 入力検証の不完全性 | 4.9 | 3時間 |
+| ID               | 深刻度 | 脆弱性                           | CVSS | 推定工数 |
+| ---------------- | ------ | -------------------------------- | ---- | -------- |
+| **MED-2025-003** | Medium | 秘密情報のログ出力リスク         | 5.8  | 2時間    |
+| **MED-2025-004** | Medium | データベース接続文字列の平文管理 | 5.3  | 1.5時間  |
+| **MED-2025-005** | Medium | 入力検証の不完全性               | 4.9  | 3時間    |
 
 **合計推定工数**: 6.5時間
 
@@ -40,23 +36,22 @@
 
 ### 1.1 ファイル一覧と脆弱性概要
 
-| ファイル | 行数 | 脆弱性 | セキュリティスコア |
-|---------|------|--------|-------------------|
-| `backend/src/core/config/settings.py` | 223 | 2件 (M×1, L×1) | 75/100 |
-| `backend/src/domain/prompt/events/prompt_created.py` | 88 | 0件 | 95/100 |
-| `backend/src/domain/prompt/events/prompt_saved.py` | 78 | 0件 | 95/100 |
-| `backend/src/domain/prompt/events/prompt_updated.py` | 91 | 0件 | 95/100 |
-| `backend/src/domain/prompt/value_objects/prompt_content.py` | 60 | 1件 (M×1) | 70/100 |
-| `backend/src/domain/prompt/value_objects/prompt_metadata.py` | 68 | 0件 | 90/100 |
-| `backend/src/domain/prompt/value_objects/user_input.py` | 41 | 1件 (L×1) | 85/100 |
-| `backend/src/domain/shared/events/event_bus.py` | 278 | 2件 (L×2) | 80/100 |
-| `backend/src/domain/shared/events/event_store.py` | 175 | 1件 (L×1) | 85/100 |
-| `backend/src/infrastructure/shared/database/turso_connection.py` | 169 | 2件 (M×1, I×1) | 70/100 |
-| `backend/src/middleware/observability.py` | 534 | 2件 (L×1, I×1) | 82/100 |
-| `backend/src/monitoring.py` | 509 | 1件 (I×1) | 88/100 |
+| ファイル                                                         | 行数 | 脆弱性         | セキュリティスコア |
+| ---------------------------------------------------------------- | ---- | -------------- | ------------------ |
+| `backend/src/core/config/settings.py`                            | 223  | 2件 (M×1, L×1) | 75/100             |
+| `backend/src/domain/prompt/events/prompt_created.py`             | 88   | 0件            | 95/100             |
+| `backend/src/domain/prompt/events/prompt_saved.py`               | 78   | 0件            | 95/100             |
+| `backend/src/domain/prompt/events/prompt_updated.py`             | 91   | 0件            | 95/100             |
+| `backend/src/domain/prompt/value_objects/prompt_content.py`      | 60   | 1件 (M×1)      | 70/100             |
+| `backend/src/domain/prompt/value_objects/prompt_metadata.py`     | 68   | 0件            | 90/100             |
+| `backend/src/domain/prompt/value_objects/user_input.py`          | 41   | 1件 (L×1)      | 85/100             |
+| `backend/src/domain/shared/events/event_bus.py`                  | 278  | 2件 (L×2)      | 80/100             |
+| `backend/src/domain/shared/events/event_store.py`                | 175  | 1件 (L×1)      | 85/100             |
+| `backend/src/infrastructure/shared/database/turso_connection.py` | 169  | 2件 (M×1, I×1) | 70/100             |
+| `backend/src/middleware/observability.py`                        | 534  | 2件 (L×1, I×1) | 82/100             |
+| `backend/src/monitoring.py`                                      | 509  | 1件 (I×1)      | 88/100             |
 
-**総行数**: 2,314行
-**平均スコア**: **84.2/100**
+**総行数**: 2,314行 **平均スコア**: **84.2/100**
 
 ---
 
@@ -65,9 +60,11 @@
 ### 2.1 完全準拠項目 ✅
 
 #### A02:2021 - Cryptographic Failures
+
 **ステータス**: ✅ **合格**
 
 **実装状況**:
+
 ```python
 # settings.py - 秘密情報は環境変数から読み込み
 clerk_secret_key: str | None = Field(default=None)
@@ -76,19 +73,23 @@ redis_password: str | None = Field(default=None)
 ```
 
 **評価**:
+
 - ✅ 秘密情報のハードコーディング無し
 - ✅ Pydantic Fieldでデフォルトnone
 - ✅ 環境変数経由での注入
 
 **推奨事項**:
+
 - より高度な暗号化が必要な場合、`cryptography`ライブラリ統合を検討
 
 ---
 
 #### A04:2021 - Insecure Design
+
 **ステータス**: ✅ **合格**
 
 **実装状況**:
+
 ```python
 # DDD Value Objects - 不変性保証
 @dataclass(frozen=True)
@@ -102,17 +103,20 @@ class PromptContent:
 ```
 
 **評価**:
+
 - ✅ ドメイン駆動設計による堅牢な設計
 - ✅ 不変オブジェクト（frozen=True）
-- ✅ 初期化時検証（__post_init__）
+- ✅ 初期化時検証（**post_init**）
 - ✅ 明確なビジネスルール実装
 
 ---
 
 #### A06:2021 - Vulnerable and Outdated Components
+
 **ステータス**: ✅ **合格**（Phase 2実装完了）
 
 **実装状況**:
+
 ```yaml
 # .github/workflows/shared-setup-python.yml
 - name: 📦 依存関係のインストール
@@ -122,6 +126,7 @@ class PromptContent:
 ```
 
 **評価**:
+
 - ✅ pip-toolsによるハッシュ検証実装済み（SLSA Level 3準拠）
 - ✅ サプライチェーン攻撃対策完了
 - ✅ 依存関係の固定とハッシュ検証
@@ -131,9 +136,11 @@ class PromptContent:
 ---
 
 #### A08:2021 - Software and Data Integrity Failures
+
 **ステータス**: ✅ **合格**
 
 **実装状況**:
+
 ```python
 # event_store.py - イベントソーシング
 class InMemoryEventStore(EventStore):
@@ -145,6 +152,7 @@ class InMemoryEventStore(EventStore):
 ```
 
 **評価**:
+
 - ✅ イベントの完全性保証（不変イベントストア）
 - ✅ バージョン管理（event.version）
 - ✅ 改ざん検出可能な設計
@@ -152,9 +160,11 @@ class InMemoryEventStore(EventStore):
 ---
 
 #### A09:2021 - Security Logging and Monitoring Failures
+
 **ステータス**: ✅ **合格**
 
 **実装状況**:
+
 ```python
 # observability.py - 包括的ログ記録
 logger.info("Request started", extra={"context": context})
@@ -168,6 +178,7 @@ async def get_health_status(self) -> HealthCheckResponse:
 ```
 
 **評価**:
+
 - ✅ 構造化ログ（JSON形式）
 - ✅ リクエストIDトレーシング
 - ✅ 包括的監視（LangFuse、Prometheus統合）
@@ -176,9 +187,11 @@ async def get_health_status(self) -> HealthCheckResponse:
 ---
 
 #### A10:2021 - Server-Side Request Forgery (SSRF)
+
 **ステータス**: ✅ **合格** (該当処理なし)
 
 **評価**:
+
 - ✅ 現時点で外部URLへのユーザー入力依存リクエストなし
 - ✅ LLM API呼び出しは固定エンドポイント（将来実装時に検証必要）
 
@@ -187,9 +200,11 @@ async def get_health_status(self) -> HealthCheckResponse:
 ### 2.2 改善が必要な項目 ⚠️
 
 #### A01:2021 - Broken Access Control
+
 **ステータス**: ⚠️ **改善余地**（実装未完了）
 
 **現状**:
+
 ```python
 # settings.py - 認証設定は存在
 clerk_publishable_key: str | None = Field(default=None)
@@ -198,11 +213,13 @@ auth_enabled: bool = Field(default=True)
 ```
 
 **問題点**:
+
 - ⚠️ Clerk認証統合が未実装（Phase 3の今後の実装予定）
 - ⚠️ エンドポイントレベルの認可ロジック未実装
 - ⚠️ ロールベースアクセス制御（RBAC）未定義
 
 **推奨対応**:
+
 ```python
 # 実装すべきデコレーター（例）
 from functools import wraps
@@ -231,13 +248,14 @@ def require_auth(required_roles: list[str] = None):
 ---
 
 #### A03:2021 - Injection
+
 **ステータス**: ⚠️ **改善余地**
 
-**脆弱性ID**: **MED-2025-005**
-**CVSS 3.1スコア**: **4.9 (Medium)**
-**CWE**: CWE-94 (Improper Control of Generation of Code)
+**脆弱性ID**: **MED-2025-005** **CVSS 3.1スコア**: **4.9 (Medium)** **CWE**:
+CWE-94 (Improper Control of Generation of Code)
 
 **問題コード**:
+
 ```python
 # prompt_content.py (行41-51)
 def format(self, **kwargs: Any) -> str:
@@ -246,6 +264,7 @@ def format(self, **kwargs: Any) -> str:
 ```
 
 **攻撃シナリオ**:
+
 ```python
 # 攻撃者が悪意のある入力を注入
 malicious_template = "{__import__('os').system('rm -rf /')}"
@@ -254,6 +273,7 @@ content.format()  # 💥 任意のコード実行
 ```
 
 **推奨修正**:
+
 ```python
 from string import Template
 
@@ -272,6 +292,7 @@ def format(self, **kwargs: Any) -> str:
 ```
 
 **代替案（より厳格）**:
+
 ```python
 import re
 
@@ -294,6 +315,7 @@ def format(self, **kwargs: Any) -> str:
 ```
 
 **緩和策の効果**:
+
 - ✅ 任意コード実行の完全防止
 - ✅ ホワイトリスト方式による変数制限
 - ✅ 明示的なバリデーション
@@ -303,13 +325,14 @@ def format(self, **kwargs: Any) -> str:
 ---
 
 #### A05:2021 - Security Misconfiguration
+
 **ステータス**: ⚠️ **改善余地**
 
-**脆弱性ID**: **MED-2025-004**
-**CVSS 3.1スコア**: **5.3 (Medium)**
-**CWE**: CWE-798 (Use of Hard-coded Credentials)
+**脆弱性ID**: **MED-2025-004** **CVSS 3.1スコア**: **5.3 (Medium)** **CWE**:
+CWE-798 (Use of Hard-coded Credentials)
 
 **問題コード**:
+
 ```python
 # turso_connection.py (行38-47)
 def get_connection_url(self) -> str:
@@ -319,11 +342,13 @@ def get_connection_url(self) -> str:
 ```
 
 **問題点**:
+
 1. **ログ漏洩リスク**: URLがログに記録されるとトークンも露出
 2. **履歴残存**: ブラウザ履歴、プロキシログに残る可能性
 3. **アクセスログ**: Webサーバーログに平文記録
 
 **推奨修正**:
+
 ```python
 def get_connection_url(self) -> str:
     """安全な接続URL生成（トークンをヘッダーで渡す）"""
@@ -356,6 +381,7 @@ def get_libsql_client(self) -> libsql_client.Client:
 ```
 
 **追加対策**:
+
 ```python
 # settings.py - データベースURL取得時のトークン除去
 def get_database_url_safe(self) -> str:
@@ -366,6 +392,7 @@ def get_database_url_safe(self) -> str:
 ```
 
 **緩和策の効果**:
+
 - ✅ 認証情報のログ漏洩防止
 - ✅ HTTPS経由での安全な送信
 - ✅ アクセスログへの露出防止
@@ -375,14 +402,17 @@ def get_database_url_safe(self) -> str:
 ---
 
 #### A07:2021 - Identification and Authentication Failures
+
 **ステータス**: ⚠️ **改善余地**（未実装）
 
 **現状**:
+
 - ⚠️ Clerk認証統合が未完了（Phase 3.8予定）
 - ⚠️ セッション管理未実装
 - ⚠️ MFA（多要素認証）未検証
 
 **推奨対応**（Phase 3.8実装時）:
+
 ```python
 # middleware/auth.py（実装予定）
 from clerk import Clerk
@@ -411,10 +441,9 @@ async def verify_clerk_jwt(request: Request):
 
 ### 3.1 MED-2025-003: 秘密情報のログ出力リスク
 
-**脆弱性ID**: MED-2025-003
-**CVSS 3.1スコア**: **5.8 (Medium)**
-**CWE**: CWE-532 (Insertion of Sensitive Information into Log File)
-**影響範囲**: `observability.py`, `settings.py`
+**脆弱性ID**: MED-2025-003 **CVSS 3.1スコア**: **5.8 (Medium)** **CWE**: CWE-532
+(Insertion of Sensitive Information into Log File) **影響範囲**:
+`observability.py`, `settings.py`
 
 #### 問題箇所
 
@@ -432,6 +461,7 @@ print(f"✅ Loaded: {env_file}")  # ❌ ファイルパス出力
 #### 攻撃シナリオ
 
 **シナリオ1: 環境変数ファイルパスの露出**
+
 ```bash
 # ログ出力例
 ✅ Loaded: /home/user/AutoForgeNexus/backend/.env.production
@@ -442,6 +472,7 @@ print(f"✅ Loaded: {env_file}")  # ❌ ファイルパス出力
 ```
 
 **シナリオ2: デバッグログでの秘密情報露出**
+
 ```python
 # 将来的なリスク
 logger.debug(f"Database URL: {settings.get_database_url()}")
@@ -487,11 +518,11 @@ def __repr__(self) -> str:
 
 #### 緩和策の効果
 
-| 項目 | 変更前 | 変更後 | リスク削減 |
-|------|--------|--------|------------|
-| **環境ファイルパス露出** | フルパス出力 | ファイル名のみ | 80% |
-| **デバッグ時の秘密露出** | 無防備 | 自動マスキング | 95% |
-| **CVSS スコア** | 5.8 (Medium) | 2.1 (Low) | 64% |
+| 項目                     | 変更前       | 変更後         | リスク削減 |
+| ------------------------ | ------------ | -------------- | ---------- |
+| **環境ファイルパス露出** | フルパス出力 | ファイル名のみ | 80%        |
+| **デバッグ時の秘密露出** | 無防備       | 自動マスキング | 95%        |
+| **CVSS スコア**          | 5.8 (Medium) | 2.1 (Low)      | 64%        |
 
 **推定工数**: 2時間
 
@@ -502,6 +533,7 @@ def __repr__(self) -> str:
 （前述のA05で詳細分析済み）
 
 **要約**:
+
 - 問題: 認証トークンがURLに含まれる
 - CVSS: 5.3 (Medium)
 - 推定工数: 1.5時間
@@ -513,6 +545,7 @@ def __repr__(self) -> str:
 （前述のA03で詳細分析済み）
 
 **要約**:
+
 - 問題: テンプレート変数の無制限format実行
 - CVSS: 4.9 (Medium)
 - 推定工数: 3時間
@@ -523,9 +556,8 @@ def __repr__(self) -> str:
 
 ### 4.1 LOW-2025-002: イベントバス例外処理の不透明性
 
-**脆弱性ID**: LOW-2025-002
-**CVSS 3.1スコア**: **3.1 (Low)**
-**CWE**: CWE-755 (Improper Handling of Exceptional Conditions)
+**脆弱性ID**: LOW-2025-002 **CVSS 3.1スコア**: **3.1 (Low)** **CWE**: CWE-755
+(Improper Handling of Exceptional Conditions)
 
 #### 問題箇所
 
@@ -604,9 +636,8 @@ class InMemoryEventBus(EventBus):
 
 ### 4.2 LOW-2025-003: イベントストアのメモリ制限なし
 
-**脆弱性ID**: LOW-2025-003
-**CVSS 3.1スコア**: **2.7 (Low)**
-**CWE**: CWE-770 (Allocation of Resources Without Limits or Throttling)
+**脆弱性ID**: LOW-2025-003 **CVSS 3.1スコア**: **2.7 (Low)** **CWE**: CWE-770
+(Allocation of Resources Without Limits or Throttling)
 
 #### 問題箇所
 
@@ -686,9 +717,8 @@ class InMemoryEventStore(EventStore):
 
 ### 4.3 LOW-2025-004: ユーザー入力の不十分なサニタイゼーション
 
-**脆弱性ID**: LOW-2025-004
-**CVSS 3.1スコア**: **2.3 (Low)**
-**CWE**: CWE-20 (Improper Input Validation)
+**脆弱性ID**: LOW-2025-004 **CVSS 3.1スコア**: **2.3 (Low)** **CWE**: CWE-20
+(Improper Input Validation)
 
 #### 問題箇所
 
@@ -781,9 +811,8 @@ class UserInput:
 
 ### 4.4 LOW-2025-005: レート制限の未実装
 
-**脆弱性ID**: LOW-2025-005
-**CVSS 3.1スコア**: **2.1 (Low)**
-**CWE**: CWE-770 (Allocation of Resources Without Limits or Throttling)
+**脆弱性ID**: LOW-2025-005 **CVSS 3.1スコア**: **2.1 (Low)** **CWE**: CWE-770
+(Allocation of Resources Without Limits or Throttling)
 
 #### 問題箇所
 
@@ -885,12 +914,14 @@ app.add_middleware(
 ### 5.1 INFO-2025-001: デバッグ情報の過剰露出
 
 **問題箇所**:
+
 ```python
 # turso_connection.py (行94)
 echo=self.settings.debug,  # ❌ 本番環境でもSQLログが出力される可能性
 ```
 
 **推奨修正**:
+
 ```python
 echo=self.settings.debug and self.settings.is_development(),
 ```
@@ -898,6 +929,7 @@ echo=self.settings.debug and self.settings.is_development(),
 ### 5.2 INFO-2025-002: 型ヒントの不一致
 
 **問題箇所**:
+
 ```python
 # observability.py (行288-290)
 def _sanitize_dict(self, data: dict[str, object], depth: int = 0) -> dict[str, str]:
@@ -905,6 +937,7 @@ def _sanitize_dict(self, data: dict[str, object], depth: int = 0) -> dict[str, s
 ```
 
 **推奨修正**:
+
 ```python
 def _sanitize_dict(self, data: dict[str, Any], depth: int = 0) -> dict[str, Any]:
 ```
@@ -912,6 +945,7 @@ def _sanitize_dict(self, data: dict[str, Any], depth: int = 0) -> dict[str, Any]
 ### 5.3 INFO-2025-003: 監視メトリクスのハードコーディング
 
 **問題箇所**:
+
 ```python
 # monitoring.py (行230-238)
 metadata={
@@ -925,6 +959,7 @@ metadata={
 ```
 
 **推奨**:
+
 - 動的メトリクス収集の実装
 - Prometheusメトリクスエクスポート機能
 
@@ -935,6 +970,7 @@ metadata={
 ### 6.1 実装済みベストプラクティス ✅
 
 #### 1. 秘密情報管理
+
 ```python
 # ✅ 環境変数経由での管理
 clerk_secret_key: str | None = Field(default=None)
@@ -945,6 +981,7 @@ openai_api_key: str | None = Field(default=None)
 ```
 
 #### 2. 構造化ログ
+
 ```python
 # ✅ JSON形式ログ
 logger.info("Request started", extra={"context": context})
@@ -954,6 +991,7 @@ request_id = str(uuid.uuid4())
 ```
 
 #### 3. 機密情報のサニタイゼーション
+
 ```python
 # ✅ ヘッダーサニタイズ
 def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
@@ -967,6 +1005,7 @@ def _sanitize_dict(self, data: dict) -> dict:
 ```
 
 #### 4. ドメイン駆動設計
+
 ```python
 # ✅ 不変オブジェクト
 @dataclass(frozen=True)
@@ -979,6 +1018,7 @@ def __post_init__(self) -> None:
 ```
 
 #### 5. エラー処理
+
 ```python
 # ✅ 包括的例外処理
 try:
@@ -993,21 +1033,25 @@ except Exception as e:
 ### 6.2 未実装のベストプラクティス ⚠️
 
 #### 1. 認証・認可
+
 - ❌ Clerk統合未実装
 - ❌ JWTトークン検証なし
 - ❌ RBAC未定義
 
 #### 2. レート制限
+
 - ❌ ミドルウェア未実装
 - ❌ API制限なし
 - ❌ ユーザーごとのクォータなし
 
 #### 3. 入力検証
+
 - ❌ 長さ制限が一部未実装
 - ❌ ホワイトリスト検証なし
 - ❌ プロンプトインジェクション対策不足
 
 #### 4. 監査ログ
+
 - ❌ セキュリティイベントの専用ログなし
 - ❌ SIEM統合なし
 - ❌ 異常検知機能なし
@@ -1021,11 +1065,13 @@ except Exception as e:
 **ステータス**: ✅ **準拠** (Phase 3時点)
 
 **評価**:
+
 - ✅ 個人情報の最小化（必要最小限の収集）
 - ✅ ログからの機密情報サニタイズ
 - ✅ データ主体の権利対応準備（削除、ポータビリティ）
 
 **今後必要な対応**:
+
 - ⚠️ Cookie同意バナー（フロントエンド実装時）
 - ⚠️ プライバシーポリシー整備
 - ⚠️ データ保持期間の明示
@@ -1037,6 +1083,7 @@ except Exception as e:
 **ステータス**: ✅ **該当なし**
 
 **評価**:
+
 - ✅ クレジットカード情報を一切扱わない設計
 - ✅ 決済処理は外部サービス（Stripe等）利用予定
 
@@ -1047,11 +1094,13 @@ except Exception as e:
 **ステータス**: ⚠️ **部分準拠**
 
 **準拠項目**:
+
 - ✅ ログ記録（CC7.2）
 - ✅ 監視機能（CC7.2）
 - ✅ アクセス制御準備（CC6.1、未実装）
 
 **不足項目**:
+
 - ⚠️ 変更管理プロセス（CC8.1）
 - ⚠️ インシデント対応計画（CC7.3）
 - ⚠️ ベンダー管理（CC9.2、LLMプロバイダー評価）
@@ -1062,30 +1111,34 @@ except Exception as e:
 
 ### 8.1 現在のリスク評価
 
-| 脆弱性ID | 脅威 | 可能性 | 影響 | リスクレベル | 対応期限 |
-|----------|------|--------|------|--------------|----------|
-| **MED-2025-003** | 秘密情報ログ露出 | Medium | High | **Medium** | Phase 3.7 |
-| **MED-2025-004** | DB接続文字列露出 | Low | High | **Medium** | Phase 3.7 |
-| **MED-2025-005** | テンプレートインジェクション | Medium | High | **Medium** | Phase 3.7 |
-| **LOW-2025-002** | イベントハンドラー失敗 | Low | Medium | **Low** | Phase 3.9 |
-| **LOW-2025-003** | イベントストアメモリリーク | Low | Medium | **Low** | Phase 3.9 |
-| **LOW-2025-004** | 入力サニタイゼーション不足 | Low | Low | **Low** | Phase 3.9 |
-| **LOW-2025-005** | レート制限未実装 | Medium | Medium | **Low** | Phase 3.8 |
+| 脆弱性ID         | 脅威                         | 可能性 | 影響   | リスクレベル | 対応期限  |
+| ---------------- | ---------------------------- | ------ | ------ | ------------ | --------- |
+| **MED-2025-003** | 秘密情報ログ露出             | Medium | High   | **Medium**   | Phase 3.7 |
+| **MED-2025-004** | DB接続文字列露出             | Low    | High   | **Medium**   | Phase 3.7 |
+| **MED-2025-005** | テンプレートインジェクション | Medium | High   | **Medium**   | Phase 3.7 |
+| **LOW-2025-002** | イベントハンドラー失敗       | Low    | Medium | **Low**      | Phase 3.9 |
+| **LOW-2025-003** | イベントストアメモリリーク   | Low    | Medium | **Low**      | Phase 3.9 |
+| **LOW-2025-004** | 入力サニタイゼーション不足   | Low    | Low    | **Low**      | Phase 3.9 |
+| **LOW-2025-005** | レート制限未実装             | Medium | Medium | **Low**      | Phase 3.8 |
 
 ### 8.2 リスク優先順位
 
 **🔴 Critical Priority（即時対応）**:
+
 - なし ✅
 
 **🟠 High Priority（1週間以内）**:
+
 - なし ✅
 
 **🟡 Medium Priority（Phase 3.7完了前）**:
+
 1. **MED-2025-003**: 秘密情報ログ露出対策（推定2時間）
 2. **MED-2025-004**: DB接続文字列安全化（推定1.5時間）
 3. **MED-2025-005**: テンプレートインジェクション対策（推定3時間）
 
 **🟢 Low Priority（Phase 3.9以降）**:
+
 - LOW-2025-002〜005の対応
 
 ---
@@ -1096,11 +1149,10 @@ except Exception as e:
 
 #### 推奨1: MED-2025-005対応（テンプレートインジェクション）
 
-**優先度**: ⚠️ **High**
-**推定工数**: 3時間
-**担当**: Backend Developer
+**優先度**: ⚠️ **High** **推定工数**: 3時間 **担当**: Backend Developer
 
 **実装内容**:
+
 ```python
 # prompt_content.py修正
 def format(self, **kwargs: Any) -> str:
@@ -1111,6 +1163,7 @@ def format(self, **kwargs: Any) -> str:
 ```
 
 **テスト**:
+
 ```python
 # tests/unit/domain/prompt/test_prompt_content_security.py
 def test_template_injection_prevention():
@@ -1124,6 +1177,7 @@ def test_template_injection_prevention():
 ```
 
 **成功基準**:
+
 - [ ] 任意コード実行の防止確認
 - [ ] ホワイトリスト方式の実装完了
 - [ ] セキュリティテスト80%カバレッジ
@@ -1132,11 +1186,10 @@ def test_template_injection_prevention():
 
 #### 推奨2: MED-2025-003対応（秘密情報ログ露出）
 
-**優先度**: ⚠️ **High**
-**推定工数**: 2時間
-**担当**: Backend Developer
+**優先度**: ⚠️ **High** **推定工数**: 2時間 **担当**: Backend Developer
 
 **実装内容**:
+
 ```python
 # settings.py - __repr__メソッド追加
 def __repr__(self) -> str:
@@ -1149,6 +1202,7 @@ def __repr__(self) -> str:
 ```
 
 **成功基準**:
+
 - [ ] print(settings)で秘密情報が表示されない
 - [ ] ログファイルに秘密情報が記録されない
 - [ ] 自動テスト追加
@@ -1157,11 +1211,10 @@ def __repr__(self) -> str:
 
 #### 推奨3: MED-2025-004対応（DB接続文字列）
 
-**優先度**: ⚠️ **Medium**
-**推定工数**: 1.5時間
-**担当**: Backend Developer
+**優先度**: ⚠️ **Medium** **推定工数**: 1.5時間 **担当**: Backend Developer
 
 **実装内容**:
+
 ```python
 # turso_connection.py修正
 def get_connection_url(self) -> str:
@@ -1177,6 +1230,7 @@ def get_libsql_client(self) -> libsql_client.Client:
 ```
 
 **成功基準**:
+
 - [ ] URLにauthTokenが含まれない
 - [ ] ログにトークンが記録されない
 - [ ] 接続動作確認
@@ -1187,17 +1241,18 @@ def get_libsql_client(self) -> libsql_client.Client:
 
 #### 推奨4: Clerk認証統合
 
-**優先度**: ⚠️ **High**（Phase 3.8必須）
-**推定工数**: 1週間
-**担当**: Backend Developer + Frontend Developer
+**優先度**: ⚠️ **High**（Phase 3.8必須） **推定工数**: 1週間 **担当**: Backend
+Developer + Frontend Developer
 
 **実装内容**:
+
 - Clerk SDK統合
 - JWTトークン検証ミドルウェア
 - RBAC実装（admin, user, guest）
 - セッション管理
 
 **成功基準**:
+
 - [ ] 全APIエンドポイントで認証必須
 - [ ] ロールベースアクセス制御動作
 - [ ] セッション有効期限管理
@@ -1206,20 +1261,20 @@ def get_libsql_client(self) -> libsql_client.Client:
 
 #### 推奨5: レート制限実装
 
-**優先度**: 🟡 **Medium**
-**推定工数**: 3時間
-**担当**: Backend Developer
+**優先度**: 🟡 **Medium** **推定工数**: 3時間 **担当**: Backend Developer
 
 **実装内容**:
+
 - RateLimitMiddleware実装
 - IPベース制限（未認証）
 - ユーザーIDベース制限（認証済み）
 - Redis連携（将来）
 
 **成功基準**:
+
 - [ ] 60リクエスト/分の制限適用
 - [ ] 429エラーの正しい返却
-- [ ] X-RateLimit-*ヘッダー実装
+- [ ] X-RateLimit-\*ヘッダー実装
 
 ---
 
@@ -1227,10 +1282,10 @@ def get_libsql_client(self) -> libsql_client.Client:
 
 #### 推奨6: セキュリティ監査ログ
 
-**優先度**: 🟢 **Low**
-**推定工数**: 1週間
+**優先度**: 🟢 **Low** **推定工数**: 1週間
 
 **実装内容**:
+
 - セキュリティイベント専用ログ
 - SIEM統合（Splunk, DataDog等）
 - 異常検知ルール
@@ -1240,10 +1295,10 @@ def get_libsql_client(self) -> libsql_client.Client:
 
 #### 推奨7: WAF導入
 
-**優先度**: 🟢 **Low**
-**推定工数**: 3日
+**優先度**: 🟢 **Low** **推定工数**: 3日
 
 **実装内容**:
+
 - Cloudflare WAF有効化
 - OWASP Core Rule Set適用
 - カスタムルール定義
@@ -1256,10 +1311,12 @@ def get_libsql_client(self) -> libsql_client.Client:
 ### 10.1 セキュリティテストカバレッジ
 
 **現状**:
+
 - 単体テスト: 実装済み（prompt domain配下）
 - セキュリティテスト: 未実装
 
 **目標**:
+
 ```
 tests/security/
 ├── test_injection.py              # インジェクション攻撃テスト
@@ -1273,6 +1330,7 @@ tests/security/
 ### 10.2 推奨テストケース
 
 #### テンプレートインジェクション
+
 ```python
 # tests/security/test_injection.py
 import pytest
@@ -1306,6 +1364,7 @@ def test_variable_whitelist():
 ```
 
 #### 秘密情報露出
+
 ```python
 # tests/security/test_log_sanitization.py
 def test_settings_repr_sanitization():
@@ -1325,6 +1384,7 @@ def test_database_url_sanitization():
 ```
 
 #### レート制限
+
 ```python
 # tests/security/test_rate_limiting.py
 @pytest.mark.asyncio
@@ -1377,11 +1437,13 @@ class SecurityMetrics:
 ### 11.2 アラートルール
 
 **Critical Alerts**:
+
 - 5分間に10回以上の認証失敗
 - 1分間に3回以上のインジェクション試行
 - データベース接続文字列のログ記録検出
 
 **Warning Alerts**:
+
 - レート制限ヒット率 > 10%
 - イベントハンドラー失敗率 > 5%
 - メモリ使用率 > 80%
@@ -1393,6 +1455,7 @@ class SecurityMetrics:
 ### 12.1 本番デプロイ前の必須対応
 
 #### セキュリティ
+
 - [ ] **MED-2025-003**: 秘密情報ログ露出対策
 - [ ] **MED-2025-004**: DB接続文字列安全化
 - [ ] **MED-2025-005**: テンプレートインジェクション対策
@@ -1400,16 +1463,19 @@ class SecurityMetrics:
 - [ ] レート制限実装
 
 #### テスト
+
 - [ ] セキュリティテストカバレッジ > 80%
 - [ ] ペネトレーションテスト実施
 - [ ] 負荷テスト（10,000同時接続）
 
 #### ドキュメント
+
 - [ ] セキュリティポリシー整備
 - [ ] インシデント対応手順書
 - [ ] プライバシーポリシー
 
 #### 監視
+
 - [ ] セキュリティメトリクス実装
 - [ ] アラートルール設定
 - [ ] ログ集約（LangFuse, Grafana）
@@ -1420,26 +1486,29 @@ class SecurityMetrics:
 
 ### 13.1 現在の技術的負債
 
-| 項目 | 深刻度 | 影響 | 対応優先度 |
-|------|--------|------|------------|
-| InMemoryEventStore本番不適 | High | スケーラビリティ | Phase 4で解消 |
-| 認証未実装 | High | セキュリティ | Phase 3.8で解消 |
-| レート制限未実装 | Medium | DoS脆弱性 | Phase 3.8で解消 |
-| テンプレート検証不足 | Medium | インジェクション | Phase 3.7で解消 |
+| 項目                       | 深刻度 | 影響             | 対応優先度      |
+| -------------------------- | ------ | ---------------- | --------------- |
+| InMemoryEventStore本番不適 | High   | スケーラビリティ | Phase 4で解消   |
+| 認証未実装                 | High   | セキュリティ     | Phase 3.8で解消 |
+| レート制限未実装           | Medium | DoS脆弱性        | Phase 3.8で解消 |
+| テンプレート検証不足       | Medium | インジェクション | Phase 3.7で解消 |
 
 ### 13.2 リファクタリング計画
 
 **Phase 3.7（短期）**:
+
 - テンプレート処理の安全化
 - ログ出力の秘密情報マスキング
 - データベース接続の安全化
 
 **Phase 3.8（中期）**:
+
 - 認証システム統合
 - レート制限実装
 - セキュリティテスト拡充
 
 **Phase 4（長期）**:
+
 - EventStore永続化（Turso/Redis Streams）
 - 分散トレーシング強化
 - WAF導入
@@ -1461,6 +1530,7 @@ graph TD
 ```
 
 **参加エージェント**:
+
 1. **security-engineer**: 脆弱性評価、CVSS採点、推奨対策
 2. **backend-developer**: コード分析、修正案作成
 3. **compliance-officer**: GDPR/SOC2準拠確認
@@ -1468,12 +1538,11 @@ graph TD
 
 ### 14.2 レビュー効率
 
-**実施時間**: 4.5時間
-**分析行数**: 2,314行
-**脆弱性検出**: 10件
-**推奨対策**: 7項目
+**実施時間**: 4.5時間 **分析行数**: 2,314行 **脆弱性検出**: 10件 **推奨対策**:
+7項目
 
 **効率指標**:
+
 - 分析速度: 514行/時間
 - 脆弱性検出率: 0.43件/100行
 - CVSS平均スコア: 3.9（Low-Medium）
@@ -1484,30 +1553,27 @@ graph TD
 
 ### 15.1 デプロイ判定マトリックス
 
-| 環境 | ステータス | 条件 |
-|------|------------|------|
-| **開発環境** | ✅ **承認** | 無条件 |
-| **ステージング環境** | ✅ **承認** | 無条件 |
-| **本番環境** | ⚠️ **条件付き承認** | Medium脆弱性解消後 |
+| 環境                 | ステータス          | 条件               |
+| -------------------- | ------------------- | ------------------ |
+| **開発環境**         | ✅ **承認**         | 無条件             |
+| **ステージング環境** | ✅ **承認**         | 無条件             |
+| **本番環境**         | ⚠️ **条件付き承認** | Medium脆弱性解消後 |
 
 ### 15.2 本番デプロイ承認条件
 
 **必須対応（Phase 3.7完了時）**:
+
 1. ✅ **MED-2025-003**解消（秘密情報ログ露出）
 2. ✅ **MED-2025-004**解消（DB接続文字列）
 3. ✅ **MED-2025-005**解消（テンプレートインジェクション）
 
-**推奨対応（Phase 3.8完了時）**:
-4. ⚠️ Clerk認証統合
-5. ⚠️ レート制限実装
-6. ⚠️ セキュリティテストカバレッジ > 80%
+**推奨対応（Phase 3.8完了時）**: 4. ⚠️ Clerk認証統合 5. ⚠️ レート制限実装 6.
+⚠️ セキュリティテストカバレッジ > 80%
 
 ### 15.3 承認者
 
-**承認**: Security Engineer Agent
-**承認日**: 2025年10月8日
-**有効期限**: Phase 3.7完了まで（推定1週間）
-**再レビュー**: Phase 3.8完了時（認証統合後）
+**承認**: Security Engineer Agent **承認日**: 2025年10月8日 **有効期限**: Phase
+3.7完了まで（推定1週間） **再レビュー**: Phase 3.8完了時（認証統合後）
 
 ---
 
@@ -1516,6 +1582,7 @@ graph TD
 ### 16.1 CVSS 3.1スコア計算詳細
 
 #### MED-2025-003: 秘密情報ログ露出
+
 ```
 CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
 - Attack Vector: Network (AV:N)
@@ -1531,6 +1598,7 @@ Base Score: 5.8 (Medium)
 ```
 
 #### MED-2025-004: DB接続文字列露出
+
 ```
 CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:N/A:N
 - Attack Vector: Network (AV:N)
@@ -1546,6 +1614,7 @@ Base Score: 5.3 (Medium)
 ```
 
 #### MED-2025-005: テンプレートインジェクション
+
 ```
 CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L
 - Attack Vector: Network (AV:N)
@@ -1571,9 +1640,9 @@ Base Score: 4.9 (Medium)
 
 ### 16.3 変更履歴
 
-| 日付 | バージョン | 変更内容 | 承認者 |
-|------|------------|----------|--------|
-| 2025-10-08 | 1.0 | 初版作成（Backend Core Phase 3レビュー） | Security Engineer Agent |
+| 日付       | バージョン | 変更内容                                 | 承認者                  |
+| ---------- | ---------- | ---------------------------------------- | ----------------------- |
+| 2025-10-08 | 1.0        | 初版作成（Backend Core Phase 3レビュー） | Security Engineer Agent |
 
 ---
 
@@ -1582,6 +1651,7 @@ Base Score: 4.9 (Medium)
 ### 17.1 即時対応（24時間以内）
 
 1. **脆弱性チケット作成**
+
    - GitHub Issueで3つのMedium脆弱性を起票
    - 各チケットに修正提案とテストケースを添付
 
@@ -1592,6 +1662,7 @@ Base Score: 4.9 (Medium)
 ### 17.2 短期対応（1週間以内）
 
 1. **Medium脆弱性の解消**
+
    - MED-2025-003, 004, 005の修正実装
    - セキュリティテストの追加
    - 修正コードのレビュー
@@ -1603,6 +1674,7 @@ Base Score: 4.9 (Medium)
 ### 17.3 中期対応（2週間以内）
 
 1. **Phase 3.8実装**
+
    - Clerk認証統合
    - レート制限実装
    - RBAC設計・実装
@@ -1616,4 +1688,5 @@ Base Score: 4.9 (Medium)
 **レポート終了**
 
 **次のセキュリティレビュー予定**: Phase 3.8完了時（認証統合後）
-**連絡先**: セキュリティ関連の質問は `docs/security/SECURITY_POLICY.md` を参照してください。
+**連絡先**: セキュリティ関連の質問は `docs/security/SECURITY_POLICY.md`
+を参照してください。

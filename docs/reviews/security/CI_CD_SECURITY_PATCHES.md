@@ -1,22 +1,23 @@
 # CI/CD セキュリティパッチ実装ガイド
 
-**作成日**: 2025-10-08
-**対象**: CI/CD Security Review 改善推奨項目
-**優先度**: Low Risk → Very Low Risk
-**推定工数**: 30分
+**作成日**: 2025-10-08 **対象**: CI/CD Security Review 改善推奨項目 **優先度**:
+Low Risk → Very Low Risk **推定工数**: 30分
 
 ## 📋 概要
 
-CI/CDセキュリティレビューで特定された改善推奨項目（リスク: Low）に対する具体的な実装パッチを提供します。
+CI/CDセキュリティレビューで特定された改善推奨項目（リスク:
+Low）に対する具体的な実装パッチを提供します。
 
 ---
 
 ## 🔧 パッチ1: TruffleHogバージョン固定
 
 ### 対象ファイル
+
 `.github/workflows/pr-check.yml`
 
 ### 現在の実装
+
 ```yaml
 - name: 🔍 Check for secrets
   uses: trufflesecurity/trufflehog@main
@@ -27,9 +28,10 @@ CI/CDセキュリティレビューで特定された改善推奨項目（リス
 ```
 
 ### パッチ適用後
+
 ```yaml
 - name: 🔍 Check for secrets
-  uses: trufflesecurity/trufflehog@v3.82.0  # バージョン固定
+  uses: trufflesecurity/trufflehog@v3.82.0 # バージョン固定
   with:
     path: ./
     base: ${{ github.event.pull_request.base.sha }}
@@ -37,16 +39,19 @@ CI/CDセキュリティレビューで特定された改善推奨項目（リス
 ```
 
 ### 変更理由
+
 - セマンティックバージョニングによる予測可能性向上
 - 意図しない更新によるCI/CD障害リスク排除
 - セキュリティベストプラクティス遵守
 
 ### 影響範囲
+
 - ✅ 既存機能への影響なし
 - ✅ 後方互換性あり
 - ✅ テスト不要（バージョン番号変更のみ）
 
 ### 適用コマンド
+
 ```bash
 # 手動編集
 vim .github/workflows/pr-check.yml
@@ -56,6 +61,7 @@ sed -i '' 's|trufflesecurity/trufflehog@main|trufflesecurity/trufflehog@v3.82.0|
 ```
 
 ### 検証方法
+
 ```bash
 # ワークフロー構文チェック
 gh workflow view pr-check.yml
@@ -71,9 +77,11 @@ gh pr create --fill
 ## 🔧 パッチ2: PRタイトルインジェクション対策
 
 ### 対象ファイル
+
 `.github/workflows/pr-check.yml`
 
 ### 現在の実装
+
 ```yaml
 - name: 🧹 Sanitize PR title
   id: sanitize
@@ -86,6 +94,7 @@ gh pr create --fill
 ```
 
 ### パッチ適用後
+
 ```yaml
 - name: 🧹 Sanitize PR title
   id: sanitize
@@ -100,11 +109,13 @@ gh pr create --fill
 ```
 
 ### 変更理由
+
 - シェルインジェクションリスク軽減
 - 環境変数経由でユーザー入力を安全に処理
 - OWASP A03:2021 (Injection) 対策
 
 ### 脆弱性シナリオ（理論的）
+
 ```bash
 # 悪意のあるPRタイトル例（理論上）
 "; rm -rf / #"
@@ -113,6 +124,7 @@ $(malicious_command)
 ```
 
 ### 環境変数使用による保護
+
 ```bash
 # env経由の場合
 PR_TITLE="; rm -rf /"
@@ -121,17 +133,20 @@ SANITIZED_TITLE=$(echo "${PR_TITLE}" | xargs)
 ```
 
 ### 影響範囲
+
 - ✅ 既存機能への影響なし
 - ✅ 後方互換性あり
 - ✅ セキュリティ強化のみ
 
 ### 適用コマンド
+
 ```bash
 # 手動編集推奨（複数行変更のため）
 vim .github/workflows/pr-check.yml
 ```
 
 ### 検証方法
+
 ```bash
 # テストPRタイトル（無害）
 PR_TITLE="  feat: テスト機能  "
@@ -149,9 +164,11 @@ echo "${PR_TITLE}" | xargs
 ## 🔧 パッチ3: SonarCloud設定一元化
 
 ### 対象ファイル
+
 `.github/workflows/pr-check.yml`
 
 ### 現在の実装
+
 ```yaml
 - name: 📊 SonarCloud Scan
   if: ${{ secrets.SONAR_TOKEN != '' }}
@@ -162,8 +179,7 @@ echo "${PR_TITLE}" | xargs
   with:
     # SonarCloud設定（オプション）
     args: >
-      -Dsonar.projectKey=daishiman_AutoForgeNexus
-      -Dsonar.organization=daishiman
+      -Dsonar.projectKey=daishiman_AutoForgeNexus -Dsonar.organization=daishiman
       -Dsonar.python.coverage.reportPaths=coverage.xml
       -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
       -Dsonar.sources=backend/src,frontend/src
@@ -172,6 +188,7 @@ echo "${PR_TITLE}" | xargs
 ```
 
 ### パッチ適用後
+
 ```yaml
 - name: 📊 SonarCloud Scan
   if: ${{ secrets.SONAR_TOKEN != '' }}
@@ -183,11 +200,13 @@ echo "${PR_TITLE}" | xargs
 ```
 
 ### 変更理由
+
 - 設定の一元管理（DRY原則）
 - `sonar-project.properties`が唯一の真実の情報源
 - 保守性向上（設定変更時の修正箇所削減）
 
 ### sonar-project.properties確認
+
 ```properties
 # sonar-project.properties（既存）
 sonar.projectKey=daishiman_AutoForgeNexus
@@ -199,11 +218,13 @@ sonar.tests=backend/tests,frontend/tests
 ```
 
 ### 影響範囲
+
 - ✅ 機能的同等（sonar-project.propertiesが優先）
 - ✅ 設定の重複削除
 - ✅ 保守性向上
 
 ### 適用コマンド
+
 ```bash
 # 手動編集
 vim .github/workflows/pr-check.yml
@@ -212,6 +233,7 @@ vim .github/workflows/pr-check.yml
 ```
 
 ### 検証方法
+
 ```bash
 # SonarCloud設定検証
 sonar-scanner -Dsonar.verbose=true
@@ -225,9 +247,11 @@ gh workflow run pr-check.yml
 ## 🔧 パッチ4: verify-secrets.sh文字エンコーディング修正
 
 ### 対象ファイル
+
 `scripts/verify-secrets.sh`
 
 ### 現在の問題
+
 ```bash
 # 文字化け例
 # r��  → 本来は「# 色定義」
@@ -237,6 +261,7 @@ RED='\033[0;31m'
 ### パッチ適用後
 
 #### ステップ1: UTF-8再保存
+
 ```bash
 # ファイルをUTF-8 without BOMで保存
 iconv -f UTF-8 -t UTF-8 scripts/verify-secrets.sh > scripts/verify-secrets.sh.tmp
@@ -244,6 +269,7 @@ mv scripts/verify-secrets.sh.tmp scripts/verify-secrets.sh
 ```
 
 #### ステップ2: スクリプト修正
+
 ```bash
 #!/bin/bash
 # -*- coding: utf-8 -*-
@@ -378,6 +404,7 @@ echo "3. 監査ログで定期的にアクセス履歴を確認"
 ```
 
 ### 適用コマンド
+
 ```bash
 # UTF-8エンコーディング確認
 file scripts/verify-secrets.sh
@@ -394,6 +421,7 @@ chmod +x scripts/verify-secrets.sh
 ```
 
 ### .gitattributes追加
+
 ```bash
 # .gitattributes に追加
 cat >> .gitattributes <<EOF
@@ -410,66 +438,70 @@ EOF
 ## 🔧 パッチ5: 監査ログ長期保存（オプション）
 
 ### 対象ファイル
+
 `.github/workflows/audit-logging.yml`
 
 ### パッチ適用後
 
 #### 追加セクション
+
 ```yaml
 # .github/workflows/audit-logging.yml の最後に追加
 
-  # 長期監査ログ保存（GDPR/SOC2準拠）
-  archive-audit-logs:
-    name: Archive Audit Logs
-    runs-on: ubuntu-latest
-    if: always()
-    needs: [audit-actions, audit-secrets, audit-workflows]
+# 長期監査ログ保存（GDPR/SOC2準拠）
+archive-audit-logs:
+  name: Archive Audit Logs
+  runs-on: ubuntu-latest
+  if: always()
+  needs: [audit-actions, audit-secrets, audit-workflows]
 
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
+  steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
 
-      - name: 📝 Collect audit logs
-        run: |
-          mkdir -p audit-logs
+    - name: 📝 Collect audit logs
+      run: |
+        mkdir -p audit-logs
 
-          # ワークフロー実行ログ
-          gh api \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/logs \
-            > audit-logs/workflow-run-${{ github.run_id }}.log
+        # ワークフロー実行ログ
+        gh api \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/logs \
+          > audit-logs/workflow-run-${{ github.run_id }}.log
 
-          # Secretsアクセス履歴（直近30日）
-          gh api \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            /repos/${{ github.repository }}/actions/secrets \
-            > audit-logs/secrets-access-${{ github.run_id }}.json
+        # Secretsアクセス履歴（直近30日）
+        gh api \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          /repos/${{ github.repository }}/actions/secrets \
+          > audit-logs/secrets-access-${{ github.run_id }}.json
 
-          # タイムスタンプ追加
-          echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > audit-logs/timestamp.txt
+        # タイムスタンプ追加
+        echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > audit-logs/timestamp.txt
 
-      - name: 📦 Archive logs
-        uses: actions/upload-artifact@v4
-        with:
-          name: audit-logs-${{ github.run_id }}
-          path: audit-logs/
-          retention-days: 365  # 1年間保持（GDPR/SOC2推奨）
-          compression-level: 9  # 最大圧縮
+    - name: 📦 Archive logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: audit-logs-${{ github.run_id }}
+        path: audit-logs/
+        retention-days: 365 # 1年間保持（GDPR/SOC2推奨）
+        compression-level: 9 # 最大圧縮
 
-      - name: 📊 Log retention summary
-        run: |
-          echo "✅ Audit logs archived for 365 days"
-          echo "Artifact name: audit-logs-${{ github.run_id }}"
-          echo "Download command:"
-          echo "  gh run download ${{ github.run_id }} -n audit-logs-${{ github.run_id }}"
+    - name: 📊 Log retention summary
+      run: |
+        echo "✅ Audit logs archived for 365 days"
+        echo "Artifact name: audit-logs-${{ github.run_id }}"
+        echo "Download command:"
+        echo "  gh run download ${{ github.run_id }} -n audit-logs-${{ github.run_id }}"
 ```
 
 ### 適用理由
+
 - GDPR Article 30: 処理活動記録（6ヶ月最低保持）
 - SOC2 CC7.2: システム監視（1年推奨）
 - インシデント調査のための証跡保存
 
 ### コスト影響
+
 - GitHub Actionsアーティファクト保存料金: 無料枠内（目安: 1GB/月）
 - 推定サイズ: 1実行あたり1MB未満
 
@@ -478,6 +510,7 @@ EOF
 ## 📋 一括適用スクリプト
 
 ### apply-security-patches.sh
+
 ```bash
 #!/bin/bash
 # セキュリティパッチ一括適用スクリプト
@@ -537,6 +570,7 @@ echo "4. テストPRで動作確認"
 ```
 
 ### 実行方法
+
 ```bash
 # スクリプト実行権限付与
 chmod +x apply-security-patches.sh
@@ -568,27 +602,32 @@ gh pr create --title "security: CI/CDセキュリティパッチ適用" --fill
 ## ✅ 適用後チェックリスト
 
 ### パッチ1: TruffleHogバージョン固定
+
 - [ ] `.github/workflows/pr-check.yml` 編集完了
 - [ ] `@main` → `@v3.82.0` 変更確認
 - [ ] ワークフロー構文エラーなし
 
 ### パッチ2: PRタイトルインジェクション対策
+
 - [ ] `.github/workflows/pr-check.yml` 編集完了
 - [ ] `env:` セクション追加確認
 - [ ] `${PR_TITLE}` 使用確認
 
 ### パッチ3: SonarCloud設定一元化
+
 - [ ] `.github/workflows/pr-check.yml` 編集完了
 - [ ] `args:` セクション削除確認
 - [ ] `sonar-project.properties` 設定確認
 
 ### パッチ4: verify-secrets.sh修正
+
 - [ ] UTF-8エンコーディング確認
 - [ ] BOM削除確認
 - [ ] 実行権限確認
 - [ ] 日本語コメント正常表示確認
 
 ### パッチ5: .gitattributes設定
+
 - [ ] `.gitattributes` ファイル作成
 - [ ] `*.sh text eol=lf` 追加確認
 - [ ] `* text=auto` 追加確認
@@ -599,13 +638,13 @@ gh pr create --title "security: CI/CDセキュリティパッチ適用" --fill
 
 ### セキュリティスコア向上
 
-| カテゴリ | 適用前 | 適用後 | 改善 |
-|---------|--------|--------|------|
-| **シークレット管理** | 8.5/10 | 8.5/10 | - |
-| **ワークフローセキュリティ** | 9.0/10 | 9.5/10 | +0.5 |
-| **OWASP準拠** | 8.0/10 | 8.5/10 | +0.5 |
-| **コンプライアンス** | 7.5/10 | 8.0/10 | +0.5 |
-| **総合スコア** | **8.30/10** | **8.65/10** | **+0.35** |
+| カテゴリ                     | 適用前      | 適用後      | 改善      |
+| ---------------------------- | ----------- | ----------- | --------- |
+| **シークレット管理**         | 8.5/10      | 8.5/10      | -         |
+| **ワークフローセキュリティ** | 9.0/10      | 9.5/10      | +0.5      |
+| **OWASP準拠**                | 8.0/10      | 8.5/10      | +0.5      |
+| **コンプライアンス**         | 7.5/10      | 8.0/10      | +0.5      |
+| **総合スコア**               | **8.30/10** | **8.65/10** | **+0.35** |
 
 ### リスクレベル変化
 
@@ -630,6 +669,5 @@ CVE検出数削減:
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2025-10-08
-**Patch Status**: Ready for Application
+**Document Version**: 1.0.0 **Last Updated**: 2025-10-08 **Patch Status**: Ready
+for Application

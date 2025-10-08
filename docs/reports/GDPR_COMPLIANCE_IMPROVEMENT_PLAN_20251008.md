@@ -1,9 +1,7 @@
 # GDPR準拠改善計画
 
-**計画ID**: COMP-20251008-001
-**作成日**: 2025年10月8日
-**作成者**: compliance-officer Agent
-**対象期間**: 2025年10月8日 〜 2026年1月8日（3ヶ月）
+**計画ID**: COMP-20251008-001 **作成日**: 2025年10月8日 **作成者**:
+compliance-officer Agent **対象期間**: 2025年10月8日 〜 2026年1月8日（3ヶ月）
 **ステータス**: 🔄 **実行中**
 
 ---
@@ -16,19 +14,18 @@
 
 ### 目標
 
-**短期目標（1週間）**: 秘密情報管理の技術的強化
-**中期目標（1ヶ月）**: DPIAプロセスの自動化
-**長期目標（3ヶ月）**: GDPR準拠証明書取得
+**短期目標（1週間）**: 秘密情報管理の技術的強化 **中期目標（1ヶ月）**:
+DPIAプロセスの自動化 **長期目標（3ヶ月）**: GDPR準拠証明書取得
 
 ### 予算
 
-| カテゴリ | 金額 | 備考 |
-|---------|------|------|
-| Git Hook実装 | ¥0 | 内製 |
-| DPIA自動化 | ¥0 | 内製 |
-| ISO 27701認証 | ¥300,000 | 外部監査 |
-| SOC 2 Type II更新 | ¥200,000 | 外部監査 |
-| **合計** | **¥500,000** | 3ヶ月間 |
+| カテゴリ          | 金額         | 備考     |
+| ----------------- | ------------ | -------- |
+| Git Hook実装      | ¥0           | 内製     |
+| DPIA自動化        | ¥0           | 内製     |
+| ISO 27701認証     | ¥300,000     | 外部監査 |
+| SOC 2 Type II更新 | ¥200,000     | 外部監査 |
+| **合計**          | **¥500,000** | 3ヶ月間  |
 
 ---
 
@@ -48,7 +45,7 @@
 
 証拠:
   - コミット: 5fe40e6
-  - メッセージ: "fix(security): Discord Webhook URLをモック値に置換"
+  - メッセージ: 'fix(security): Discord Webhook URLをモック値に置換'
   - 検証: TruffleHog再スキャン結果 = 0件
 ```
 
@@ -75,8 +72,7 @@
 
 ### 2.1 秘密情報の無効化・再発行
 
-**期限**: 2025年10月9日（24時間以内）
-**担当**: security-architect Agent
+**期限**: 2025年10月9日（24時間以内） **担当**: security-architect Agent
 **優先度**: 🔴 Critical
 
 #### 実施内容
@@ -138,13 +134,12 @@ KPI:
 
 ### 2.2 Git Hook秘密検知の実装
 
-**期限**: 2025年10月12日（4日以内）
-**担当**: version-control-specialist Agent
+**期限**: 2025年10月12日（4日以内） **担当**: version-control-specialist Agent
 **優先度**: 🔴 High
 
 #### 実施内容
 
-```bash
+````bash
 # 1. TruffleHog Git Hook実装
 cat > .git/hooks/pre-commit << 'EOF'
 #!/bin/bash
@@ -179,9 +174,11 @@ cat >> docs/development/SETUP.md << 'EOF'
 ```bash
 cp scripts/git-hooks/pre-commit.trufflehog .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
-```
+````
+
 EOF
-```
+
+````
 
 #### 検証基準
 
@@ -202,12 +199,11 @@ EOF
 KPI:
   - フック実行時間: < 5秒
   - 検出精度: 100%（False Positive < 5%）
-```
+````
 
 ### 2.3 秘密情報管理ポリシー文書化
 
-**期限**: 2025年10月15日（1週間以内）
-**担当**: compliance-officer Agent
+**期限**: 2025年10月15日（1週間以内） **担当**: compliance-officer Agent
 **優先度**: 🟡 Medium
 
 #### 実施内容
@@ -216,6 +212,7 @@ KPI:
 # 作成ドキュメント: docs/security/SECRETS_MANAGEMENT_POLICY.md
 
 ## 目次
+
 1. ポリシー概要
 2. 秘密情報の定義
 3. 保管方法
@@ -228,16 +225,19 @@ KPI:
 ## 主要ポリシー
 
 ### 保管方法
+
 - すべての秘密情報はGitHub Secretsで管理
 - .envファイルは必ず.gitignoreに追加
 - 平文での保存は厳禁
 
 ### ローテーション要件
+
 - API Token: 90日ごとに再発行
 - Webhook URL: 年次レビュー
 - SSH Key: 180日ごとに更新
 
 ### アクセス制御
+
 - GitHub Secrets: リポジトリ管理者のみ
 - 環境変数アクセスログ: 365日保持
 - 最小権限の原則を適用
@@ -271,27 +271,26 @@ KPI:
 
 ### 3.1 DPIAプロセス自動化
 
-**期限**: 2025年11月8日（1ヶ月以内）
-**担当**: compliance-officer, security-architect
-**優先度**: 🟡 High
+**期限**: 2025年11月8日（1ヶ月以内） **担当**: compliance-officer,
+security-architect **優先度**: 🟡 High
 
 #### 実施内容
 
 ```yaml
 1. DPIAチェックリスト作成:
-   - 個人データ取り扱いチェック
-   - リスク評価マトリックス
-   - 軽減策の検証
+  - 個人データ取り扱いチェック
+  - リスク評価マトリックス
+  - 軽減策の検証
 
 2. PR自動チェック実装:
-   - GitHub Actions DPIAワークフロー
-   - 個人データキーワード検出
-   - 自動リスク評価
+  - GitHub Actions DPIAワークフロー
+  - 個人データキーワード検出
+  - 自動リスク評価
 
 3. 開発者ガイドライン整備:
-   - DPIAトレーニング資料
-   - ケーススタディ集
-   - Q&A集
+  - DPIAトレーニング資料
+  - ケーススタディ集
+  - Q&A集
 ```
 
 #### 技術実装
@@ -308,30 +307,30 @@ jobs:
   dpia-assessment:
     runs-on: ubuntu-latest
     steps:
-    - name: Personal data keyword scan
-      run: |
-        # 個人データ関連キーワードの検出
-        grep -rn "email\|name\|address\|phone\|ssn\|passport" . \
-          --exclude-dir=node_modules \
-          --exclude-dir=.git > pii_keywords.txt || true
+      - name: Personal data keyword scan
+        run: |
+          # 個人データ関連キーワードの検出
+          grep -rn "email\|name\|address\|phone\|ssn\|passport" . \
+            --exclude-dir=node_modules \
+            --exclude-dir=.git > pii_keywords.txt || true
 
-        if [ -s pii_keywords.txt ]; then
-          echo "⚠️ Personal data keywords detected"
-          echo "::warning::DPIA review required"
-        fi
+          if [ -s pii_keywords.txt ]; then
+            echo "⚠️ Personal data keywords detected"
+            echo "::warning::DPIA review required"
+          fi
 
-    - name: Create DPIA checklist issue
-      if: contains(github.event.pull_request.body, 'personal data')
-      uses: actions/github-script@v7
-      with:
-        script: |
-          await github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: `DPIA Required: PR #${context.payload.pull_request.number}`,
-            body: 'DPIA checklist...',
-            labels: ['compliance', 'dpia']
-          });
+      - name: Create DPIA checklist issue
+        if: contains(github.event.pull_request.body, 'personal data')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `DPIA Required: PR #${context.payload.pull_request.number}`,
+              body: 'DPIA checklist...',
+              labels: ['compliance', 'dpia']
+            });
 ```
 
 #### 完了基準
@@ -350,16 +349,16 @@ KPI:
 
 ### 3.2 インシデント対応手順の文書化
 
-**期限**: 2025年11月8日（1ヶ月以内）
-**担当**: compliance-officer Agent
+**期限**: 2025年11月8日（1ヶ月以内） **担当**: compliance-officer Agent
 **優先度**: 🟡 Medium
 
 #### 実施内容
 
-```markdown
+````markdown
 # 作成ドキュメント: docs/security/INCIDENT_RESPONSE_MANUAL.md
 
 ## 目次
+
 1. インシデント分類
 2. 個人データ該当性判定
 3. GDPR Article 33/34対応フロー
@@ -371,6 +370,7 @@ KPI:
 ## 主要フロー
 
 ### インシデント分類フローチャート
+
 ```mermaid
 graph TD
     A[インシデント検出] --> B{個人データ該当?}
@@ -379,13 +379,16 @@ graph TD
     C -->|Yes| E[72時間以内通知]
     C -->|No| F[監督機関通知検討]
 ```
+````
 
 ### 72時間ルール運用
+
 - Hour 0-4: 初動対応と判定
 - Hour 4-24: 詳細調査
 - Hour 24-48: 通知準備
 - Hour 48-72: 正式通知
-```
+
+````
 
 #### 完了基準
 
@@ -400,13 +403,12 @@ graph TD
   - docs/security/INCIDENT_RESPONSE_MANUAL.md
   - フローチャート（Mermaid図）
   - 連絡先リスト
-```
+````
 
 ### 3.3 定期セキュリティ監査スケジュール確立
 
-**期限**: 2025年11月8日（1ヶ月以内）
-**担当**: compliance-officer, security-architect
-**優先度**: 🟡 Medium
+**期限**: 2025年11月8日（1ヶ月以内） **担当**: compliance-officer,
+security-architect **優先度**: 🟡 Medium
 
 #### 監査スケジュール
 
@@ -438,7 +440,7 @@ name: Monthly Security Audit
 
 on:
   schedule:
-    - cron: '0 0 1 * *'  # 毎月1日 00:00 UTC
+    - cron: '0 0 1 * *' # 毎月1日 00:00 UTC
 
 jobs:
   security-metrics:
@@ -469,32 +471,31 @@ KPI:
 
 ### 4.1 プライバシーエンジニアリング実装
 
-**期限**: 2026年1月8日（3ヶ月以内）
-**担当**: compliance-officer, backend-developer
-**優先度**: 🟢 Medium
+**期限**: 2026年1月8日（3ヶ月以内） **担当**: compliance-officer,
+backend-developer **優先度**: 🟢 Medium
 
 #### 実施内容
 
 ```yaml
 1. データ最小化自動チェック:
-   - データフロー分析ツール導入
-   - 不要データ検出・削除自動化
-   - プライバシーメトリクス測定
+  - データフロー分析ツール導入
+  - 不要データ検出・削除自動化
+  - プライバシーメトリクス測定
 
 2. 匿名化・仮名化ツール導入:
-   - ARX Data Anonymization Tool統合
-   - k-匿名性・l-多様性実装
-   - 再識別リスク評価
+  - ARX Data Anonymization Tool統合
+  - k-匿名性・l-多様性実装
+  - 再識別リスク評価
 
 3. 差分プライバシー実装:
-   - Google DP Library統合
-   - ノイズ付加アルゴリズム
-   - プライバシー予算管理
+  - Google DP Library統合
+  - ノイズ付加アルゴリズム
+  - プライバシー予算管理
 
 4. 保持期間自動管理:
-   - データライフサイクル管理
-   - 自動削除スケジューラー
-   - 監査証跡記録
+  - データライフサイクル管理
+  - 自動削除スケジューラー
+  - 監査証跡記録
 ```
 
 #### 技術スタック
@@ -531,55 +532,39 @@ KPI:
 
 ### 4.2 GDPR準拠証明書取得
 
-**期限**: 2026年1月8日（3ヶ月以内）
-**担当**: compliance-officer（プロジェクトリード）
-**優先度**: 🟢 High
+**期限**: 2026年1月8日（3ヶ月以内） **担当**:
+compliance-officer（プロジェクトリード） **優先度**: 🟢 High
 
 #### 認証取得スケジュール
 
 ```yaml
 Month 1（2025年10月）:
-  Week 1-2: ギャップ分析
-    - 現状評価（GDPR・SOC2・ISO27001）
-    - 改善必要箇所の特定
-    - 外部監査機関選定
+  Week 1-2:
+    ギャップ分析 - 現状評価（GDPR・SOC2・ISO27001） - 改善必要箇所の特定 -
+    外部監査機関選定
 
-  Week 3-4: 改善計画策定
-    - 優先順位付け
-    - リソース配分
-    - スケジュール確定
+  Week 3-4: 改善計画策定 - 優先順位付け - リソース配分 - スケジュール確定
 
 Month 2（2025年11月）:
-  Week 1-2: 改善実施
-    - ギャップ項目の修正
-    - プロセス文書化
-    - 証拠資料準備
+  Week 1-2: 改善実施 - ギャップ項目の修正 - プロセス文書化 - 証拠資料準備
 
-  Week 3-4: 内部監査
-    - 自己評価
-    - 模擬監査
-    - 最終調整
+  Week 3-4: 内部監査 - 自己評価 - 模擬監査 - 最終調整
 
 Month 3（2025年12月）:
-  Week 1-2: 外部監査
-    - ISO 27701監査
-    - SOC 2 Type II監査
-    - GDPR認証審査
+  Week 1-2: 外部監査 - ISO 27701監査 - SOC 2 Type II監査 - GDPR認証審査
 
-  Week 3-4: 是正措置・認証取得
-    - 指摘事項対応
-    - 再審査（必要に応じて）
-    - 認証書発行
+  Week 3-4:
+    是正措置・認証取得 - 指摘事項対応 - 再審査（必要に応じて） - 認証書発行
 ```
 
 #### 予算配分
 
-| 認証 | 監査費用 | 準備費用 | 合計 |
-|------|---------|---------|------|
-| ISO 27701 | ¥200,000 | ¥50,000 | ¥250,000 |
-| SOC 2 Type II | ¥150,000 | ¥0 | ¥150,000 |
-| GDPR認証 | ¥80,000 | ¥20,000 | ¥100,000 |
-| **合計** | **¥430,000** | **¥70,000** | **¥500,000** |
+| 認証          | 監査費用     | 準備費用    | 合計         |
+| ------------- | ------------ | ----------- | ------------ |
+| ISO 27701     | ¥200,000     | ¥50,000     | ¥250,000     |
+| SOC 2 Type II | ¥150,000     | ¥0          | ¥150,000     |
+| GDPR認証      | ¥80,000      | ¥20,000     | ¥100,000     |
+| **合計**      | **¥430,000** | **¥70,000** | **¥500,000** |
 
 #### 完了基準
 
@@ -603,14 +588,14 @@ Month 3（2025年12月）:
 
 ### 全体KPI
 
-| KPI | 目標値 | 現在値 | ステータス |
-|-----|--------|--------|-----------|
-| GDPR準拠度 | 100% | 95% | 🟡 改善中 |
-| SOC 2準拠度 | 100% | 93% | 🟡 改善中 |
-| ISO 27001準拠度 | 100% | 93% | 🟡 改善中 |
-| インシデント対応時間 | < 4時間 | 0.4時間 | ✅ 達成 |
-| 秘密情報検出率 | 100% | 100% | ✅ 達成 |
-| DPIA実施率 | 100% | 0% | ⚠️ 未実装 |
+| KPI                  | 目標値  | 現在値  | ステータス |
+| -------------------- | ------- | ------- | ---------- |
+| GDPR準拠度           | 100%    | 95%     | 🟡 改善中  |
+| SOC 2準拠度          | 100%    | 93%     | 🟡 改善中  |
+| ISO 27001準拠度      | 100%    | 93%     | 🟡 改善中  |
+| インシデント対応時間 | < 4時間 | 0.4時間 | ✅ 達成    |
+| 秘密情報検出率       | 100%    | 100%    | ✅ 達成    |
+| DPIA実施率           | 100%    | 0%      | ⚠️ 未実装  |
 
 ### フェーズ別進捗
 
@@ -657,12 +642,12 @@ Phase 4（長期改善）: ⏳ 0%完了
 
 ### 想定リスク
 
-| リスク | 影響度 | 発生確率 | 軽減策 |
-|--------|--------|----------|--------|
-| 認証取得遅延 | High | Medium | 早期準備・外部コンサル活用 |
-| リソース不足 | Medium | Medium | 優先順位明確化・外注検討 |
-| 技術的困難 | Medium | Low | PoC実施・段階的導入 |
-| 予算超過 | High | Low | 段階的実施・必須項目優先 |
+| リスク       | 影響度 | 発生確率 | 軽減策                     |
+| ------------ | ------ | -------- | -------------------------- |
+| 認証取得遅延 | High   | Medium   | 早期準備・外部コンサル活用 |
+| リソース不足 | Medium | Medium   | 優先順位明確化・外注検討   |
+| 技術的困難   | Medium | Low      | PoC実施・段階的導入        |
+| 予算超過     | High   | Low      | 段階的実施・必須項目優先   |
 
 ### 対応計画
 
@@ -773,7 +758,5 @@ Issue:
 
 ---
 
-**計画作成日**: 2025年10月8日 19:45 JST
-**次回更新**: 2025年10月15日（週次レビュー）
-**計画承認**: 承認待ち
-
+**計画作成日**: 2025年10月8日 19:45 JST **次回更新**:
+2025年10月15日（週次レビュー） **計画承認**: 承認待ち

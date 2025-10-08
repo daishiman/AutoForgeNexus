@@ -1,6 +1,7 @@
 # Infrastructure CLAUDE.md
 
-このファイルは、AutoForgeNexusのインフラストラクチャを作業する際のClaude Code (claude.ai/code) へのガイダンスを提供します。
+このファイルは、AutoForgeNexusのインフラストラクチャを作業する際のClaude Code
+(claude.ai/code) へのガイダンスを提供します。
 
 ## 🎯 インフラストラクチャ概要
 
@@ -38,6 +39,7 @@ infrastructure/
 ### Workers（バックエンドAPI）
 
 #### wrangler.toml主要設定
+
 ```toml
 name = "autoforgenexus"
 main = "src/main.py"
@@ -54,6 +56,7 @@ vars = { ENVIRONMENT = "staging" }
 ```
 
 #### Python Workers設定
+
 ```toml
 [[pyodide.packages]]
 package = ["fastapi", "pydantic", "sqlalchemy", "redis", "langchain"]
@@ -62,6 +65,7 @@ package = ["fastapi", "pydantic", "sqlalchemy", "redis", "langchain"]
 ### Pages（フロントエンド）
 
 #### デプロイ設定
+
 ```json
 {
   "projectName": "autoforge-nexus-frontend",
@@ -74,6 +78,7 @@ package = ["fastapi", "pydantic", "sqlalchemy", "redis", "langchain"]
 ### セキュリティ設定
 
 #### CSPヘッダー
+
 ```javascript
 const CSP_HEADER = `
   default-src 'self';
@@ -86,6 +91,7 @@ const CSP_HEADER = `
 ## 📊 監視システム
 
 ### 監視スタック
+
 - **メトリクス**: Cloudflare Analytics + Prometheus
 - **ログ**: 構造化JSON + Cloudflare Logpush
 - **トレース**: LangFuse (LLM専用)
@@ -207,13 +213,13 @@ wrangler secret put --env staging TURSO_DATABASE_URL
 ```javascript
 // DDoS対策
 if (request.cf.threatScore > 50) {
-  return new Response("Blocked", { status: 403 });
+  return new Response('Blocked', { status: 403 });
 }
 
 // レート制限
 const rateLimit = await env.RATE_LIMITER.get(clientIP);
 if (rateLimit > 60) {
-  return new Response("Too Many Requests", { status: 429 });
+  return new Response('Too Many Requests', { status: 429 });
 }
 ```
 
@@ -224,7 +230,7 @@ if (rateLimit > 60) {
 policies:
   - name: admin_only
     include:
-      - email: { domain: "autoforgenexus.com" }
+      - email: { domain: 'autoforgenexus.com' }
     require:
       - mfa: true
 ```
@@ -257,11 +263,13 @@ imageURL.searchParams.set('quality', '85');
 ### 日次運用
 
 1. **ヘルスチェック確認**
+
    ```bash
    curl https://api.autoforgenexus.com/health
    ```
 
 2. **メトリクス確認**
+
    - Cloudflare Dashboard
    - Grafanaダッシュボード
 
@@ -273,10 +281,12 @@ imageURL.searchParams.set('quality', '85');
 ### インシデント対応
 
 1. **アラート受信**
+
    - Discord通知確認
    - 重要度判定
 
 2. **初期対応**
+
    ```bash
    # ステータス確認
    ./scripts/health-check.sh
@@ -293,15 +303,18 @@ imageURL.searchParams.set('quality', '85');
 ## 📊 SLO/SLI
 
 ### 可用性目標
+
 - **SLO**: 99.9%（月間43.2分のダウンタイム許容）
 - **測定**: Cloudflare Analytics
 
 ### レイテンシ目標
+
 - **P50**: < 100ms
 - **P95**: < 500ms
 - **P99**: < 2000ms
 
 ### エラー率目標
+
 - **SLO**: < 0.5%
 - **測定**: 5xx エラー率
 
@@ -318,6 +331,7 @@ imageURL.searchParams.set('quality', '85');
 ### よくある問題
 
 #### Workers起動エラー
+
 ```bash
 # ログ確認
 wrangler tail --env production
@@ -327,6 +341,7 @@ wrangler deploy --dry-run
 ```
 
 #### Pages ビルド失敗
+
 ```bash
 # ビルドログ確認
 wrangler pages deployment list --project-name autoforge-nexus-frontend
@@ -336,6 +351,7 @@ cd frontend && pnpm build && pnpm export
 ```
 
 #### 監視アラート過多
+
 ```bash
 # アラート設定確認
 cat infrastructure/monitoring/alerts-config.yaml
@@ -357,6 +373,7 @@ vim alerts-config.yaml
 ### Phase 2: インフラ・監視基盤 ✅ 完了 (100%)
 
 #### 完了項目
+
 - Docker環境構築（docker-compose.dev.yml）
 - Cloudflare Workers/Pages設定
 - Prometheus/Grafana/LangFuse監視スタック
@@ -366,12 +383,14 @@ vim alerts-config.yaml
   - セキュリティ強化: CodeQL、TruffleHog統合
 
 #### セキュリティ強化実装
+
 - CodeQL静的解析（Python/TypeScript）
 - TruffleHog秘密情報検出
 - 監査ログシステム（365日保存）
 - DORAメトリクス自動収集
 
 #### デプロイメント戦略
+
 - ブルーグリーンデプロイメント準備
 - 自動ロールバック機構
 - Cloudflare CDN最適化

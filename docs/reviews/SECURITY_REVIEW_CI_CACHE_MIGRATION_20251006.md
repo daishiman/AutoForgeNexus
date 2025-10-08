@@ -1,21 +1,18 @@
 # GitHub Actions CI/CDパイプライン セキュリティレビューレポート
 
-**レビュー日**: 2025年10月6日
-**レビュアー**: セキュリティエンジニアエージェント
-**対象コミット**: `e770dfc` (2025年10月6日)
-**スコープ**: `.github/workflows/shared-setup-python.yml`, `.github/workflows/backend-ci.yml`
+**レビュー日**: 2025年10月6日 **レビュアー**: セキュリティエンジニアエージェント
+**対象コミット**: `e770dfc` (2025年10月6日) **スコープ**:
+`.github/workflows/shared-setup-python.yml`, `.github/workflows/backend-ci.yml`
 
 ---
 
 ## エグゼクティブサマリー
 
-GitHub Actions CI/CDパイプラインにおける「アーティファクト配布からキャッシュのみへの移行」修正について、セキュリティ観点から包括的レビューを実施しました。
+GitHub Actions
+CI/CDパイプラインにおける「アーティファクト配布からキャッシュのみへの移行」修正について、セキュリティ観点から包括的レビューを実施しました。
 
-**総合セキュリティスコア**: 82/100 (**承認推奨**)
-**Critical脆弱性**: 0件
-**High脆弱性**: 0件
-**Medium脆弱性**: 2件
-**Low脆弱性**: 1件
+**総合セキュリティスコア**: 82/100 (**承認推奨**) **Critical脆弱性**: 0件
+**High脆弱性**: 0件 **Medium脆弱性**: 2件 **Low脆弱性**: 1件
 
 **承認判断**: ✅ **セキュリティ承認**（条件付き）
 
@@ -27,12 +24,12 @@ GitHub Actions CI/CDパイプラインにおける「アーティファクト配
 
 ### 1.1 主要な変更点
 
-| 変更項目 | 変更前 | 変更後 | セキュリティ影響 |
-|----------|--------|--------|------------------|
-| **依存関係配布方法** | `actions/upload-artifact` (tar.gz) | GitHub Actions Cache | ✅ 露出削減 |
-| **venv検証** | なし | 明示的な検証ステップ追加 | ✅ 整合性向上 |
-| **setup-environment依存** | 削除されていた（独立実行） | 復活（needs: setup-environment） | ✅ 一貫性向上 |
-| **キャッシュキーバージョン** | `-v2`サフィックス | バージョン削除（ハッシュのみ） | ⚠️ 影響中立 |
+| 変更項目                     | 変更前                             | 変更後                           | セキュリティ影響 |
+| ---------------------------- | ---------------------------------- | -------------------------------- | ---------------- |
+| **依存関係配布方法**         | `actions/upload-artifact` (tar.gz) | GitHub Actions Cache             | ✅ 露出削減      |
+| **venv検証**                 | なし                               | 明示的な検証ステップ追加         | ✅ 整合性向上    |
+| **setup-environment依存**    | 削除されていた（独立実行）         | 復活（needs: setup-environment） | ✅ 一貫性向上    |
+| **キャッシュキーバージョン** | `-v2`サフィックス                  | バージョン削除（ハッシュのみ）   | ⚠️ 影響中立      |
 
 ### 1.2 アーキテクチャ変更
 
@@ -78,10 +75,11 @@ quality-checks/test-suite/build-artifacts jobs
 
 #### 🟡 **MED-2025-001: キャッシュポイズニング攻撃の理論的可能性**
 
-**CVSS 3.1スコア**: 5.3 (Medium)
-**ベクトル**: `CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:N`
+**CVSS 3.1スコア**: 5.3 (Medium) **ベクトル**:
+`CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:N`
 
 **脆弱性詳細**:
+
 - **CWE-345**: Insufficient Verification of Data Authenticity
 - **問題**: キャッシュ内容の暗号学的検証（チェックサム、署名）が実装されていない
 - **攻撃シナリオ**:
@@ -91,16 +89,20 @@ quality-checks/test-suite/build-artifacts jobs
   4. 後続のジョブが汚染されたキャッシュを使用
 
 **現在の緩和策**:
-- GitHub Actionsのキャッシュは**ブランチスコープ分離**されている（main/developのキャッシュは分離）
+
+- GitHub
+  Actionsのキャッシュは**ブランチスコープ分離**されている（main/developのキャッシュは分離）
 - PRからはmain/developのキャッシュを**読み取り専用**で使用可能
 - `hashFiles('backend/pyproject.toml', 'backend/requirements*.txt')`によるキャッシュキー生成
 
 **リスク評価**:
+
 - **可能性**: Low（GitHub Actionsのブランチ保護とキーハッシュによる緩和）
 - **影響**: High（CI/CD全体の汚染、供給チェーン攻撃）
 - **総合**: Medium
 
 **推奨緩和策**:
+
 ```yaml
 # 優先度: Medium | 実装工数: 1-2時間
 
@@ -111,7 +113,9 @@ quality-checks/test-suite/build-artifacts jobs
     path: |
       ~/.cache/pip
       ./backend/venv
-    key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
+    key:
+      python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{
+      hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
     restore-keys: |
       python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 
@@ -145,10 +149,11 @@ quality-checks/test-suite/build-artifacts jobs
 
 #### 🟡 **MED-2025-002: 依存関係の動的インストールによるサプライチェーン攻撃リスク**
 
-**CVSS 3.1スコア**: 4.8 (Medium)
-**ベクトル**: `CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:L/I:L/A:L`
+**CVSS 3.1スコア**: 4.8 (Medium) **ベクトル**:
+`CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:L/I:L/A:L`
 
 **脆弱性詳細**:
+
 - **CWE-494**: Download of Code Without Integrity Check
 - **問題**: `quality-checks`ジョブで実行時にツール固有依存関係を動的インストール
   ```yaml
@@ -166,20 +171,24 @@ quality-checks/test-suite/build-artifacts jobs
   ```
 
 **攻撃シナリオ**:
+
 1. PyPIパッケージリポジトリへのMITM攻撃（DNS spoofing、ネットワーク侵害）
 2. パッケージ名タイポスクワッティング（typosquatting）
 3. 正規パッケージの侵害（supply chain attack）
 
 **現在の緩和策**:
+
 - バージョンピン（`black==24.10.0`）による特定バージョン固定
 - GitHub Actionsのネットワーク分離
 
 **リスク評価**:
+
 - **可能性**: Low-Medium（PyPIのセキュリティ向上、HTTPS通信）
 - **影響**: Medium（CI/CD環境の汚染、コード品質チェックのバイパス）
 - **総合**: Medium
 
 **推奨緩和策**:
+
 ```yaml
 # 優先度: Medium | 実装工数: 2-3時間
 
@@ -223,12 +232,14 @@ dev = [
 
 #### 🟢 **LOW-2025-001: venv検証の不完全性**
 
-**CVSS 3.1スコア**: 2.3 (Low)
-**ベクトル**: `CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:L/A:N`
+**CVSS 3.1スコア**: 2.3 (Low) **ベクトル**:
+`CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:L/A:N`
 
 **脆弱性詳細**:
+
 - **CWE-754**: Improper Check for Unusual or Exceptional Conditions
-- **問題**: venv検証が**ディレクトリ存在**と**activate存在**のみで、**Python実行可能性**や**パッケージ整合性**を検証していない
+- **問題**:
+  venv検証が**ディレクトリ存在**と**activate存在**のみで、**Python実行可能性**や**パッケージ整合性**を検証していない
   ```yaml
   - name: ✅ Verify venv restoration
     run: |
@@ -244,16 +255,19 @@ dev = [
   ```
 
 **攻撃シナリオ**:
+
 1. キャッシュ破損によるvenvの部分的損傷
 2. `venv/bin/python`が実行不可能な状態でも検証を通過
 3. 後続のステップで予期しないエラー
 
 **リスク評価**:
+
 - **可能性**: Low（GitHub Actionsキャッシュの信頼性は高い）
 - **影響**: Low（ビルド失敗のみ、セキュリティ侵害ではない）
 - **総合**: Low
 
 **推奨緩和策**:
+
 ```yaml
 # 優先度: Low | 実装工数: 30分
 
@@ -303,11 +317,14 @@ dev = [
 **改善項目**: tar.gzアーティファクトアップロードの削除
 
 **セキュリティ効果**:
+
 1. **露出削減**: アーティファクトは**公開リポジトリで誰でもダウンロード可能**だった
+
    - 変更前: `actions/upload-artifact` → 1日間保持 → 第三者がダウンロード可能
    - 変更後: GitHub Actionsキャッシュ → **ワークフロー内のみアクセス可能**
 
 2. **情報漏洩リスク削減**: venv内の潜在的な秘密情報露出を防止
+
    - パッケージインストールログ
    - キャッシュされた認証トークン（pip設定ファイル等）
    - `.pyc`ファイル内のコンパイル時情報
@@ -323,6 +340,7 @@ dev = [
 **改善項目**: `✅ Verify venv restoration`ステップ追加
 
 **セキュリティ効果**:
+
 1. **Fail-Fast原則**: キャッシュ破損時の早期検出
 2. **可視性向上**: venv復元状態の明示的な確認
 3. **デバッグ容易性**: 問題発生時のトラブルシューティング支援
@@ -336,16 +354,20 @@ dev = [
 **評価項目**: キャッシュキー生成ロジック
 
 ```yaml
-key: python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
+key:
+  python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-${{
+  hashFiles('backend/pyproject.toml', 'backend/requirements*.txt') }}
 restore-keys: |
   python-${{ env.PYTHON_VERSION }}-${{ runner.os }}-
 ```
 
 **セキュリティ評価**:
+
 1. ✅ **依存関係ハッシュ**: `hashFiles()`による自動無効化
 2. ✅ **プラットフォーム分離**: `runner.os`による環境分離
 3. ✅ **バージョン分離**: `PYTHON_VERSION`によるPythonバージョン分離
-4. ⚠️ **restore-keys**: プレフィックスマッチングによる部分的なキャッシュ再利用（リスク低）
+4. ⚠️
+   **restore-keys**: プレフィックスマッチングによる部分的なキャッシュ再利用（リスク低）
 
 **推奨**: 現状維持（適切に設計されている）
 
@@ -356,6 +378,7 @@ restore-keys: |
 ### 4.1 GITHUB_TOKEN使用状況
 
 **分析結果**:
+
 - `shared-setup-python.yml`: シークレット使用**なし** ✅
 - `backend-ci.yml`: `codecov/codecov-action`のみで`GITHUB_TOKEN`を使用
 
@@ -369,11 +392,13 @@ restore-keys: |
 ```
 
 **セキュリティ評価**:
+
 - ✅ **最小権限原則**: `codecov-action`は読み取り専用アクセスのみ必要
 - ✅ **バージョンピン**: SHA-256ハッシュでアクションバージョン固定
 - ⚠️ **権限明示化不足**: `permissions:`ブロックが未定義
 
 **推奨緩和策**:
+
 ```yaml
 # 優先度: Low | 実装工数: 15分
 
@@ -385,9 +410,9 @@ jobs:
 
     # 追加: 明示的な権限定義
     permissions:
-      contents: read       # リポジトリ読み取り
+      contents: read # リポジトリ読み取り
       pull-requests: write # Codecovコメント投稿（必要な場合）
-      statuses: write      # ステータスチェック更新
+      statuses: write # ステータスチェック更新
 
     strategy:
       # ... 既存の設定
@@ -400,11 +425,13 @@ jobs:
 **スキャン範囲**: `.github/workflows/shared-setup-python.yml`, `backend-ci.yml`
 
 **結果**:
+
 - ✅ ハードコードされたシークレット: **なし**
 - ✅ API KEY漏洩: **なし**
 - ✅ 認証トークン露出: **なし**
 
 **検証方法**:
+
 ```bash
 # TruffleHog相当のパターンマッチング
 grep -rE '(password|secret|token|api[_-]?key)' .github/workflows/shared-setup-python.yml
@@ -421,19 +448,20 @@ grep -rE '(password|secret|token|api[_-]?key)' .github/workflows/backend-ci.yml
 
 **評価対象**: 使用されているActionsのバージョン固定状況
 
-| Action | バージョン指定 | セキュリティ評価 |
-|--------|--------------|------------------|
-| `actions/checkout` | `@692973e3d937129bcbf40652eb9f2f61becf3332` (SHA-256) | ✅ **優秀** |
-| `actions/setup-python` | `@0a5c61591373683505ea898e09a3ea4f39ef2b9c` (SHA-256) | ✅ **優秀** |
-| `actions/cache` | `@0057852bfaa89a56745cba8c7296529d2fc39830` (SHA-256) | ✅ **優秀** |
-| `actions/upload-artifact` | `@834a144ee995460fba8ed112a2fc961b36a5ec5a` (SHA-256) | ✅ **優秀** |
-| `codecov/codecov-action` | `@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0` (SHA-256) | ✅ **優秀** |
-| `docker/setup-buildx-action` | `@988b5a0280414f521da01fcc63a27aeeb4b104db` (SHA-256) | ✅ **優秀** |
-| `docker/build-push-action` | `@4f58ea79222b3b9dc2c8bbdd6debcef730109a75` (SHA-256) | ✅ **優秀** |
+| Action                       | バージョン指定                                        | セキュリティ評価 |
+| ---------------------------- | ----------------------------------------------------- | ---------------- |
+| `actions/checkout`           | `@692973e3d937129bcbf40652eb9f2f61becf3332` (SHA-256) | ✅ **優秀**      |
+| `actions/setup-python`       | `@0a5c61591373683505ea898e09a3ea4f39ef2b9c` (SHA-256) | ✅ **優秀**      |
+| `actions/cache`              | `@0057852bfaa89a56745cba8c7296529d2fc39830` (SHA-256) | ✅ **優秀**      |
+| `actions/upload-artifact`    | `@834a144ee995460fba8ed112a2fc961b36a5ec5a` (SHA-256) | ✅ **優秀**      |
+| `codecov/codecov-action`     | `@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0` (SHA-256) | ✅ **優秀**      |
+| `docker/setup-buildx-action` | `@988b5a0280414f521da01fcc63a27aeeb4b104db` (SHA-256) | ✅ **優秀**      |
+| `docker/build-push-action`   | `@4f58ea79222b3b9dc2c8bbdd6debcef730109a75` (SHA-256) | ✅ **優秀**      |
 
 **セキュリティスコア**: 100/100 ✅
 
-**評価**: すべてのActionsがSHA-256ハッシュでピン固定されており、**SLSA Level 3**相当のサプライチェーン保護を実現
+**評価**: すべてのActionsがSHA-256ハッシュでピン固定されており、**SLSA Level
+3**相当のサプライチェーン保護を実現
 
 ---
 
@@ -442,6 +470,7 @@ grep -rE '(password|secret|token|api[_-]?key)' .github/workflows/backend-ci.yml
 **評価項目**: `pyproject.toml` vs `requirements.txt`
 
 **現状**:
+
 ```toml
 # backend/pyproject.toml - 49個の直接依存関係
 dependencies = [
@@ -469,11 +498,13 @@ wheel==0.44.0
 ```
 
 **問題点**:
+
 - `requirements.txt`は**部分的なパッケージリスト**（全依存関係を含まない）
 - CI/CDでは`pyproject.toml`を優先使用（`pip install -e .[dev]`）
 - **整合性リスク**: ローカル開発とCI/CDで異なる依存関係バージョンの可能性
 
 **推奨アクション**:
+
 ```bash
 # 優先度: Medium | 実装工数: 1時間
 
@@ -496,18 +527,18 @@ pip-compile pyproject.toml --extra=dev --output-file=requirements-dev.txt --gene
 
 ## 6. OWASP CI/CD Top 10 準拠評価
 
-| OWASP脅威 | 評価 | 詳細 |
-|-----------|------|------|
-| **CICD-SEC-1**: Insufficient Flow Control Mechanisms | ✅ **合格** | ブランチ保護、PRレビュー必須化実装済み |
-| **CICD-SEC-2**: Inadequate Identity and Access Management | ✅ **合格** | GitHub Actionsのデフォルト認証使用 |
-| **CICD-SEC-3**: Dependency Chain Abuse | 🟡 **改善余地** | ハッシュ検証未実装（MED-2025-002） |
-| **CICD-SEC-4**: Poisoned Pipeline Execution (PPE) | ✅ **合格** | PRからのmain/developキャッシュ書き込み不可 |
-| **CICD-SEC-5**: Insufficient PBAC | ✅ **合格** | GitHubのRBAC機能使用 |
-| **CICD-SEC-6**: Insufficient Credential Hygiene | ✅ **合格** | シークレット露出なし、環境変数経由管理 |
-| **CICD-SEC-7**: Insecure System Configuration | ✅ **合格** | セキュアなデフォルト設定使用 |
-| **CICD-SEC-8**: Ungoverned Usage of 3rd Party Services | ✅ **合格** | すべてのActionsがSHA-256ピン固定 |
-| **CICD-SEC-9**: Improper Artifact Integrity Validation | 🟡 **改善余地** | キャッシュ整合性検証未実装（MED-2025-001） |
-| **CICD-SEC-10**: Insufficient Logging and Visibility | ✅ **合格** | 構造化ログ、監査ログ実装済み |
+| OWASP脅威                                                 | 評価            | 詳細                                       |
+| --------------------------------------------------------- | --------------- | ------------------------------------------ |
+| **CICD-SEC-1**: Insufficient Flow Control Mechanisms      | ✅ **合格**     | ブランチ保護、PRレビュー必須化実装済み     |
+| **CICD-SEC-2**: Inadequate Identity and Access Management | ✅ **合格**     | GitHub Actionsのデフォルト認証使用         |
+| **CICD-SEC-3**: Dependency Chain Abuse                    | 🟡 **改善余地** | ハッシュ検証未実装（MED-2025-002）         |
+| **CICD-SEC-4**: Poisoned Pipeline Execution (PPE)         | ✅ **合格**     | PRからのmain/developキャッシュ書き込み不可 |
+| **CICD-SEC-5**: Insufficient PBAC                         | ✅ **合格**     | GitHubのRBAC機能使用                       |
+| **CICD-SEC-6**: Insufficient Credential Hygiene           | ✅ **合格**     | シークレット露出なし、環境変数経由管理     |
+| **CICD-SEC-7**: Insecure System Configuration             | ✅ **合格**     | セキュアなデフォルト設定使用               |
+| **CICD-SEC-8**: Ungoverned Usage of 3rd Party Services    | ✅ **合格**     | すべてのActionsがSHA-256ピン固定           |
+| **CICD-SEC-9**: Improper Artifact Integrity Validation    | 🟡 **改善余地** | キャッシュ整合性検証未実装（MED-2025-001） |
+| **CICD-SEC-10**: Insufficient Logging and Visibility      | ✅ **合格**     | 構造化ログ、監査ログ実装済み               |
 
 **総合スコア**: 8/10 合格、2項目改善推奨
 
@@ -530,6 +561,7 @@ pip-compile pyproject.toml --extra=dev --output-file=requirements-dev.txt --gene
 ### 7.2 データ保持期間
 
 **キャッシュ保持期間**:
+
 - GitHub Actionsキャッシュ: **最大7日間**（GitHub側の自動削除）
 - アーティファクト（削除済み）: ~~1日間~~ → **0日（削除済み）**
 
@@ -539,13 +571,14 @@ pip-compile pyproject.toml --extra=dev --output-file=requirements-dev.txt --gene
 
 ## 8. リスクマトリックス
 
-| リスク | 可能性 | 影響 | リスクレベル | 優先度 | ステータス |
-|--------|--------|------|--------------|--------|------------|
-| **MED-2025-001**: キャッシュポイズニング | Low | High | Medium | Medium | 📋 改善推奨 |
-| **MED-2025-002**: サプライチェーン攻撃 | Low-Medium | Medium | Medium | Medium | 📋 改善推奨 |
-| **LOW-2025-001**: venv検証不完全 | Low | Low | Low | Low | 📋 改善推奨 |
+| リスク                                   | 可能性     | 影響   | リスクレベル | 優先度 | ステータス  |
+| ---------------------------------------- | ---------- | ------ | ------------ | ------ | ----------- |
+| **MED-2025-001**: キャッシュポイズニング | Low        | High   | Medium       | Medium | 📋 改善推奨 |
+| **MED-2025-002**: サプライチェーン攻撃   | Low-Medium | Medium | Medium       | Medium | 📋 改善推奨 |
+| **LOW-2025-001**: venv検証不完全         | Low        | Low    | Low          | Low    | 📋 改善推奨 |
 
-**リスク受容基準**: Medium以下のリスクは**受容可能**（緩和策実装は推奨だが必須ではない）
+**リスク受容基準**:
+Medium以下のリスクは**受容可能**（緩和策実装は推奨だが必須ではない）
 
 ---
 
@@ -564,6 +597,7 @@ pip-compile pyproject.toml --extra=dev --output-file=requirements-dev.txt --gene
 **対応する脆弱性**: MED-2025-002
 
 **実装方法**:
+
 ```bash
 # Step 1: pip-toolsインストール
 cd backend
@@ -605,6 +639,7 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes
 **対応する脆弱性**: MED-2025-001
 
 **実装方法**:
+
 ```yaml
 # .github/workflows/backend-ci.yml (各ジョブに追加)
 - name: 🔐 Verify cache integrity
@@ -651,6 +686,7 @@ pip-compile pyproject.toml --output-file=requirements.lock --generate-hashes
 **対応する脆弱性**: アクセス制御の可視性向上
 
 **実装方法**:
+
 ```yaml
 # .github/workflows/backend-ci.yml
 jobs:
@@ -675,12 +711,12 @@ jobs:
 
 ### 10.1 業界標準準拠
 
-| 標準 | 準拠状況 | 詳細 |
-|------|----------|------|
-| **SLSA Level 2** | ✅ **準拠** | バージョンピン、再現可能ビルド |
-| **SLSA Level 3** | 🟡 **部分準拠** | ハッシュ検証未実装（推奨2で対応） |
-| **NIST SP 800-218** | ✅ **準拠** | 安全なソフトウェア開発フレームワーク |
-| **CIS Docker Benchmark** | ✅ **準拠** | Dockerビルドセキュリティベストプラクティス |
+| 標準                     | 準拠状況        | 詳細                                       |
+| ------------------------ | --------------- | ------------------------------------------ |
+| **SLSA Level 2**         | ✅ **準拠**     | バージョンピン、再現可能ビルド             |
+| **SLSA Level 3**         | 🟡 **部分準拠** | ハッシュ検証未実装（推奨2で対応）          |
+| **NIST SP 800-218**      | ✅ **準拠**     | 安全なソフトウェア開発フレームワーク       |
+| **CIS Docker Benchmark** | ✅ **準拠**     | Dockerビルドセキュリティベストプラクティス |
 
 ---
 
@@ -701,11 +737,11 @@ jobs:
 
 ### 11.1 実行時間比較
 
-| フェーズ | 変更前 | 変更後 | 差分 |
-|----------|--------|--------|------|
-| **setup-environment** | ~3分 | ~3分 | ±0秒 |
-| **キャッシュヒット時** | download-artifact (~15秒) + tar展開 (~10秒) | cache復元 (~5秒) | **-20秒** |
-| **キャッシュミス時** | venv作成 (~2分) + upload (~20秒) | venv作成 (~2分) + cache保存 (~10秒) | **-10秒** |
+| フェーズ               | 変更前                                      | 変更後                              | 差分      |
+| ---------------------- | ------------------------------------------- | ----------------------------------- | --------- |
+| **setup-environment**  | ~3分                                        | ~3分                                | ±0秒      |
+| **キャッシュヒット時** | download-artifact (~15秒) + tar展開 (~10秒) | cache復元 (~5秒)                    | **-20秒** |
+| **キャッシュミス時**   | venv作成 (~2分) + upload (~20秒)            | venv作成 (~2分) + cache保存 (~10秒) | **-10秒** |
 
 **総合パフォーマンス影響**: ✅ **10-20秒の高速化**（キャッシュヒット時）
 
@@ -714,11 +750,13 @@ jobs:
 ### 11.2 GitHub Actionsコスト影響
 
 **ストレージコスト**:
+
 - アーティファクト削除: **-500MB/月** (7 jobs × 100MB × 30日 / 30 = ~500MB削減)
 - キャッシュ使用: **+100MB/月** (最大7日保持 × 1回/日 = ~100MB増加)
 - **純削減**: -400MB/月
 
 **実行時間コスト**:
+
 - 並列実行ジョブ: 7ジョブ × 20秒削減 = **140秒/実行削減**
 - 月間実行回数: ~30実行（Push + PR）
 - **月間削減**: 140秒 × 30実行 = **4,200秒 (70分) 削減**
@@ -760,14 +798,14 @@ edd95c5 style(backend): Black Formatter準拠のコード整形
 
 ### 13.1 セキュリティ承認基準
 
-| 基準 | 評価 | 判定 |
-|------|------|------|
-| **Critical脆弱性ゼロ** | ✅ 0件 | 合格 |
-| **High脆弱性ゼロ** | ✅ 0件 | 合格 |
-| **Medium脆弱性対策** | 🟡 2件（改善推奨） | 条件付き合格 |
-| **OWASP準拠** | ✅ 8/10項目合格 | 合格 |
-| **GDPR準拠** | ✅ 非該当（個人情報なし） | 合格 |
-| **コスト影響** | ✅ 70分/月削減 | 合格 |
+| 基準                   | 評価                      | 判定         |
+| ---------------------- | ------------------------- | ------------ |
+| **Critical脆弱性ゼロ** | ✅ 0件                    | 合格         |
+| **High脆弱性ゼロ**     | ✅ 0件                    | 合格         |
+| **Medium脆弱性対策**   | 🟡 2件（改善推奨）        | 条件付き合格 |
+| **OWASP準拠**          | ✅ 8/10項目合格           | 合格         |
+| **GDPR準拠**           | ✅ 非該当（個人情報なし） | 合格         |
+| **コスト影響**         | ✅ 70分/月削減            | 合格         |
 
 ---
 
@@ -776,12 +814,12 @@ edd95c5 style(backend): Black Formatter準拠のコード整形
 **決定**: ✅ **セキュリティ承認**（条件付き）
 
 **条件**:
+
 1. Medium優先度の緩和策（推奨1, 2）を**1-2週間以内に実装**すること
 2. 本番環境デプロイ前に**推奨1（ハッシュ検証）を必須実装**すること
 3. セキュリティレビューを**四半期ごとに再実施**すること
 
-**承認者**: セキュリティエンジニアエージェント
-**承認日**: 2025年10月6日
+**承認者**: セキュリティエンジニアエージェント **承認日**: 2025年10月6日
 **有効期限**: 2026年1月6日（3ヶ月間、次回レビュー期限）
 
 ---
@@ -817,9 +855,9 @@ edd95c5 style(backend): Black Formatter準拠のコード整形
 
 ### 15.2 変更履歴
 
-| 日付 | バージョン | 変更内容 | 承認者 |
-|------|------------|----------|--------|
-| 2025-10-06 | 1.0 | 初版作成 | セキュリティエンジニアエージェント |
+| 日付       | バージョン | 変更内容 | 承認者                             |
+| ---------- | ---------- | -------- | ---------------------------------- |
+| 2025-10-06 | 1.0        | 初版作成 | セキュリティエンジニアエージェント |
 
 ---
 

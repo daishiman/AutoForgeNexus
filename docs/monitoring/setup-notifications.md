@@ -17,6 +17,7 @@
 #### 1-1. Discordサーバーを作成（既にある場合はスキップ）
 
 1. **Discordを開く**
+
    - ブラウザ版: https://discord.com
    - デスクトップアプリ: ダウンロード済みの場合
 
@@ -131,8 +132,8 @@ GitHub Actionsには、デフォルトで以下の権限が付与されていま
 
 ```yaml
 permissions:
-  issues: write        # Issue作成権限
-  pull-requests: read  # PR読み取り権限
+  issues: write # Issue作成権限
+  pull-requests: read # PR読み取り権限
 ```
 
 ### 自動作成されるタイミング
@@ -172,23 +173,23 @@ permissions:
 ```markdown
 ## 🚨 Critical Workflow Failure: Security Scanning
 
-**Workflow**: Security Scanning
-**Branch**: main
-**Commit**: abc123def456
-**Run URL**: https://github.com/.../actions/runs/123456
-**Actor**: @username
-**Time**: 2024-01-15T10:30:00Z
+**Workflow**: Security Scanning **Branch**: main **Commit**: abc123def456 **Run
+URL**: https://github.com/.../actions/runs/123456 **Actor**: @username **Time**:
+2024-01-15T10:30:00Z
 
 ### Action Required
+
 This is a critical workflow failure that requires immediate attention.
 
 ### Investigation Steps
+
 1. Check the [workflow run](URL)
 2. Review the error logs
 3. Identify the root cause
 4. Create a fix or rollback if necessary
 
 ### Labels
+
 - bug
 - critical
 - workflow-failure
@@ -230,7 +231,7 @@ gh secret set DISCORD_WEBHOOK_URL
 ```yaml
 # .github/workflows/alerts.yml を確認
 permissions:
-  issues: write  # この行があることを確認
+  issues: write # この行があることを確認
 ```
 
 #### 2. ワークフローログの確認
@@ -244,6 +245,7 @@ permissions:
 #### 3. ラベルの存在確認
 
 必要なラベルが存在することを確認：
+
 - `security`
 - `critical`
 - `bug`
@@ -301,9 +303,9 @@ content: "🚨 **Error!**"    # エラー時
 
 ```yaml
 # パフォーマンス閾値の変更（デフォルト: 10分）
-if [ $RUN_DURATION_MS -gt 600000 ]; then  # 600000ms = 10分
-  # この値を変更して調整
-  # 例: 1200000 = 20分
+if [ $RUN_DURATION_MS -gt 600000 ]; then # 600000ms = 10分
+# この値を変更して調整
+# 例: 1200000 = 20分
 ```
 
 ---
