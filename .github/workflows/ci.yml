@@ -27,15 +27,21 @@ jobs:
       - name: 🔍 Check directories
         id: check
         run: |
+          # Backend存在チェック
           if [ -d "backend" ]; then
             echo "backend=true" >> $GITHUB_OUTPUT
           else
             echo "backend=false" >> $GITHUB_OUTPUT
           fi
-          if [ -d "frontend" ]; then
+
+          # Frontend実装完了チェック（Phase 5判定）
+          # ディレクトリ存在 + package.json + 基本ファイル存在で判定
+          if [ -d "frontend" ] && [ -f "frontend/package.json" ] && [ -f "frontend/src/app/layout.tsx" ]; then
             echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "✅ Frontend Phase 5 implementation detected"
           else
             echo "frontend=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Frontend Phase 5 not ready, skipping frontend CI"
           fi
 
   # Python/Backend CI
