@@ -79,10 +79,16 @@ jobs:
                 exit 1
               fi
 
-              python3 "$SCRIPT_PATH" bandit-report.json || {
-                echo "⚠️ Bandit detected security issues, but continuing CI"
+              set +e  # エラーハンドリングのため一時的にexit-on-errorを無効化
+              python3 "$SCRIPT_PATH" bandit-report.json
+              BANDIT_EXIT_CODE=$?
+              set -e  # exit-on-errorを再有効化
+              
+              if [ $BANDIT_EXIT_CODE -ne 0 ]; then
+                echo "⚠️ Bandit detected security issues (exit code: $BANDIT_EXIT_CODE)"
                 echo "Please review security findings in the logs above"
-              }
+                echo "Continuing CI to allow other checks to complete..."
+              fi
 
               echo "🛡️ Running Safety dependency check..."
               safety check --json || echo "⚠️ Safety check completed with warnings"
