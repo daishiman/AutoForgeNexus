@@ -414,6 +414,7 @@ jobs:
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: ./backend
+          # Use production Dockerfile (multi-stage build)
           file: ./backend/Dockerfile
           push: false
           tags: autoforgenexus-backend:${{ github.sha }}
@@ -421,6 +422,35 @@ jobs:
           cache-to: type=gha,scope=backend,mode=max
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+          # Enable BuildKit optimizations
+          build-contexts: |
+            runtime=docker-image://python:3.13-slim
+          # Load image for security scanning
+          load: true
+
+      - name: 🔍 Run Trivy security scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: autoforgenexus-backend:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Phase 3では警告のみ、Phase 4以降で厳格化
+
+      - name: 📊 Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'docker-security'
+
+      - name: 📝 Generate Trivy report summary
+        if: always()
+        run: |
+          echo "## 🔍 Docker Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          trivy image --severity CRITICAL,HIGH --format table \
+            autoforgenexus-backend:${{ github.sha }} >> $GITHUB_STEP_SUMMARY || true
 
   # API specification and build artifacts
   build-artifacts:

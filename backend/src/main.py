@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.config.settings import Settings
+from src.presentation.api.shared import health
 
 # 設定読み込み
 settings = Settings()
@@ -46,6 +47,9 @@ app.add_middleware(
     allow_methods=cors_methods,
     allow_headers=cors_headers,
 )
+
+# ヘルスチェックルーター追加
+app.include_router(health.router)
 
 
 @app.get("/", response_model=dict[str, Any])
