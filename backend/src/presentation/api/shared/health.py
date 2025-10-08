@@ -102,28 +102,3 @@ async def readiness_check(response: Response) -> ReadinessResponse:
         environment=os.getenv("APP_ENV", "local"),
         checks=checks,
     )
-
-
-@router.get(
-    "/",
-    summary="ルートエンドポイント",
-    description="API情報取得",
-    status_code=status.HTTP_200_OK,
-)
-async def root() -> dict[str, str]:
-    """
-    ルートエンドポイント
-
-    APIの基本情報を返却
-
-    Returns:
-        dict: API情報
-    """
-    return {
-        "name": "AutoForgeNexus Backend API",
-        "version": "0.1.0",
-        "status": "operational",
-        "docs": "/docs",
-        "health": "/health",
-        "readiness": "/readiness",
-    }

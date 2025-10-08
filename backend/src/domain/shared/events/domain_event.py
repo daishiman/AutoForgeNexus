@@ -5,7 +5,7 @@
 イベント駆動アーキテクチャの中核となるクラス
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -38,7 +38,7 @@ class DomainEvent:
         self.aggregate_id = aggregate_id
         self.event_type = event_type
         self.event_id = event_id or str(uuid4())
-        self.occurred_at = occurred_at or datetime.utcnow()
+        self.occurred_at = occurred_at or datetime.now(UTC)
         self.version = version
         self.payload = payload or {}
 

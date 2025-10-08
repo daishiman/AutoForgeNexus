@@ -401,6 +401,12 @@ jobs:
     needs: [quality-checks]
     if: ${{ !failure() }}
 
+    # 明示的な権限定義（Trivy SARIF アップロード用）
+    permissions:
+      contents: read           # リポジトリ読み取り
+      security-events: write   # SARIF結果アップロード（Trivy）
+      actions: read            # アクション読み取り
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
