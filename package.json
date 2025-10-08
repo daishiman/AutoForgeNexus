@@ -11,7 +11,7 @@
     "dev": "pnpm --filter frontend dev",
     "build": "pnpm --filter frontend build",
     "test": "pnpm --filter frontend test",
-    "prepare": "node -e \"if(process.env.CI!=='true'){try{require('husky').install()}catch(e){if(e.code!=='MODULE_NOT_FOUND')throw e}}\""
+    "prepare": "node -e \"process.exit(process.env.CI==='true'?0:1)\" || husky"
   },
   "workspaces": [
     "frontend",
