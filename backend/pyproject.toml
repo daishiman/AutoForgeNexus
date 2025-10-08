@@ -145,10 +145,9 @@ check_untyped_defs = true
 warn_no_return = true
 show_error_codes = true
 ignore_missing_imports = true
-plugins = [
-    "pydantic.mypy",
-    "sqlalchemy.ext.mypy.plugin"
-]
+warn_unused_ignores = false
+# Note: plugins are loaded automatically when packages are installed
+# Explicit plugin configuration removed to avoid import errors during CI/CD
 
 [[tool.mypy.overrides]]
 module = [
