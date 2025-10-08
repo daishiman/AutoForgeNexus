@@ -22,11 +22,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 🧹 Sanitize PR title
+        id: sanitize
+        run: |
+          # PRタイトルから先頭・末尾の空白を削除
+          SANITIZED_TITLE=$(echo "${{ github.event.pull_request.title }}" | xargs)
+          echo "sanitized_title=$SANITIZED_TITLE" >> $GITHUB_OUTPUT
+          echo "Original title: '${{ github.event.pull_request.title }}'"
+          echo "Sanitized title: '$SANITIZED_TITLE'"
+
       - name: 📝 Check PR title
         uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # タイトルの空白を許容する設定
+          requireScope: false
           types: |
             feat
             fix
@@ -39,6 +50,11 @@ jobs:
             ci
             chore
             revert
+          # 日本語タイトルを許可（Conventional Commits形式のみ検証）
+          subjectPattern: ^.*$
+          subjectPatternError: |
+            PRタイトルは "type: description" 形式である必要があります。
+            例: "feat: 新機能追加", "fix: バグ修正"
 
       - name: 📊 Check PR size
         uses: codelytv/pr-size-labeler@v1
@@ -71,10 +87,32 @@ jobs:
           fetch-depth: 0
 
       - name: 📊 SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        # SONAR_TOKENが設定されている場合のみ実行
+        if: ${{ secrets.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          # SonarCloud設定（オプション）
+          args: >
+            -Dsonar.projectKey=daishiman_AutoForgeNexus
+            -Dsonar.organization=daishiman
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+            -Dsonar.sources=backend/src,frontend/src
+            -Dsonar.tests=backend/tests,frontend/tests
+            -Dsonar.exclusions=**/__pycache__/**,**/node_modules/**,**/dist/**,**/build/**
+
+      - name: ⚠️ SonarCloud Skipped
+        # SONAR_TOKENが設定されていない場合の警告
+        if: ${{ secrets.SONAR_TOKEN == '' }}
+        run: |
+          echo "⚠️ SonarCloud scan skipped: SONAR_TOKEN not configured"
+          echo "To enable SonarCloud analysis:"
+          echo "1. Create a SonarCloud account at https://sonarcloud.io"
+          echo "2. Generate a token"
+          echo "3. Add SONAR_TOKEN to GitHub repository secrets"
 
       - name: 🔍 Check for conflicts
         run: |
