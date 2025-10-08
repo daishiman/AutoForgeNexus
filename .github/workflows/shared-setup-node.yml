@@ -60,7 +60,8 @@ jobs:
         id: cache-key
         run: |
           LOCKFILE_HASH=$(sha256sum ${{ inputs.working-directory }}/pnpm-lock.yaml | cut -d' ' -f1)
-          CACHE_KEY="node-${{ inputs.node-version }}-pnpm-${{ inputs.pnpm-version }}-${{ runner.os }}-${LOCKFILE_HASH}${{ inputs.cache-key-suffix }}"
+          # キャッシュキー衝突防止: workflow名を追加
+          CACHE_KEY="node-${{ inputs.node-version }}-pnpm-${{ inputs.pnpm-version }}-${{ runner.os }}-${{ github.workflow }}-${LOCKFILE_HASH}${{ inputs.cache-key-suffix }}"
           echo "key=${CACHE_KEY}" >> $GITHUB_OUTPUT
           echo "生成されたキャッシュキー: ${CACHE_KEY}"
 
@@ -92,11 +93,7 @@ jobs:
         run: |
           pnpm exec playwright install --with-deps chromium
 
-      - name: 📤 Node.js環境のアップロード
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
-        with:
-          name: node-env-${{ github.run_id }}
-          path: |
-            ${{ inputs.working-directory }}/node_modules
-            ~/.cache/ms-playwright
-          retention-days: 1
+      # Note: node_modules アーティファクトアップロードは削除
+      # 理由: 171,098ファイルで EMFILE エラー発生
+      # 代替: pnpm cache + GitHub Actions cache で依存関係共有
+      # Playwright: 必要なジョブで個別インストール（--with-deps chromium）
