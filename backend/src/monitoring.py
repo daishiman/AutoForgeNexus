@@ -12,9 +12,9 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-import aioredis
 import httpx
 import psutil
+from redis import asyncio as aioredis
 from sqlalchemy import text
 
 # カスタムロガー設定
@@ -261,10 +261,10 @@ class HealthChecker:
                     error="Redis URL not configured",
                 )
 
-            redis = aioredis.from_url(redis_url)
+            redis = aioredis.from_url(redis_url, decode_responses=True)
             await redis.ping()
             info = await redis.info()
-            await redis.close()
+            await redis.aclose()
 
             response_time = (time.time() - start_time) * 1000
 
