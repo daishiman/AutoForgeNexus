@@ -59,7 +59,10 @@ jobs:
             command: 'mypy src/ --strict'
             name: 'Type Checking'
           - check-type: security
-            command: 'bandit -r src/ -f github && safety check --json'
+            command: |
+              bandit -r src/ -f json -o bandit-report.json
+              python3 ../.github/scripts/convert-bandit-to-github-annotations.py bandit-report.json
+              safety check --json
             name: 'Security Scan'
 
     defaults:
