@@ -51,7 +51,7 @@ jobs:
         path: ./
         base: main
         head: HEAD
-        extra_args: --debug --only-verified --exclude-paths=.trufflehog-exclude.txt
+        extra_args: --debug --only-verified
 
     - name: Upload scan results
       if: failure()
