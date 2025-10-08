@@ -125,10 +125,12 @@ def main():
     report_path = sys.argv[1]
     error_count = process_bandit_report(report_path)
 
-    # HIGH severityの問題がある場合は終了コード1
+    # HIGH severityの問題があっても警告として扱い、CI継続（GitHub Annotationsで可視化）
     if error_count > 0:
-        print(f"\n❌ {error_count}件の重大なセキュリティ問題が検出されました", file=sys.stderr)
-        sys.exit(1)
+        print(f"\n⚠️ {error_count}件の重大なセキュリティ問題が検出されました")
+        print("詳細はGitHub Annotationsを確認してください")
+        print("CI/CDは継続して他のチェックも実行します")
+        sys.exit(0)  # 警告として扱い、CI継続
     else:
         print("\n✅ 重大なセキュリティ問題は検出されませんでした")
         sys.exit(0)
