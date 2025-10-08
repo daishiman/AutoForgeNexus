@@ -9,6 +9,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from pydantic import Field, field_validator
+from pydantic_core.core_schema import ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # プロジェクトルートとバックエンドディレクトリのパス
@@ -65,7 +66,9 @@ class Settings(BaseSettings):
     app_name: str = Field(default="AutoForgeNexus-Backend")
     app_env: str = Field(default="local")
     debug: bool = Field(default=True)
-    host: str = Field(default="0.0.0.0")
+    # Security: 0.0.0.0 binds to all interfaces (dev/staging only)
+    # Production should use specific IP or 127.0.0.1 with reverse proxy
+    host: str = Field(default="0.0.0.0")  # nosec B104: Controlled by environment
     port: int = Field(default=8000)
 
     # === Database Settings ===
@@ -134,6 +137,31 @@ class Settings(BaseSettings):
         valid_envs = ["local", "development", "staging", "production"]
         if v not in valid_envs:
             raise ValueError(f"app_env must be one of {valid_envs}")
+        return v
+
+    @field_validator("host")
+    @classmethod
+    def validate_host_binding(cls, v: str, info: ValidationInfo) -> str:
+        """
+        ホストバインディングのセキュリティ検証
+
+        - 本番環境: 0.0.0.0 は警告（リバースプロキシ必須）
+        - 開発/Staging: 0.0.0.0 許可
+        """
+        app_env = info.data.get("app_env", "local")
+
+        # 本番環境で全インターフェースバインディングを使用している場合は警告
+        all_interfaces = "0.0.0.0"  # nosec B104: Validation check only
+        if v == all_interfaces and app_env == "production":  # nosec B104
+            import warnings
+
+            warnings.warn(
+                "⚠️  Security Warning: Binding to all interfaces in production. "
+                "Ensure reverse proxy (nginx/Cloudflare) is properly configured.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         return v
 
     @field_validator("litellm_fallback_models")
