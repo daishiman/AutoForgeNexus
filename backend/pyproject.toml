@@ -77,6 +77,8 @@ dev = [
     # Type Stubs
     "types-redis==4.6.0.20241004",
     "types-passlib==1.7.7.20240819",
+    "sqlalchemy[mypy]>=2.0.0",  # SQLAlchemy型プラグイン
+    "types-requests>=2.31.0",   # requests型スタブ
 
     # Development Tools
     "ipython==8.31.0",
@@ -143,6 +145,10 @@ check_untyped_defs = true
 warn_no_return = true
 show_error_codes = true
 ignore_missing_imports = true
+plugins = [
+    "pydantic.mypy",
+    "sqlalchemy.ext.mypy.plugin"
+]
 
 [[tool.mypy.overrides]]
 module = [
@@ -152,6 +158,27 @@ module = [
     "litellm.*",
 ]
 ignore_missing_imports = true
+
+# FastAPI decorators compatibility
+[[tool.mypy.overrides]]
+module = "src.presentation.*"
+disallow_untyped_decorators = false
+
+# Starlette/FastAPI middleware compatibility
+[[tool.mypy.overrides]]
+module = "src.middleware.*"
+disallow_subclassing_any = false
+warn_return_any = false
+
+# SQLAlchemy ORM compatibility
+[[tool.mypy.overrides]]
+module = "src.infrastructure.shared.database.*"
+disallow_subclassing_any = false
+
+# Pydantic Settings compatibility
+[[tool.mypy.overrides]]
+module = "src.core.config.*"
+disallow_subclassing_any = false
 
 [tool.pytest.ini_options]
 minversion = "8.3"
