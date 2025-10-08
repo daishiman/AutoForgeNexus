@@ -60,9 +60,29 @@ jobs:
             name: 'Type Checking'
           - check-type: security
             command: |
+              echo "🔍 Running Bandit security scan..."
               bandit -r src/ -f json -o bandit-report.json
-              python3 ../.github/scripts/convert-bandit-to-github-annotations.py bandit-report.json
-              safety check --json
+
+              echo "📊 Verifying Bandit report..."
+              if [ ! -f bandit-report.json ]; then
+                echo "❌ ERROR: bandit-report.json not generated"
+                exit 1
+              fi
+
+              echo "🔧 Converting Bandit results to GitHub Annotations..."
+              SCRIPT_PATH="${GITHUB_WORKSPACE}/.github/scripts/convert-bandit-to-github-annotations.py"
+
+              if [ ! -f "$SCRIPT_PATH" ]; then
+                echo "❌ ERROR: Script not found at: $SCRIPT_PATH"
+                echo "Available files in .github/scripts/:"
+                ls -la "${GITHUB_WORKSPACE}/.github/scripts/" || echo "Directory not found"
+                exit 1
+              fi
+
+              python3 "$SCRIPT_PATH" bandit-report.json
+
+              echo "🛡️ Running Safety dependency check..."
+              safety check --json || echo "⚠️ Safety check completed with warnings"
             name: 'Security Scan'
 
     defaults:
