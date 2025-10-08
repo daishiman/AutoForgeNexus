@@ -24,18 +24,34 @@ class TestURLSanitization:
         """トークン付きURLのサニタイズ"""
         url = "libsql://eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9@prod.turso.io/db"
         result = LogSanitizer.sanitize_url_for_logging(url)
-        assert "[REDACTED]" in result
-        assert "prod.turso.io" in result
-        assert "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" not in result
+
+        # 🔐 セキュリティ改善: 期待値との完全一致検証（CodeQL Alert #60対応）
+        # CWE-20対策: 部分一致 → 完全一致検証
+        expected_result = "libsql://[REDACTED]@prod.turso.io/db"
+        assert (
+            result == expected_result
+        ), f"Expected exact match '{expected_result}', got '{result}'"
+
+        # トークンが除外されていることを確認
+        assert (
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" not in result
+        ), f"Token should be redacted but found in: {result}"
 
     def test_sanitize_url_with_password(self):
         """パスワード付きURLのサニタイズ"""
         url = "https://user:password123@example.com/path"
         result = LogSanitizer.sanitize_url_for_logging(url)
-        assert "[REDACTED]" in result
-        assert "example.com" in result
-        assert "password123" not in result
-        assert "user" not in result
+
+        # 🔐 セキュリティ改善: 期待値との完全一致検証（CodeQL CWE-20対策）
+        # CWE-20対策: 部分一致 → 完全一致検証
+        expected_result = "https://[REDACTED]@example.com/path"
+        assert (
+            result == expected_result
+        ), f"Expected exact match '{expected_result}', got '{result}'"
+
+        # パスワードとユーザー名が除外されていることを確認
+        assert "password123" not in result, f"Password should be redacted: {result}"
+        assert "user" not in result, f"Username should be redacted: {result}"
 
     def test_sanitize_url_without_credentials(self):
         """認証情報なしURLはそのまま"""
