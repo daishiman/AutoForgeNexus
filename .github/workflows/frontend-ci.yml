@@ -84,16 +84,14 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: './frontend/pnpm-lock.yaml'
 
-      - name: 📥 Restore cached dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: |
-            frontend/node_modules
-            ~/.cache/ms-playwright
-          key: node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: |
-            node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-
+      - name: 📦 Install dependencies
+        run: |
+          echo "::notice::Installing frontend dependencies (pnpm cache enabled)"
+          pnpm install --frozen-lockfile
+        timeout-minutes: 5
 
       - name: 🎯 Run ${{ matrix.name }}
         run: ${{ matrix.command }}
@@ -139,16 +137,14 @@ jobs:
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: './frontend/pnpm-lock.yaml'
 
-      - name: 📥 Restore cached dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: |
-            frontend/node_modules
-            ~/.cache/ms-playwright
-          key: node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
-          restore-keys: |
-            node-${{ env.NODE_VERSION }}-pnpm-${{ env.PNPM_VERSION }}-${{ runner.os }}-
+      - name: 📦 Install dependencies
+        run: |
+          echo "::notice::Installing frontend dependencies for ${{ matrix.test-type }} tests"
+          pnpm install --frozen-lockfile
+        timeout-minutes: 5
 
       - name: 🧪 Run ${{ matrix.test-type }} tests
         run: ${{ matrix.command }}
