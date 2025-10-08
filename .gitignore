@@ -31,6 +31,8 @@ backend/.venv.sha256
 # Test/Quality check results
 backend/coverage.json
 backend/mypy_result.txt
+backend/bandit-report.json
+**/bandit-report.json
 
 # PyInstaller
 *.manifest
