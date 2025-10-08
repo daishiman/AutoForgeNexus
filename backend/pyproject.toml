@@ -160,7 +160,7 @@ ignore_missing_imports = true
 
 # FastAPI decorators compatibility
 [[tool.mypy.overrides]]
-module = "src.presentation.*"
+module = ["src.presentation.*", "src.main"]
 disallow_untyped_decorators = false
 
 # Starlette/FastAPI middleware compatibility
