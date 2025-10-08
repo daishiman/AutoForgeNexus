@@ -1,0 +1,191 @@
+# ==========================================
+# Pre-commit Hooks Configuration
+# ==========================================
+# AutoForgeNexus - AI Prompt Optimization System
+# Security-first development workflow
+# ==========================================
+
+default_stages: [commit, push]
+fail_fast: false
+minimum_pre_commit_version: "3.5.0"
+
+repos:
+  # ==========================================
+  # 🛡️ Security - Secrets Detection (HIGHEST PRIORITY)
+  # ==========================================
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.82.13
+    hooks:
+      - id: trufflehog-git
+        name: 🔍 TruffleHog - Secrets Scanner (Git History)
+        entry: trufflehog git file://. --since-commit HEAD --only-verified --fail
+        language: system
+        stages: [commit]
+        verbose: true
+
+      - id: trufflehog-filesystem
+        name: 🔍 TruffleHog - Secrets Scanner (Filesystem)
+        entry: trufflehog filesystem . --only-verified --fail
+        language: system
+        stages: [commit]
+        verbose: true
+
+  # ==========================================
+  # 🔒 Security - Additional Secret Detection
+  # ==========================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: 🔐 Gitleaks - Git Secrets Scanner
+        entry: gitleaks detect --source . --verbose --no-git
+        language: system
+        stages: [commit]
+
+  # ==========================================
+  # 🗂️ File Management - Prevent Sensitive Files
+  # ==========================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        name: 🚫 Check Large Files (max 1MB)
+        args: ['--maxkb=1024']
+
+      - id: detect-private-key
+        name: 🔑 Detect Private Keys (SSH/GPG)
+
+      - id: check-merge-conflict
+        name: ⚠️ Check Merge Conflicts
+
+      - id: end-of-file-fixer
+        name: 📝 Fix End of Files
+
+      - id: trailing-whitespace
+        name: 🧹 Remove Trailing Whitespace
+        args: [--markdown-linebreak-ext=md]
+
+      - id: mixed-line-ending
+        name: 🔄 Fix Line Endings
+        args: ['--fix=lf']
+
+  # ==========================================
+  # 🐍 Python - Code Quality & Security (Backend)
+  # ==========================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      - id: ruff
+        name: 🔍 Ruff - Python Linter
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/.*\.py$
+
+      - id: ruff-format
+        name: ✨ Ruff - Python Formatter
+        files: ^backend/.*\.py$
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        name: 🔍 mypy - Python Type Checker
+        args: [--strict, --ignore-missing-imports]
+        files: ^backend/src/.*\.py$
+        additional_dependencies:
+          - pydantic>=2.0
+          - types-requests
+          - types-redis
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.0
+    hooks:
+      - id: bandit
+        name: 🛡️ Bandit - Python Security Scanner
+        args: [-c, backend/pyproject.toml, -r, backend/src/]
+        files: ^backend/.*\.py$
+
+  # ==========================================
+  # 🎨 JavaScript/TypeScript - Code Quality (Frontend)
+  # ==========================================
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.16.0
+    hooks:
+      - id: eslint
+        name: 🔍 ESLint - JS/TS Linter
+        args: [--fix, --max-warnings=0]
+        files: ^frontend/.*\.(js|jsx|ts|tsx)$
+        additional_dependencies:
+          - eslint@9.16.0
+          - '@typescript-eslint/parser@8.18.2'
+          - '@typescript-eslint/eslint-plugin@8.18.2'
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: ✨ Prettier - JS/TS/CSS Formatter
+        args: [--write]
+        files: ^frontend/.*\.(js|jsx|ts|tsx|css|scss|json|md)$
+
+  # ==========================================
+  # 📦 Dependency Security Scanning
+  # ==========================================
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.3
+    hooks:
+      - id: python-safety-dependencies-check
+        name: 🔒 Safety - Python Dependency Vulnerability Scanner
+        files: ^backend/(requirements\.txt|pyproject\.toml)$
+
+  # ==========================================
+  # 🐳 Docker & Infrastructure
+  # ==========================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.1-beta
+    hooks:
+      - id: hadolint-docker
+        name: 🐳 Hadolint - Dockerfile Linter
+        args: [--ignore, DL3008, --ignore, DL3009]
+
+  # ==========================================
+  # 📄 YAML/JSON/TOML Validation
+  # ==========================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        name: ✅ Validate YAML Files
+        args: [--unsafe]  # Allow custom tags
+
+      - id: check-json
+        name: ✅ Validate JSON Files
+
+      - id: check-toml
+        name: ✅ Validate TOML Files
+
+  # ==========================================
+  # 🔍 Commit Message Validation
+  # ==========================================
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.1.0
+    hooks:
+      - id: commitizen
+        name: 📝 Commitizen - Conventional Commits Validator
+        stages: [commit-msg]
+
+# ==========================================
+# CI Configuration
+# ==========================================
+ci:
+  autofix_commit_msg: |
+    🤖 [pre-commit.ci] auto fixes from pre-commit hooks
+
+    Generated with Claude Code (https://claude.com/claude-code)
+  autofix_prs: true
+  autoupdate_commit_msg: '🔄 [pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip:
+    - trufflehog-git        # Skip in CI (heavy operation)
+    - trufflehog-filesystem # Skip in CI (heavy operation)
+    - mypy                  # Skip in CI (requires dependencies)
+    - bandit                # Skip in CI (covered by GitHub Actions)
