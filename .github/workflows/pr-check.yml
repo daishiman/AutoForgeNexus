@@ -88,7 +88,7 @@ jobs:
 
       - name: 📊 SonarCloud Scan
         # SONAR_TOKENが設定されている場合のみ実行
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: vars.SONAR_ENABLED == 'true'
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: ⚠️ SonarCloud Skipped
         # SONAR_TOKENが設定されていない場合の警告
-        if: ${{ secrets.SONAR_TOKEN == '' }}
+        if: vars.SONAR_ENABLED != 'true'
         run: |
           echo "⚠️ SonarCloud scan skipped: SONAR_TOKEN not configured"
           echo "To enable SonarCloud analysis:"
@@ -238,7 +238,7 @@ jobs:
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: 📊 Generate coverage comment
         uses: py-cov-action/python-coverage-comment-action@v3

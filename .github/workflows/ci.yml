@@ -9,7 +9,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.13"
-  NODE_VERSION: "20"
+  NODE_VERSION: "22"
   PNPM_VERSION: "9"
 
 jobs:
@@ -140,7 +140,9 @@ jobs:
         run: pnpm prettier --check .
 
       - name: 🔍 TypeScript type checking
-        run: pnpm type-check
+        run: |
+          rm -f tsconfig.tsbuildinfo
+          pnpm type-check
 
       - name: 🧪 Run tests with coverage
         run: |
