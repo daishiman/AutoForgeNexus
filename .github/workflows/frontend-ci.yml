@@ -177,6 +177,8 @@ jobs:
     name: 🏗️ Production Build
     uses: ./.github/workflows/shared-build-cache.yml
     needs: [quality-checks]
+    # Phase 5以降のみ実行（フロントエンド実装後）
+    if: ${{ vars.CURRENT_PHASE >= 5 || github.event_name == 'workflow_dispatch' }}
     with:
       build-type: 'frontend'
       working-directory: './frontend'
@@ -192,7 +194,10 @@ jobs:
     name: ⚡ Performance Audit
     runs-on: ubuntu-latest
     needs: [setup-environment, production-build]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    # Phase 5以降のみ実行（main/developブランチ & フロントエンド実装後）
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
+      (vars.CURRENT_PHASE >= 5 || github.event_name == 'workflow_dispatch')
     defaults:
       run:
         working-directory: ./frontend
@@ -249,7 +254,10 @@ jobs:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
     needs: [production-build]
-    if: ${{ !failure() }}
+    # Phase 5以降のみ実行（フロントエンド実装後）
+    if: |
+      !failure() &&
+      (vars.CURRENT_PHASE >= 5 || github.event_name == 'workflow_dispatch')
 
     steps:
       - name: 📥 Checkout code
@@ -283,7 +291,10 @@ jobs:
     name: 📦 Deployment Preparation
     runs-on: ubuntu-latest
     needs: [production-build, test-suite, docker-build]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    # Phase 5以降のみ実行（フロントエンド実装後）
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
+      (vars.CURRENT_PHASE >= 5 || github.event_name == 'workflow_dispatch')
 
     steps:
       - name: 📥 Checkout code
