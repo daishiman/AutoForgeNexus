@@ -1,13 +1,40 @@
 # GitHub Secrets セットアップガイド
 
-**作成日**: 2025-10-01
-**対象環境**: Production / Staging
+**最終更新**: 2025-10-08
+**対象環境**: Development / Staging / Production
 **セキュリティレベル**: Critical
 
 ## 🎯 概要
 
-AutoForgeNexusプロジェクトで使用するGitHub Secretsの設定ガイド。
-`.env.production`と`.env.staging`の環境変数をGitHub Secretsに安全に保管します。
+AutoForgeNexusプロジェクトで使用するGitHub Secretsの包括的設定ガイド。
+
+### 本ガイドの目的
+1. **CI/CD実行に必要なシークレット設定**（Phase 3-6）
+2. **SonarCloud品質分析の有効化**（Phase 3+）
+3. **外部サービス認証トークン管理**（Phase 4-5）
+4. **セキュリティベストプラクティス遵守**
+
+## 🚨 即座に対応が必要な問題
+
+### 問題1: SonarCloud認証エラー
+```
+ERROR: Failed to query JRE metadata: . Please check the property sonar.token
+```
+
+**原因**: `SONAR_TOKEN`未設定
+**影響**: PR品質チェックが失敗、マージブロック
+**優先度**: High
+**対処**: 下記「SonarCloud設定（必須）」セクション参照
+
+### 問題2: Semantic Pull Request検証エラー
+```
+Error: No release type found in pull request title "  feat: ..."
+```
+
+**原因**: PRタイトルの先頭空白文字
+**影響**: PR検証失敗
+**優先度**: Medium
+**対処**: `.github/workflows/pr-check.yml`更新済み（自動対応）
 
 ## 🔐 セキュリティ原則
 
@@ -17,9 +44,141 @@ AutoForgeNexusプロジェクトで使用するGitHub Secretsの設定ガイド�
 4. **Secretsのローテーション（90日毎推奨）**
 5. **最小権限の原則（必要なSecretsのみアクセス）**
 
-## 📋 必須Secrets一覧
+---
 
-### Backend Production Secrets
+## 🎯 SonarCloud設定（必須 - Phase 3+）
+
+### Phase 3の段階的セットアップ
+
+Phase 3（バックエンド開発）では、SonarCloudによる品質分析が必須です。
+以下の手順で設定してください：
+
+#### ステップ1: SonarCloudアカウント作成（5分）
+
+```bash
+# 1. https://sonarcloud.io にアクセス
+# 2. "Start now for free" をクリック
+# 3. "With GitHub" を選択してGitHubアカウントでサインイン
+# 4. 組織の選択または作成
+#    - Import an organization from GitHub → "daishiman"（あなたのGitHubユーザー名）
+#    - または "Create an organization" で新規作成
+```
+
+#### ステップ2: プロジェクト分析セットアップ（3分）
+
+```bash
+# 1. SonarCloudダッシュボード
+# 2. "Analyze new project" をクリック
+# 3. AutoForgeNexusリポジトリを選択
+# 4. "Set Up" をクリック
+# 5. Analysis Method: "With GitHub Actions" を選択
+```
+
+#### ステップ3: トークン生成（2分）
+
+```bash
+# SonarCloud画面の指示に従う
+1. "Generate a token" をクリック
+2. Token name: "AutoForgeNexus-CI"
+3. Expires in: "No expiration"（または1年）
+4. "Generate" → トークンをコピー（⚠️ 再表示不可）
+```
+
+#### ステップ4: GitHub Secretsに登録（1分）
+
+```bash
+# ブラウザで実施
+1. GitHubリポジトリページ → Settings
+2. Secrets and variables → Actions
+3. "New repository secret" をクリック
+4. 以下を入力:
+   Name: SONAR_TOKEN
+   Secret: <ステップ3でコピーしたトークン>
+5. "Add secret" をクリック
+```
+
+**またはGitHub CLIで実施:**
+```bash
+gh secret set SONAR_TOKEN
+# → トークンを貼り付けてEnter
+```
+
+#### ステップ5: sonar-project.properties 確認（1分）
+
+```bash
+# プロジェクトルートの sonar-project.properties を確認
+# 以下の値をあなたの設定に変更:
+
+sonar.organization=daishiman  # ← あなたのSonarCloud組織名
+sonar.projectKey=daishiman_AutoForgeNexus  # ← プロジェクトキー
+```
+
+**正しい値の確認方法:**
+```bash
+# SonarCloud Dashboard → Project Information
+# Organization Key: ここに表示される値
+# Project Key: ここに表示される値
+```
+
+#### ステップ6: 動作確認（2分）
+
+```bash
+# 現在のPRでワークフローを再実行
+1. GitHub → Actions タブ
+2. 失敗した "PR Check" ワークフローを選択
+3. "Re-run all jobs" をクリック
+4. "Code Quality Check" ジョブが成功することを確認
+```
+
+**期待される成功ログ:**
+```
+✅ SonarCloud Scan
+INFO: Analysis report uploaded successfully
+INFO: ANALYSIS SUCCESSFUL
+```
+
+---
+
+### Phase 4以降で必要なシークレット
+
+以下のシークレットはPhase 4（データベース）、Phase 5（フロントエンド）で必要になります。
+Phase 3の段階では設定不要です。
+
+## 📋 全シークレット一覧
+
+### 🔴 Phase 3必須（バックエンド品質保証）
+
+| シークレット名 | 説明 | 設定手順 |
+|-------------|------|---------|
+| `SONAR_TOKEN` | SonarCloud品質分析認証 | 上記「SonarCloud設定」参照 |
+
+### 🟡 Phase 4必須（データベース）
+
+| シークレット名 | 説明 | 取得方法 |
+|-------------|------|---------|
+| `TURSO_AUTH_TOKEN` | Tursoデータベース認証 | `turso db tokens create` |
+| `TURSO_DATABASE_URL` | データベース接続URL | `turso db show [db-name]` |
+| `REDIS_PASSWORD` | Redisキャッシュ認証 | Redis Cloud設定 |
+
+### 🟢 Phase 5必須（フロントエンド認証）
+
+| シークレット名 | 説明 | 取得方法 |
+|-------------|------|---------|
+| `CLERK_SECRET_KEY` | Clerk認証シークレット | Clerk Dashboard |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk公開キー | Clerk Dashboard |
+
+### ⚪ Phase 2-6オプション（機能拡張時）
+
+| シークレット名 | 説明 | 使用目的 |
+|-------------|------|---------|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API認証 | Workers/Pagesデプロイ |
+| `LANGFUSE_SECRET_KEY` | LangFuse観測性 | LLM監視強化 |
+| `OPENAI_API_KEY` | OpenAI API | LLM統合テスト |
+| `ANTHROPIC_API_KEY` | Anthropic API | Claude統合 |
+
+---
+
+## 📋 Backend Production Secrets
 
 ```bash
 # === Database ===
