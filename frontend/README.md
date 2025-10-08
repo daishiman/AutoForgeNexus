@@ -201,8 +201,8 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_WEBSOCKET_URL=ws://localhost:8000
 
 # Clerk認証
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
-CLERK_SECRET_KEY=sk_test_xxx
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<your_clerk_publishable_key>
+CLERK_SECRET_KEY=<your_clerk_secret_key>
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
@@ -210,12 +210,12 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
 # Cloudflare
 NEXT_PUBLIC_CLOUDFLARE_PAGES_URL=https://autoforge-nexus.pages.dev
-CLOUDFLARE_ACCOUNT_ID=xxx
-CLOUDFLARE_API_TOKEN=xxx
+CLOUDFLARE_ACCOUNT_ID=<your_cloudflare_account_id>
+CLOUDFLARE_API_TOKEN=<your_cloudflare_api_token>
 
 # 監視
-NEXT_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx
-NEXT_PUBLIC_POSTHOG_KEY=xxx
+NEXT_PUBLIC_SENTRY_DSN=<your_sentry_dsn>
+NEXT_PUBLIC_POSTHOG_KEY=<your_posthog_key>
 NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 ```
 

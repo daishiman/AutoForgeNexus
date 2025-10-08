@@ -1,0 +1,31 @@
+# TruffleHog Ignore Rules
+# ドキュメント内のプレースホルダーを除外
+
+# === ドキュメントファイル全体を除外 ===
+# ドキュメントにはサンプルコードや環境変数例が含まれるため
+path:**/CLAUDE.md
+path:**/README.md
+path:docs/**/*.md
+
+# === 特定のプレースホルダーパターンを除外 ===
+# <your_xxx> 形式のプレースホルダー
+pattern:<your_[a-z_]+>
+
+# xxx形式のプレースホルダー（すでに修正済みだが念のため）
+# pattern:=xxx$
+
+# === 設定ファイルのサンプル値を除外 ===
+path:**/*.example
+path:**/*.sample
+path:**/*.template
+
+# === テストファイルのモックデータを除外 ===
+path:tests/**/*
+path:**/__tests__/**/*
+path:**/*.test.*
+path:**/*.spec.*
+
+# === CI/CDパイプラインの環境変数例を除外 ===
+# GitHub Actionsでは実際の秘密情報は${{ secrets.XXX }}形式で安全に管理されている
+path:.github/workflows/**/*.yml
+path:.github/workflows/**/*.yaml

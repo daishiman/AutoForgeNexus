@@ -51,7 +51,7 @@ jobs:
         path: ./
         base: main
         head: HEAD
-        extra_args: --debug --only-verified
+        extra_args: --debug --only-verified --exclude-paths=.trufflehog_ignore
 
     - name: Upload scan results
       if: failure()
@@ -59,7 +59,7 @@ jobs:
       with:
         name: secret-scan-results
         path: trufflehog-results.json
-        retention-days: 30
+        retention-days: 365  # GDPR Article 30準拠（監査ログ365日保存）
 
   # Python依存関係セキュリティスキャン
   python-security:
@@ -111,7 +111,7 @@ jobs:
           backend/safety-report.json
           backend/bandit-report.json
           backend/pip-audit-report.json
-        retention-days: 30
+        retention-days: 365  # GDPR Article 30準拠（監査ログ365日保存）
 
   # JavaScript/TypeScript依存関係スキャン
   js-security:
@@ -159,7 +159,7 @@ jobs:
         path: |
           pnpm-audit-report.json
           audit-ci-report.json
-        retention-days: 30
+        retention-days: 365  # GDPR Article 30準拠（監査ログ365日保存）
 
   # インフラストラクチャスキャン（Checkov）
   infrastructure-scan:
@@ -197,7 +197,7 @@ jobs:
         path: |
           checkov-docker-report.json
           checkov-github-actions-report.json
-        retention-days: 30
+        retention-days: 365  # GDPR Article 30準拠（監査ログ365日保存）
 
   # セキュリティサマリー生成
   security-summary:
@@ -243,7 +243,7 @@ jobs:
       with:
         name: security-summary
         path: security-summary.md
-        retention-days: 30
+        retention-days: 365  # GDPR Article 30準拠（監査ログ365日保存）
 
     # PR時にコメント追加（オプション）
     - name: Comment security results on PR

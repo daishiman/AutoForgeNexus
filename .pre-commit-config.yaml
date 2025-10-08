@@ -18,14 +18,14 @@ repos:
     hooks:
       - id: trufflehog-git
         name: 🔍 TruffleHog - Secrets Scanner (Git History)
-        entry: trufflehog git file://. --since-commit HEAD --only-verified --fail
+        entry: trufflehog git file://. --since-commit HEAD --only-verified --exclude-paths=.trufflehog_ignore --fail
         language: system
         stages: [commit]
         verbose: true
 
       - id: trufflehog-filesystem
         name: 🔍 TruffleHog - Secrets Scanner (Filesystem)
-        entry: trufflehog filesystem . --only-verified --fail
+        entry: trufflehog filesystem . --only-verified --exclude-paths=.trufflehog_ignore --fail
         language: system
         stages: [commit]
         verbose: true
@@ -41,6 +41,18 @@ repos:
         entry: gitleaks detect --source . --verbose --no-git
         language: system
         stages: [commit]
+
+  # ==========================================
+  # ⚠️ Security - Unsafe Placeholder Detection
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: check-unsafe-placeholders
+        name: ⚠️ Detect Unsafe Placeholders (=xxx pattern)
+        entry: bash -c 'if git diff --cached --diff-filter=d | grep -E "(TOKEN|KEY|SECRET|PASSWORD|API).*=xxx"; then echo "❌ Unsafe placeholder detected! Use <your_xxx> format instead."; exit 1; fi'
+        language: system
+        stages: [commit]
+        verbose: true
 
   # ==========================================
   # 🗂️ File Management - Prevent Sensitive Files

@@ -170,9 +170,9 @@ cd infrastructure/monitoring
 
 ```env
 # Cloudflare
-CLOUDFLARE_API_TOKEN=xxx
-CLOUDFLARE_ACCOUNT_ID=xxx
-CLOUDFLARE_ZONE_ID=xxx
+CLOUDFLARE_API_TOKEN=<your_cloudflare_api_token>
+CLOUDFLARE_ACCOUNT_ID=<your_cloudflare_account_id>
+CLOUDFLARE_ZONE_ID=<your_cloudflare_zone_id>
 
 # Workers
 CLOUDFLARE_WORKERS_URL=https://api.autoforgenexus.com
