@@ -1,0 +1,25 @@
+# TruffleHog除外パターン
+# .gitignore対象の環境変数ファイルをスキャンから除外
+
+# ルート環境ファイル
+^\.env$
+^\.env\..*
+
+# バックエンド環境ファイル
+^backend/\.env$
+^backend/\.env\..*
+
+# フロントエンド環境ファイル
+^frontend/\.env$
+^frontend/\.env\..*
+
+# その他の環境ファイル
+.*\.env$
+.*\.env\.local$
+.*\.env\.production$
+.*\.env\.staging$
+.*\.env\.development$
+.*\.env\.test$
+
+# バックアップファイル
+.*\.env\..*\.bak$
