@@ -250,6 +250,7 @@ class HealthChecker:
     async def _check_redis(self) -> DependencyHealth:
         """Redis接続チェック"""
         start_time = time.time()
+        redis = None
 
         try:
             redis_url = os.getenv("REDIS_URL")
@@ -264,7 +265,6 @@ class HealthChecker:
             redis = aioredis.from_url(redis_url, decode_responses=True)
             await redis.ping()
             info = await redis.info()
-            await redis.aclose()
 
             response_time = (time.time() - start_time) * 1000
 
@@ -287,6 +287,10 @@ class HealthChecker:
                 response_time_ms=response_time,
                 error=str(e),
             )
+        finally:
+            # 修正: aclose() → close() + await redis.close()
+            if redis is not None:
+                await redis.close()
 
     async def _check_langfuse(self) -> DependencyHealth:
         """LangFuse接続チェック"""
