@@ -16,6 +16,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
+from ..core.logging.sanitizer import sanitize_for_logging
 from ..monitoring import metrics_collector
 
 # ロガー設定
@@ -270,12 +271,13 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         return sanitized
 
     async def _sanitize_body(self, body: bytes) -> str:
-        """ボディの機密情報をサニタイズ"""
+        """ボディの機密情報をサニタイズ（GDPR準拠）"""
         try:
             # JSON の場合
             data = json.loads(body.decode("utf-8"))
             if isinstance(data, dict):
-                sanitized = self._sanitize_dict(data)
+                # sanitizer.pyのGDPR準拠サニタイゼーションを使用
+                sanitized = sanitize_for_logging(data, log_level="INFO")
                 return json.dumps(sanitized, ensure_ascii=False)
             return str(data)
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -284,41 +286,6 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             if len(text) > 1000:
                 return text[:1000] + "... [TRUNCATED]"
             return text
-
-    def _sanitize_dict(self, data: dict[str, object], depth: int = 0) -> dict[str, str]:
-        """辞書データの機密情報をサニタイズ
-
-        戻り値は常にdict[str, str]に正規化され、ネストは文字列化される
-        """
-        # Prevent deep nesting DoS attacks
-        max_depth = 10
-        if depth > max_depth:
-            return {"error": "[DEPTH_LIMIT_EXCEEDED]"}
-
-        sensitive_keys = [
-            "password",
-            "token",
-            "secret",
-            "key",
-            "auth",
-            "credential",
-            "private",
-            "session",
-            "cookie",
-        ]
-
-        sanitized: dict[str, str] = {}
-        for key, value in data.items():
-            if any(sensitive in key.lower() for sensitive in sensitive_keys):
-                sanitized[key] = "[REDACTED]"
-            elif isinstance(value, dict):
-                # 再帰的にサニタイズしてJSON文字列として格納
-                nested_sanitized = self._sanitize_dict(value, depth + 1)
-                sanitized[key] = json.dumps(nested_sanitized, ensure_ascii=False)
-            else:
-                sanitized[key] = str(value)
-
-        return sanitized
 
 
 class LLMObservabilityMiddleware:

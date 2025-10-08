@@ -5,6 +5,7 @@ Handles connection to Turso (libSQL) database for staging/production environment
 
 # cspell:ignore libsql libSQL Turso authToken
 
+import logging
 import os
 from collections.abc import Generator
 
@@ -16,16 +17,37 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from src.core.config.settings import Settings
+from src.domain.shared.events.event_bus import InMemoryEventBus
+from src.domain.shared.events.infrastructure_events import (
+    DatabaseConnectionEstablished,
+    DatabaseConnectionFailed,
+    DatabaseType,
+    Environment,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class TursoConnection:
-    """Turso database connection manager"""
+    """
+    Turso database connection manager
 
-    def __init__(self) -> None:
+    データベース接続のライフサイクルを管理し、
+    接続状態の変化をイベントとして発行する。
+    """
+
+    def __init__(self, event_bus: InMemoryEventBus | None = None) -> None:
+        """
+        初期化
+
+        Args:
+            event_bus: イベントバス（省略時は新規作成）
+        """
         self.settings = Settings()
         self._engine: Engine | None = None
         self._session_factory: sessionmaker[Session] | None = None
         self._client: libsql_client.Client | None = None
+        self._event_bus = event_bus or InMemoryEventBus()
 
     def get_connection_url(self) -> str:
         """Get appropriate database URL based on environment"""
@@ -81,29 +103,95 @@ class TursoConnection:
         return self._client
 
     def get_engine(self) -> Engine:
-        """Get SQLAlchemy engine"""
-        if self._engine is None:
-            connection_url = self.get_connection_url()
+        """
+        Get SQLAlchemy engine
 
-            if "sqlite" in connection_url:
-                # SQLite specific settings
-                self._engine = create_engine(
-                    connection_url,
-                    connect_args={"check_same_thread": False},
-                    poolclass=StaticPool,
-                    echo=self.settings.debug,
+        接続確立時にDatabaseConnectionEstablishedイベントを発行する。
+        接続失敗時にDatabaseConnectionFailedイベントを発行する。
+
+        Returns:
+            SQLAlchemy engine
+
+        Raises:
+            ValueError: 接続URL取得に失敗した場合
+            Exception: エンジン作成に失敗した場合
+        """
+        if self._engine is None:
+            env_str = os.getenv("APP_ENV", "local")
+            environment = self._parse_environment(env_str)
+
+            try:
+                connection_url = self.get_connection_url()
+
+                # 🔐 セキュリティ改善: スキーム判定を明示的に（CodeQL CWE-20対策）
+                # 変更前: if "sqlite" in connection_url
+                # 変更後: スキームプレフィックスで明確に判定
+                if connection_url.startswith("sqlite:///"):
+                    # SQLite specific settings
+                    self._engine = create_engine(
+                        connection_url,
+                        connect_args={"check_same_thread": False},
+                        poolclass=StaticPool,
+                        echo=self.settings.debug,
+                    )
+                    database_type = DatabaseType.SQLITE
+                    pool_size = 1  # SQLiteはStaticPool
+                else:
+                    # Turso/libSQL settings
+                    self._engine = create_engine(
+                        connection_url,
+                        echo=self.settings.debug,
+                        pool_size=10,
+                        max_overflow=20,
+                        pool_pre_ping=True,
+                    )
+                    database_type = DatabaseType.TURSO
+                    pool_size = 10
+
+                # 🎉 イベント発行: 接続確立成功
+                event = DatabaseConnectionEstablished(
+                    environment=environment,
+                    database_type=database_type,
+                    connection_pool_size=pool_size,
                 )
-            else:
-                # Turso/libSQL settings
-                self._engine = create_engine(
-                    connection_url,
-                    echo=self.settings.debug,
-                    pool_size=10,
-                    max_overflow=20,
-                    pool_pre_ping=True,
+                self._event_bus.publish(event)
+                logger.info(
+                    f"Database connection established: {database_type.value} ({environment.value})"
                 )
+
+            except Exception as e:
+                # 🚨 イベント発行: 接続失敗
+                error_event = DatabaseConnectionFailed(
+                    environment=environment,
+                    error_message=str(e),
+                    retry_count=0,
+                )
+                self._event_bus.publish(error_event)
+                logger.error(
+                    f"Database connection failed: {environment.value} - {e}",
+                    exc_info=True,
+                )
+                raise
 
         return self._engine
+
+    def _parse_environment(self, env_str: str) -> Environment:
+        """
+        環境文字列をEnvironment enumに変換
+
+        Args:
+            env_str: 環境文字列
+
+        Returns:
+            Environment enum
+        """
+        env_map = {
+            "production": Environment.PRODUCTION,
+            "staging": Environment.STAGING,
+            "local": Environment.LOCAL,
+            "development": Environment.DEVELOPMENT,
+        }
+        return env_map.get(env_str.lower(), Environment.LOCAL)
 
     def get_session_factory(self) -> sessionmaker[Session]:
         """Get session factory"""

@@ -108,8 +108,12 @@ class TestDatabaseConnection:
         connection = TursoConnection()
         url = connection.get_connection_url()
 
-        assert "sqlite" in url
-        assert "test_local.db" in url or "autoforge_dev.db" in url
+        # 🔐 セキュリティ改善: 部分一致 → スキーム検証（CodeQL CWE-20対策）
+        assert url.startswith("sqlite:///"), f"Expected SQLite URL scheme, got: {url}"
+        # データベースファイル名の検証（完全パス一致ではなく、ファイル名のみ）
+        assert url.endswith("test_local.db") or url.endswith(
+            "autoforge_dev.db"
+        ), f"Expected test database file, got: {url}"
 
     def test_get_connection_url_production_env(self):
         """本番環境のDB接続URL取得（環境変数未設定時）"""
@@ -766,8 +770,15 @@ class TestRedisConnection:
         redis_url = settings.get_redis_url()
 
         assert redis_url is not None
-        assert "redis://" in redis_url
-        assert f"{settings.redis_host}:{settings.redis_port}" in redis_url
+        # 🔐 セキュリティ改善: スキーム検証（CodeQL CWE-20対策）
+        assert redis_url.startswith(
+            "redis://"
+        ), f"Expected redis:// scheme, got: {redis_url}"
+        # ホスト:ポート検証
+        expected_host_port = f"{settings.redis_host}:{settings.redis_port}"
+        assert (
+            expected_host_port in redis_url
+        ), f"Expected host:port '{expected_host_port}' in URL: {redis_url}"
 
     def test_redis_url_with_password(self):
         """パスワード付きRedis接続URL生成テスト"""
@@ -775,8 +786,17 @@ class TestRedisConnection:
         settings = Settings()
         redis_url = settings.get_redis_url()
 
-        assert "test_password" in redis_url
-        assert redis_url.startswith("redis://:")
+        # 🔐 セキュリティ改善: スキーム検証を先に実行（CodeQL CWE-20対策）
+        assert redis_url.startswith(
+            "redis://:"
+        ), f"Expected redis://:password@ format, got: {redis_url}"
+        # パスワード存在確認（セキュアな方法）
+        from urllib.parse import urlparse
+
+        parsed = urlparse(redis_url)
+        assert (
+            parsed.password == "test_password"
+        ), "Expected password in URL credentials"
 
         # クリーンアップ
         os.environ.pop("REDIS_PASSWORD")

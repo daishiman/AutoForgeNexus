@@ -468,7 +468,15 @@ class TestHealthCheckerDependencies:
             assert result.status == HealthStatus.HEALTHY
             assert result.response_time_ms > 0
             assert result.version == "turso"
-            assert "test.turso.io" in result.metadata["database_url"]
+            # 🔐 セキュリティ改善: 部分一致 → 完全一致検証（CodeQL Alert #5対応）
+            # CWE-20対策: URL substring sanitization の脆弱性を排除
+            # 変更前: assert "test.turso.io" in result.metadata["database_url"]
+            # 変更理由: 部分一致は攻撃者がホスト名を任意位置に埋め込む攻撃を許す
+            expected_hostname = "test.turso.io"
+            actual_hostname = result.metadata["database_url"]
+            assert (
+                actual_hostname == expected_hostname
+            ), f"Expected exact hostname match '{expected_hostname}', got '{actual_hostname}'"
 
     @pytest.mark.skip(reason="infrastructure.database モジュールが未実装のためスキップ")
     @pytest.mark.asyncio
