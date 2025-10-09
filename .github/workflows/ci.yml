@@ -117,65 +117,12 @@ jobs:
           path: backend/htmlcov/
 
   # TypeScript/Frontend CI
-  frontend-ci:
-    name: Frontend CI
-    runs-on: ubuntu-latest
-    needs: check-structure
-    if: needs.check-structure.outputs.frontend-exists == 'true'
-    defaults:
-      run:
-        working-directory: ./frontend
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: 🟢 Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: 🎨 Run ESLint
-        run: pnpm lint
-
-      - name: 🎨 Check Prettier formatting
-        run: pnpm prettier --check .
-
-      - name: 🔍 TypeScript type checking
-        run: |
-          rm -f tsconfig.tsbuildinfo
-          pnpm type-check
-
-      - name: 🧪 Run tests with coverage
-        run: |
-          pnpm test:ci --coverage \
-            --coverageThreshold='{"global":{"branches":75,"functions":75,"lines":75,"statements":75}}'
-
-      - name: 📊 Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./frontend/coverage/coverage-final.json
-          flags: frontend
-          name: frontend-coverage
-
-      - name: 🏗️ Build application
-        run: pnpm build
-
-      - name: 📁 Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/.next/
+  # Note: フロントエンド専用CI/CDは .github/workflows/frontend-ci.yml で実行
+  # このワークフローはバックエンドとの統合テストのみを担当
+  # 理由:
+  #   - frontend-ci.yml がPhase別の品質ゲート管理を実装済み
+  #   - ワークフロー重複実行によるGitHub Actions使用量の無駄を防止
+  #   - カバレッジ閾値はjest.config.mjsで一元管理（Phase別設定）
 
   # Docker build test
   docker-build:
@@ -263,7 +210,7 @@ jobs:
   ci-status:
     name: CI Status Check
     needs:
-      [backend-ci, frontend-ci, docker-build, integration-tests, security-scan]
+      [backend-ci, docker-build, integration-tests, security-scan]
     runs-on: ubuntu-latest
     if: always()
 
