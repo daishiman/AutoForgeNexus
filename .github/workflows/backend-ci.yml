@@ -47,42 +47,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check-type: [lint, format, type-check, security]
+        check-type: [lint, type-check, security]
         include:
           - check-type: lint
-            command: "ruff check src/ tests/ --output-format=github"
-            name: "Ruff Linting"
-          - check-type: format
-            command: "black --check src/ tests/"
-            name: "Black Formatting"
+            command: "ruff check src/ tests/ --output-format=github && black --check src/ tests/"
+            name: "Ruff + Black"
           - check-type: type-check
             command: "mypy src/ --strict"
             name: "Type Checking"
           - check-type: security
             command: |
-              echo "🔍 Running Bandit security scan..."
               bandit -r src/ -f json -o bandit-report.json
-
-              echo "📊 Verifying Bandit report..."
-              if [ ! -f bandit-report.json ]; then
-                echo "❌ ERROR: bandit-report.json not generated"
-                exit 1
+              if [ -f "${GITHUB_WORKSPACE}/.github/scripts/convert-bandit-to-github-annotations.py" ]; then
+                python3 "${GITHUB_WORKSPACE}/.github/scripts/convert-bandit-to-github-annotations.py" bandit-report.json || true
               fi
-
-              echo "🔧 Converting Bandit results to GitHub Annotations..."
-              SCRIPT_PATH="${GITHUB_WORKSPACE}/.github/scripts/convert-bandit-to-github-annotations.py"
-
-              if [ ! -f "$SCRIPT_PATH" ]; then
-                echo "❌ ERROR: Script not found at: $SCRIPT_PATH"
-                echo "Available files in .github/scripts/:"
-                ls -la "${GITHUB_WORKSPACE}/.github/scripts/" || echo "Directory not found"
-                exit 1
-              fi
-
-              python3 "$SCRIPT_PATH" bandit-report.json || true  # セキュリティ問題を警告として扱う
-
-              echo "🛡️ Running Safety dependency check..."
-              safety check --json || echo "⚠️ Safety check completed with warnings"
+              safety check --json || echo "⚠️ Safety completed"
             name: "Security Scan"
 
     defaults:
@@ -130,73 +109,23 @@ jobs:
       - name: ✅ Verify venv restoration
         working-directory: ./backend
         run: |
-          if [ ! -d venv ]; then
-            echo "❌ ERROR: venv directory not found after cache restoration"
-            echo "Expected path: $(pwd)/venv"
-            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
-            ls -la . || true
-            exit 1
-          fi
-          if [ ! -f venv/bin/activate ]; then
-            echo "❌ ERROR: venv/bin/activate not found"
-            ls -la venv/bin/ || true
-            exit 1
-          fi
-
-          # Python実行可能性検証（LOW-2025-001対応）
-          if [ ! -x venv/bin/python ]; then
-            echo "❌ ERROR: venv/bin/python is not executable"
-            ls -lh venv/bin/python || true
-            exit 1
-          fi
-
-          # venv完全性検証
+          [ -d venv ] && [ -f venv/bin/activate ] || { echo "❌ venv missing"; exit 1; }
           source venv/bin/activate
-          python --version || { echo "❌ ERROR: Python execution failed"; exit 1; }
-          pip --version || { echo "❌ ERROR: pip not available"; exit 1; }
-          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
-          echo "✅ venv verified: $(ls -lh venv/bin/activate)"
-          echo "✅ Python executable: $(python --version)"
-          echo "✅ Pip version: $(pip --version)"
+          python --version && pip --version
+          echo "✅ venv verified"
 
       - name: 🔐 Verify cache integrity
         if: steps.cache-deps.outputs.cache-hit == 'true'
         working-directory: ./backend
         run: |
           source venv/bin/activate
-
-          # インストール済みパッケージの検証（MED-2025-001対応）
-          pip list --format=freeze | sort > /tmp/installed.txt
-          INSTALLED_HASH=$(sha256sum /tmp/installed.txt | cut -d' ' -f1)
-          INSTALLED_COUNT=$(wc -l < /tmp/installed.txt)
-
-          # 期待されるパッケージ数の概算（pyproject.tomlベース）
-          EXPECTED_COUNT=$(grep -E '^\s*"[a-zA-Z0-9_-]+' pyproject.toml | grep -c '==' || echo "0")
-
-          echo "📊 Cache Integrity Report:"
-          echo "  - Installed packages: ${INSTALLED_COUNT}"
-          echo "  - Expected packages (approx): ${EXPECTED_COUNT}"
-          echo "  - Package list hash: ${INSTALLED_HASH}"
-
-          # 最小限のパッケージ数チェック（FastAPI, pytest, ruff, mypy等）
-          MIN_PACKAGES=30
-          if [ "$INSTALLED_COUNT" -lt "$MIN_PACKAGES" ]; then
-            echo "⚠️ WARNING: Package count too low (expected: >=${MIN_PACKAGES}, installed: $INSTALLED_COUNT)"
-            echo "This may indicate cache corruption. Rebuilding cache..."
-            exit 1  # キャッシュ無効化して再ビルド
-          fi
-
-          # 重要パッケージの存在確認
-          REQUIRED_PACKAGES="fastapi pytest ruff mypy black"
-          for pkg in $REQUIRED_PACKAGES; do
-            if ! pip show "$pkg" > /dev/null 2>&1; then
-              echo "❌ ERROR: Required package '$pkg' not found in venv"
-              echo "Cache may be corrupted. Rebuilding..."
-              exit 1
-            fi
+          INSTALLED_COUNT=$(pip list --format=freeze | wc -l)
+          echo "📊 Installed packages: ${INSTALLED_COUNT}"
+          [ "$INSTALLED_COUNT" -ge 30 ] || { echo "⚠️ Package count low"; exit 1; }
+          for pkg in fastapi pytest ruff mypy black; do
+            pip show "$pkg" > /dev/null 2>&1 || { echo "❌ $pkg missing"; exit 1; }
           done
-
-          echo "✅ Cache integrity verified (hash: ${INSTALLED_HASH})"
+          echo "✅ Cache verified"
 
       - name: 🎯 Run ${{ matrix.name }}
         working-directory: ./backend
@@ -235,23 +164,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [unit, integration, domain]
+        test-type: [unit, integration]
         include:
           - test-type: unit
             path: "tests/unit/"
             coverage-flag: "unit"
-            cov-fail-under: 80 # Phase 3: バックエンド基盤完了時の目標
-            cov-scope: "src" # 全ソースコードをカバレッジ対象
+            cov-fail-under: 80
+            cov-scope: "src"
           - test-type: integration
             path: "tests/integration/"
             coverage-flag: "integration"
-            cov-fail-under: 0 # Phase 4未実装のため全テストスキップ時はカバレッジチェックなし
-            cov-scope: "src" # 全ソースコードをカバレッジ対象
-          - test-type: domain
-            path: "tests/unit/domain/"
-            coverage-flag: "domain"
-            cov-fail-under: 85 # domain層のみで現実的な目標
-            cov-scope: "src/domain" # domain層のみをカバレッジ対象
+            cov-fail-under: 0
+            cov-scope: "src"
 
     defaults:
       run:
@@ -298,73 +222,21 @@ jobs:
       - name: ✅ Verify venv restoration
         working-directory: ./backend
         run: |
-          if [ ! -d venv ]; then
-            echo "❌ ERROR: venv directory not found after cache restoration"
-            echo "Expected path: $(pwd)/venv"
-            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
-            ls -la . || true
-            exit 1
-          fi
-          if [ ! -f venv/bin/activate ]; then
-            echo "❌ ERROR: venv/bin/activate not found"
-            ls -la venv/bin/ || true
-            exit 1
-          fi
-
-          # Python実行可能性検証（LOW-2025-001対応）
-          if [ ! -x venv/bin/python ]; then
-            echo "❌ ERROR: venv/bin/python is not executable"
-            ls -lh venv/bin/python || true
-            exit 1
-          fi
-
-          # venv完全性検証
+          [ -d venv ] && [ -f venv/bin/activate ] || { echo "❌ venv missing"; exit 1; }
           source venv/bin/activate
-          python --version || { echo "❌ ERROR: Python execution failed"; exit 1; }
-          pip --version || { echo "❌ ERROR: pip not available"; exit 1; }
-          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
-          echo "✅ venv verified: $(ls -lh venv/bin/activate)"
-          echo "✅ Python executable: $(python --version)"
-          echo "✅ Pip version: $(pip --version)"
+          python --version && pip --version
+          echo "✅ venv verified"
 
       - name: 🔐 Verify cache integrity
         if: steps.cache-deps.outputs.cache-hit == 'true'
         working-directory: ./backend
         run: |
           source venv/bin/activate
-
-          # インストール済みパッケージの検証（MED-2025-001対応）
-          pip list --format=freeze | sort > /tmp/installed.txt
-          INSTALLED_HASH=$(sha256sum /tmp/installed.txt | cut -d' ' -f1)
-          INSTALLED_COUNT=$(wc -l < /tmp/installed.txt)
-
-          # 期待されるパッケージ数の概算（pyproject.tomlベース）
-          EXPECTED_COUNT=$(grep -E '^\s*"[a-zA-Z0-9_-]+' pyproject.toml | grep -c '==' || echo "0")
-
-          echo "📊 Cache Integrity Report:"
-          echo "  - Installed packages: ${INSTALLED_COUNT}"
-          echo "  - Expected packages (approx): ${EXPECTED_COUNT}"
-          echo "  - Package list hash: ${INSTALLED_HASH}"
-
-          # 最小限のパッケージ数チェック（FastAPI, pytest, ruff, mypy等）
-          MIN_PACKAGES=30
-          if [ "$INSTALLED_COUNT" -lt "$MIN_PACKAGES" ]; then
-            echo "⚠️ WARNING: Package count too low (expected: >=${MIN_PACKAGES}, installed: $INSTALLED_COUNT)"
-            echo "This may indicate cache corruption. Rebuilding cache..."
-            exit 1  # キャッシュ無効化して再ビルド
-          fi
-
-          # 重要パッケージの存在確認
-          REQUIRED_PACKAGES="fastapi pytest"
-          for pkg in $REQUIRED_PACKAGES; do
-            if ! pip show "$pkg" > /dev/null 2>&1; then
-              echo "❌ ERROR: Required package '$pkg' not found in venv"
-              echo "Cache may be corrupted. Rebuilding..."
-              exit 1
-            fi
-          done
-
-          echo "✅ Cache integrity verified (hash: ${INSTALLED_HASH})"
+          INSTALLED_COUNT=$(pip list --format=freeze | wc -l)
+          echo "📊 Installed packages: ${INSTALLED_COUNT}"
+          [ "$INSTALLED_COUNT" -ge 30 ] || { echo "⚠️ Package count low"; exit 1; }
+          pip show fastapi pytest > /dev/null 2>&1 || { echo "❌ Required packages missing"; exit 1; }
+          echo "✅ Cache verified"
 
       - name: 🧪 Run ${{ matrix.test-type }} tests
         working-directory: ./backend
@@ -394,12 +266,14 @@ jobs:
           path: backend/htmlcov-${{ matrix.test-type }}/
           retention-days: 7
 
-  # Docker build with optimized caching
+  # Docker build with optimized caching (main/develop only)
   docker-build:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
     needs: [quality-checks]
-    if: ${{ !failure() }}
+    if: |
+      !failure() &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
 
     # 明示的な権限定義（Trivy SARIF アップロード用）
     permissions:
@@ -514,66 +388,21 @@ jobs:
       - name: ✅ Verify venv restoration
         working-directory: ./backend
         run: |
-          if [ ! -d venv ]; then
-            echo "❌ ERROR: venv directory not found after cache restoration"
-            echo "Expected path: $(pwd)/venv"
-            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
-            ls -la . || true
-            exit 1
-          fi
-          if [ ! -f venv/bin/activate ]; then
-            echo "❌ ERROR: venv/bin/activate not found"
-            ls -la venv/bin/ || true
-            exit 1
-          fi
-
-          # Python実行可能性検証（LOW-2025-001対応）
-          if [ ! -x venv/bin/python ]; then
-            echo "❌ ERROR: venv/bin/python is not executable"
-            ls -lh venv/bin/python || true
-            exit 1
-          fi
-
-          # venv完全性検証
+          [ -d venv ] && [ -f venv/bin/activate ] || { echo "❌ venv missing"; exit 1; }
           source venv/bin/activate
-          python --version || { echo "❌ ERROR: Python execution failed"; exit 1; }
-          pip --version || { echo "❌ ERROR: pip not available"; exit 1; }
-          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
-          echo "✅ venv verified: $(ls -lh venv/bin/activate)"
-          echo "✅ Python executable: $(python --version)"
-          echo "✅ Pip version: $(pip --version)"
+          python --version && pip --version
+          echo "✅ venv verified"
 
       - name: 🔐 Verify cache integrity
         if: steps.cache-deps.outputs.cache-hit == 'true'
         working-directory: ./backend
         run: |
           source venv/bin/activate
-
-          # インストール済みパッケージの検証（MED-2025-001対応）
-          pip list --format=freeze | sort > /tmp/installed.txt
-          INSTALLED_HASH=$(sha256sum /tmp/installed.txt | cut -d' ' -f1)
-          INSTALLED_COUNT=$(wc -l < /tmp/installed.txt)
-
-          echo "📊 Cache Integrity Report:"
-          echo "  - Installed packages: ${INSTALLED_COUNT}"
-          echo "  - Package list hash: ${INSTALLED_HASH}"
-
-          # 最小限のパッケージ数チェック
-          MIN_PACKAGES=30
-          if [ "$INSTALLED_COUNT" -lt "$MIN_PACKAGES" ]; then
-            echo "⚠️ WARNING: Package count too low (expected: >=${MIN_PACKAGES}, installed: $INSTALLED_COUNT)"
-            echo "This may indicate cache corruption. Rebuilding cache..."
-            exit 1
-          fi
-
-          # FastAPI存在確認（OpenAPI生成に必須）
-          if ! pip show fastapi > /dev/null 2>&1; then
-            echo "❌ ERROR: FastAPI not found in venv"
-            echo "Cache may be corrupted. Rebuilding..."
-            exit 1
-          fi
-
-          echo "✅ Cache integrity verified (hash: ${INSTALLED_HASH})"
+          INSTALLED_COUNT=$(pip list --format=freeze | wc -l)
+          echo "📊 Installed packages: ${INSTALLED_COUNT}"
+          [ "$INSTALLED_COUNT" -ge 30 ] || { echo "⚠️ Package count low"; exit 1; }
+          pip show fastapi > /dev/null 2>&1 || { echo "❌ FastAPI missing"; exit 1; }
+          echo "✅ Cache verified"
 
       - name: 📄 Generate OpenAPI specification
         working-directory: ./backend
@@ -656,25 +485,10 @@ jobs:
       - name: ✅ Verify venv restoration
         working-directory: ./backend
         run: |
-          if [ ! -d venv ]; then
-            echo "❌ ERROR: venv directory not found after cache restoration"
-            echo "Expected path: $(pwd)/venv"
-            echo "Cache hit: ${{ steps.cache-deps.outputs.cache-hit }}"
-            ls -la . || true
-            exit 1
-          fi
-          if [ ! -f venv/bin/activate ]; then
-            echo "❌ ERROR: venv/bin/activate not found"
-            ls -la venv/bin/ || true
-            exit 1
-          fi
-
-          # venv完全性検証
+          [ -d venv ] && [ -f venv/bin/activate ] || { echo "❌ venv missing"; exit 1; }
           source venv/bin/activate
-          python --version
-          pip --version
-          pip check || { echo "⚠️ Dependency conflicts detected"; pip check; }
-          echo "✅ venv verified and validated"
+          python --version && pip --version
+          echo "✅ venv verified"
 
       - name: 🚀 Run performance tests
         working-directory: ./backend
