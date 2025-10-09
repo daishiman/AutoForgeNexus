@@ -95,6 +95,14 @@ jobs:
           pnpm install --frozen-lockfile
         timeout-minutes: 5
 
+      - name: 🧹 Clear TypeScript cache (before type-check)
+        if: matrix.check-type == 'type-check'
+        run: |
+          echo "::notice::Clearing TypeScript incremental build cache"
+          rm -f tsconfig.tsbuildinfo
+          rm -rf .next node_modules/.cache
+        continue-on-error: true
+
       - name: 🎯 Run ${{ matrix.name }}
         run: ${{ matrix.command }}
         env:
@@ -233,7 +241,7 @@ jobs:
           curl -f http://localhost:3000 || exit 1
 
       - name: 🏗️ Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@12893c83ca13479969b1da83c9b8e36072df8524 # v12.1.0
+        uses: treosh/lighthouse-ci-action@03becbfc543944dd6e7534f7ff768abb8a296826 # v11.4.0
         with:
           urls: |
             http://localhost:3000
