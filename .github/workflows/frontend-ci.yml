@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check-type: [lint, type-check, build-check]
+        check-type: [lint, format, type-check, build-check]
         include:
           - check-type: lint
             command: "pnpm lint"
