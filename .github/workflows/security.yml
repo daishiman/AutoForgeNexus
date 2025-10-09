@@ -51,7 +51,13 @@ jobs:
           path: ./
           base: main
           head: HEAD
-          extra_args: --debug --only-verified --exclude-paths=.trufflehog_ignore
+          extra_args: >-
+            --debug
+            --only-verified
+            --exclude-paths=.trufflehog_regex_ignore
+            --fail
+            --no-update
+            --github-actions
 
       - name: Upload scan results
         if: failure()

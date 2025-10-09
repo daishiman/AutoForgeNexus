@@ -51,7 +51,7 @@ jobs:
           echo "🔍 Scanning for exposed secrets..."
 
           # TruffleHogでシークレット検索（ドキュメント除外）
-          trufflehog git file://. --only-verified --exclude-paths=.trufflehog_ignore --json > secret_findings.json || true
+          trufflehog git file://. --only-verified --exclude-paths=.trufflehog_regex_ignore --json > secret_findings.json || true
 
           FINDINGS_COUNT=$(jq length secret_findings.json)
           echo "findings_count=$FINDINGS_COUNT" >> $GITHUB_OUTPUT

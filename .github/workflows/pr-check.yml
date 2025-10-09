@@ -229,7 +229,12 @@ jobs:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
-          extra_args: --only-verified --exclude-paths=.trufflehog_ignore
+          extra_args: >-
+            --only-verified
+            --exclude-paths=.trufflehog_regex_ignore
+            --fail
+            --no-update
+            --github-actions
 
   # Claude Code Review (AI Review)
   claude-review:
