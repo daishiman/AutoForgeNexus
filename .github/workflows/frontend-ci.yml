@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup-environment
     # Phase 3以降で実行（TypeScriptファイル存在時）
-    if: vars.CURRENT_PHASE >= 3 || github.event_name == 'workflow_dispatch'
+    if: ${{ fromJSON(vars.CURRENT_PHASE || '3') >= 3 || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
@@ -99,8 +99,8 @@ jobs:
         if: matrix.check-type == 'type-check'
         run: |
           echo "::notice::Clearing TypeScript incremental build cache"
-          rm -f tsconfig.tsbuildinfo
-          rm -rf .next node_modules/.cache
+          rm -f ./frontend/tsconfig.tsbuildinfo
+          rm -rf ./frontend/.next ./frontend/node_modules/.cache
         continue-on-error: true
 
       - name: 🎯 Run ${{ matrix.name }}
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup-environment
     # Phase 5以降のみ実行
-    if: vars.CURRENT_PHASE >= 5 || github.event_name == 'workflow_dispatch'
+    if: ${{ fromJSON(vars.CURRENT_PHASE || '3') >= 5 || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
@@ -188,7 +188,7 @@ jobs:
     # Phase 3以降で実行
     if: |
       !failure() &&
-      (vars.CURRENT_PHASE >= 3 || github.event_name == 'workflow_dispatch')
+      (fromJSON(vars.CURRENT_PHASE || '3') >= 3 || github.event_name == 'workflow_dispatch')
     with:
       build-type: "frontend"
       working-directory: "./frontend"
@@ -207,7 +207,7 @@ jobs:
     # Phase 5以降 かつ main/developブランチのみ実行
     if: |
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-      vars.CURRENT_PHASE >= 5
+      fromJSON(vars.CURRENT_PHASE || '3') >= 5
     defaults:
       run:
         working-directory: ./frontend
@@ -267,7 +267,7 @@ jobs:
     # Phase 5以降のみ実行
     if: |
       !failure() &&
-      (vars.CURRENT_PHASE >= 5 || github.event_name == 'workflow_dispatch')
+      (fromJSON(vars.CURRENT_PHASE || '3') >= 5 || github.event_name == 'workflow_dispatch')
 
     steps:
       - name: 📥 Checkout code
@@ -304,7 +304,7 @@ jobs:
     # Phase 5以降 かつ main/developブランチのみ実行
     if: |
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-      vars.CURRENT_PHASE >= 5
+      fromJSON(vars.CURRENT_PHASE || '3') >= 5
 
     steps:
       - name: 📥 Checkout code
@@ -338,7 +338,14 @@ jobs:
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [setup-environment, quality-checks, test-suite, production-build, docker-build]
+    needs:
+      [
+        setup-environment,
+        quality-checks,
+        test-suite,
+        production-build,
+        docker-build,
+      ]
     if: always()
 
     steps:

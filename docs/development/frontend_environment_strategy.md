@@ -110,7 +110,21 @@ pnpm install                    # 依存関係インストール
 pnpm dev:frontend              # 開発サーバー起動 (3-5秒)
 pnpm test:watch               # テスト監視モード
 pnpm lint:watch               # リアルタイムLinting
+
+# TypeScriptキャッシュクリア（型エラー再発時・CIと同等手順）
+pnpm clean:ts-cache           # => rm -f ./frontend/tsconfig.tsbuildinfo && rm -rf ./frontend/.next ./frontend/node_modules/.cache
 ```
+
+> 💡 **Tip**: `pnpm clean:ts-cache` スクリプトは `package.json`
+> に次のように登録してください。
+>
+> ```json
+> {
+>   "scripts": {
+>     "clean:ts-cache": "rm -f ./frontend/tsconfig.tsbuildinfo && rm -rf ./frontend/.next ./frontend/node_modules/.cache"
+>   }
+> }
+> ```
 
 #### 📈 期待パフォーマンス
 
