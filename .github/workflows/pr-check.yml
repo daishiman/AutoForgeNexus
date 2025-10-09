@@ -22,16 +22,87 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🧹 Sanitize PR title
-        id: sanitize
-        run: |
-          # PRタイトルから先頭・末尾の空白を削除
-          SANITIZED_TITLE=$(echo "${{ github.event.pull_request.title }}" | xargs)
-          echo "sanitized_title=$SANITIZED_TITLE" >> $GITHUB_OUTPUT
-          echo "Original title: '${{ github.event.pull_request.title }}'"
-          echo "Sanitized title: '$SANITIZED_TITLE'"
+      - name: 📝 Validate PR title format
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = context.payload.pull_request.title;
 
-      - name: 📝 Check PR title
+            // タイトルの正規化（空白は事前にpr-title-fix.ymlで修正済み）
+            const normalizedTitle = title.trim().replace(/\s+/g, ' ');
+
+            // Conventional Commits形式の検証（より厳密なパターン）
+            const conventionalCommitRegex = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?: .+$/;
+
+            // タイトルの基本検証
+            const validations = {
+              hasCorrectFormat: conventionalCommitRegex.test(normalizedTitle),
+              hasDescription: normalizedTitle.split(':')[1]?.trim().length > 0,
+              isNotTooLong: normalizedTitle.length <= 72,
+              startsWithLowercase: /^[a-z]/.test(normalizedTitle)
+            };
+
+            // 検証結果の集計
+            const validationErrors = [];
+
+            if (!validations.hasCorrectFormat) {
+              validationErrors.push('Conventional Commits形式に従っていません');
+            }
+
+            if (!validations.hasDescription) {
+              validationErrors.push('説明文が空または不足しています');
+            }
+
+            if (!validations.isNotTooLong) {
+              validationErrors.push(`タイトルが長すぎます（${normalizedTitle.length}文字、推奨: 72文字以内）`);
+            }
+
+            if (!validations.startsWithLowercase) {
+              validationErrors.push('タイプは小文字で始める必要があります');
+            }
+
+            // エラーがある場合
+            if (validationErrors.length > 0) {
+              const errorMessage = `❌ **PRタイトルの検証エラー**\n\n` +
+                `**現在のタイトル**: \`${normalizedTitle}\`\n\n` +
+                `**検出された問題**:\n` +
+                validationErrors.map(err => `- ${err}`).join('\n') + '\n\n' +
+                `**正しい形式**: \`<type>[(scope)]: <description>\`\n\n` +
+                `**利用可能なタイプ**:\n` +
+                `- \`feat\`: 新機能\n` +
+                `- \`fix\`: バグ修正\n` +
+                `- \`docs\`: ドキュメントのみの変更\n` +
+                `- \`style\`: フォーマットの変更\n` +
+                `- \`refactor\`: リファクタリング\n` +
+                `- \`perf\`: パフォーマンス改善\n` +
+                `- \`test\`: テストの追加・修正\n` +
+                `- \`build\`: ビルドシステムの変更\n` +
+                `- \`ci\`: CI設定の変更\n` +
+                `- \`chore\`: その他の変更\n` +
+                `- \`revert\`: コミットの取り消し\n\n` +
+                `**タイトル例**:\n` +
+                `- \`feat: ユーザー認証機能の追加\`\n` +
+                `- \`fix(auth): ログインエラーの修正\`\n` +
+                `- \`docs: API仕様書の更新\`\n\n` +
+                `詳細は[CONTRIBUTING.md](../blob/main/CONTRIBUTING.md)を参照してください。`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: errorMessage
+              });
+
+              core.setFailed(`PRタイトルの検証に失敗しました: ${validationErrors.join(', ')}`);
+              return;
+            }
+
+            // すべての検証をパス
+            console.log(`✅ PR title is valid: '${normalizedTitle}'`);
+
+      - name: 📝 Validate PR title format (backup check)
+        if: success()
         uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -79,6 +150,8 @@ jobs:
   code-quality:
     name: Code Quality Check
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
       - name: 📥 Checkout code
@@ -87,8 +160,8 @@ jobs:
           fetch-depth: 0
 
       - name: 📊 SonarCloud Scan
-        # SONAR_TOKENが設定されている場合のみ実行
-        if: vars.SONAR_ENABLED == 'true'
+        # SONAR_TOKENが設定されている場合のみ実行（環境変数で判定）
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +179,7 @@ jobs:
 
       - name: ⚠️ SonarCloud Skipped
         # SONAR_TOKENが設定されていない場合の警告
-        if: vars.SONAR_ENABLED != 'true'
+        if: env.SONAR_TOKEN == ''
         run: |
           echo "⚠️ SonarCloud scan skipped: SONAR_TOKEN not configured"
           echo "To enable SonarCloud analysis:"
