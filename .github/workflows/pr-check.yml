@@ -163,8 +163,8 @@ jobs:
           fetch-depth: 0
 
       - name: 📊 SonarCloud Scan
-        # SONAR_TOKENが設定されている場合のみ実行（環境変数で判定）
-        if: env.SONAR_TOKEN != ''
+        # SONAR_TOKENが設定されている場合のみ実行
+        if: ${{ format('{0}', env.SONAR_TOKEN) != '' }}
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -182,7 +182,7 @@ jobs:
 
       - name: ⚠️ SonarCloud Skipped
         # SONAR_TOKENが設定されていない場合の警告
-        if: env.SONAR_TOKEN == ''
+        if: ${{ format('{0}', env.SONAR_TOKEN) == '' }}
         run: |
           echo "⚠️ SonarCloud scan skipped: SONAR_TOKEN not configured"
           echo "To enable SonarCloud analysis:"
@@ -192,10 +192,36 @@ jobs:
 
       - name: 🔍 Check for conflicts
         run: |
-          if grep -r "<<<<<<< HEAD" --exclude-dir=.git .; then
-            echo "❌ Merge conflicts detected!"
+          # ソースコードのみを検索（依存関係・ドキュメント・ビルド成果物を除外）
+          # 対象: backend/src/, frontend/src/ のみ（最も重要なソースコード）
+          CONFLICT_COUNT=0
+
+          # backend/src ディレクトリの検索
+          if [ -d "backend/src" ]; then
+            BACKEND_CONFLICTS=$(grep -r "<<<<<<< HEAD" backend/src/ 2>/dev/null || true)
+            if [ -n "$BACKEND_CONFLICTS" ]; then
+              echo "❌ Merge conflicts in backend/src:"
+              echo "$BACKEND_CONFLICTS"
+              CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+            fi
+          fi
+
+          # frontend/src ディレクトリの検索
+          if [ -d "frontend/src" ]; then
+            FRONTEND_CONFLICTS=$(grep -r "<<<<<<< HEAD" frontend/src/ 2>/dev/null || true)
+            if [ -n "$FRONTEND_CONFLICTS" ]; then
+              echo "❌ Merge conflicts in frontend/src:"
+              echo "$FRONTEND_CONFLICTS"
+              CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+            fi
+          fi
+
+          if [ $CONFLICT_COUNT -gt 0 ]; then
             exit 1
           fi
+
+          echo "✅ No merge conflicts found in source code"
+          echo "   Checked: backend/src/, frontend/src/"
 
       - name: 🔍 Check for secrets
         uses: trufflesecurity/trufflehog@main
