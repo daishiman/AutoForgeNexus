@@ -61,7 +61,7 @@ jobs:
             command: "pnpm prettier --check ."
             name: "Prettier Format Check"
           - check-type: type-check
-            command: "pnpm type-check"
+            command: "rm -f tsconfig.tsbuildinfo && rm -rf .next node_modules/.cache && pnpm type-check"
             name: "TypeScript Type Check"
           - check-type: build-check
             command: "pnpm build && npx size-limit || true"
@@ -94,14 +94,6 @@ jobs:
           echo "::notice::Installing frontend dependencies (pnpm cache enabled)"
           pnpm install --frozen-lockfile
         timeout-minutes: 5
-
-      - name: 🧹 Clear TypeScript cache (before type-check)
-        if: matrix.check-type == 'type-check'
-        run: |
-          echo "::notice::Clearing TypeScript incremental build cache"
-          rm -f tsconfig.tsbuildinfo
-          rm -rf .next node_modules/.cache
-        continue-on-error: true
 
       - name: 🎯 Run ${{ matrix.name }}
         run: ${{ matrix.command }}
