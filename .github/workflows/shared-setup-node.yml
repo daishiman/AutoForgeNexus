@@ -45,9 +45,10 @@ jobs:
           persist-credentials: false
 
       - name: 📦 pnpmセットアップ
-        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        uses: pnpm/action-setup@v2  # v2 = 公式推奨安定版
         with:
           version: ${{ inputs.pnpm-version }}
+          run_install: false
 
       - name: 🟢 Node.jsセットアップ
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3

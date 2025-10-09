@@ -77,17 +77,56 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 📦 Setup pnpm # 必要最小限のセットアップ
-        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2  # v2 = 公式推奨安定版
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: 9
+          run_install: false
 
-      - name: 🟢 Setup Node.js # 必要最小限のセットアップ
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
           cache-dependency-path: "./frontend/pnpm-lock.yaml"
+
+      - name: 📦 Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: 💾 Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('./frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: 🔍 Pre-flight environment validation
+        run: |
+          set -e
+          echo "::notice::🔍 Validating CI environment..."
+
+          # 必須コマンド検証
+          REQUIRED_COMMANDS="node npm pnpm"
+          for cmd in $REQUIRED_COMMANDS; do
+            if command -v $cmd &> /dev/null; then
+              VERSION=$($cmd --version 2>&1 | head -1)
+              LOCATION=$(command -v $cmd)
+              echo "::notice::✅ $cmd: $VERSION ($LOCATION)"
+            else
+              echo "::error::❌ $cmd: NOT FOUND"
+              echo "::error::PATH: $PATH"
+              exit 1
+            fi
+          done
+
+          # pnpm設定確認
+          STORE_PATH=$(pnpm store path --silent)
+          echo "::notice::pnpm store: $STORE_PATH"
+
+          echo "::notice::✅ All pre-flight checks passed"
 
       - name: 📦 Install dependencies
         run: |
@@ -97,6 +136,7 @@ jobs:
 
       - name: 🎯 Run ${{ matrix.name }}
         run: ${{ matrix.command }}
+        timeout-minutes: ${{ matrix.check-type == 'build-check' && 15 || 5 }}
         env:
           NODE_ENV: production
           NEXT_TELEMETRY_DISABLED: 1
@@ -132,12 +172,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: 📦 Setup pnpm # 必要最小限のセットアップ
-        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2  # v2 = 公式推奨安定版
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: 9
+          run_install: false
 
-      - name: 🟢 Setup Node.js # 必要最小限のセットアップ
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -150,14 +191,48 @@ jobs:
           pnpm install --frozen-lockfile
         timeout-minutes: 5
 
+      - name: 💾 Cache Playwright browsers
+        if: matrix.test-type == 'e2e'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: 🎭 Install Playwright browsers
+        if: matrix.test-type == 'e2e'
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: 🧪 Run ${{ matrix.test-type }} tests
         run: ${{ matrix.command }}
+        timeout-minutes: ${{ matrix.test-type == 'e2e' && 20 || 10 }}
         env:
           CI: true
           NODE_ENV: test
 
-      - name: 📊 Upload coverage to Codecov
+      - name: 📊 Verify coverage threshold
         if: matrix.test-type == 'unit'
+        run: |
+          # カバレッジ閾値検証（フロントエンド: 75%）
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(jq '.total.lines.pct' coverage/coverage-summary.json)
+            THRESHOLD=75
+
+            echo "::notice::📊 Coverage: ${COVERAGE}% (Threshold: ${THRESHOLD}%)"
+
+            if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+              echo "::error::❌ Coverage ${COVERAGE}% below threshold ${THRESHOLD}%"
+              exit 1
+            fi
+
+            echo "::notice::✅ Coverage ${COVERAGE}% meets threshold ${THRESHOLD}%"
+          else
+            echo "::warning::⚠️ Coverage report not found, skipping threshold check"
+          fi
+
+      - name: 📊 Upload coverage to Codecov
+        if: matrix.test-type == 'unit' && always()
         uses: codecov/codecov-action@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0 # v3.1.5
         with:
           file: ./frontend/coverage/coverage-final.json
@@ -211,9 +286,10 @@ jobs:
           persist-credentials: false
 
       - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        uses: pnpm/action-setup@v2  # v2 = 公式推奨安定版
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: 9
+          run_install: false
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3

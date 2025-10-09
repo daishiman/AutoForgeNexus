@@ -254,13 +254,24 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // 安全なPR番号取得（Optional chaining + 型検証）
+            const prNumber = context.payload?.pull_request?.number;
+
+            // Early validation
+            if (!prNumber || typeof prNumber !== 'number') {
+              core.info('ℹ️ PR context not available, skipping review comment');
+              core.debug(`Event: ${context.eventName}, Payload keys: ${Object.keys(context.payload).join(', ')}`);
+              return;
+            }
+
             const fileCount = parseInt('${{ steps.prepare.outputs.file_count }}', 10) || 0;
 
-            // Markdownインデント問題を回避するため、Array.join()で組み立て
+            // Markdownコメント生成（安全な変数使用）
             const comment = [
               '## 🤖 Claude Code レビュー',
               '',
               '### 📊 PR サマリー',
+              `- **PR番号**: #${prNumber}`,
               `- **変更ファイル数**: ${fileCount}`,
               '- **レビュー状況**: 自動レビュー開始済み',
               '',
@@ -303,19 +314,44 @@ jobs:
               '### 📌 注意',
               '詳細な分析が必要な場合は、以下のコマンドを実行してください:',
               '```bash',
-              `/ai:quality:analyze --pr ${github.event.pull_request.number}`,
+              `/ai:quality:analyze --pr ${prNumber}`,
               '```',
               '',
               '---',
               '*Claude Code レビューシステム v1.0 により生成*'
             ].join('\n');
 
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: comment
-            });
+            // エラーハンドリング付きAPI呼び出し
+            try {
+              const result = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+              core.info(`✅ Review comment posted to PR #${prNumber}`);
+              core.info(`Comment URL: ${result.data.html_url}`);
+            } catch (error) {
+              // セキュアなエラーログ（機密情報除外）
+              const errorType = error.name || 'UnknownError';
+              const errorStatus = error.status || 'N/A';
+
+              // 機密情報をサニタイズ
+              const sanitizedMessage = (error.message || '')
+                .replace(/token[=:][\w-]+/gi, 'token=[REDACTED]')
+                .replace(/key[=:][\w-]+/gi, 'key=[REDACTED]')
+                .replace(/https?:\/\/[^\s]+/gi, '[URL_REDACTED]');
+
+              core.warning(`⚠️ Failed to post review comment: ${errorType} (${errorStatus})`);
+              core.debug(`Sanitized details: ${sanitizedMessage}`);
+
+              // レート制限の特別処理
+              if (errorStatus === 403 || errorStatus === 429) {
+                core.warning('GitHub API rate limit may be exceeded');
+              }
+
+              // ジョブは失敗させない（他のチェック継続）
+            }
 
   # Test coverage report
   coverage-report:
