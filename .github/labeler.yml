@@ -1,87 +1,159 @@
 # GitHub Labeler configuration for auto-labeling PRs
+# v5 syntax: Each label must have an array of match objects
 
 backend:
-  - backend/**/*
-  - "*.py"
-  - requirements*.txt
-  - Pipfile*
-  - pyproject.toml
-  - alembic.ini
+  - changed-files:
+      - any-glob-to-any-file:
+          - backend/**/*
+          - "*.py"
+          - requirements*.txt
+          - Pipfile*
+          - pyproject.toml
+          - alembic.ini
 
 frontend:
-  - frontend/**/*
-  - "*.ts"
-  - "*.tsx"
-  - "*.js"
-  - "*.jsx"
-  - package*.json
-  - tsconfig*.json
-  - next.config.js
+  - changed-files:
+      - any-glob-to-any-file:
+          - frontend/**/*
+          - "*.ts"
+          - "*.tsx"
+          - "*.js"
+          - "*.jsx"
+          - package*.json
+          - tsconfig*.json
+          - next.config.js
 
 documentation:
-  - docs/**/*
-  - "*.md"
-  - README*
-  - CONTRIBUTING*
-  - CHANGELOG*
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**/*
+          - "*.md"
+          - README*
+          - CONTRIBUTING*
+          - CHANGELOG*
 
 docker:
-  - docker/**/*
-  - Dockerfile*
-  - docker-compose*.yml
-  - .dockerignore
+  - changed-files:
+      - any-glob-to-any-file:
+          - docker/**/*
+          - Dockerfile*
+          - docker-compose*.yml
+          - .dockerignore
 
 ci/cd:
-  - .github/workflows/*
-  - .github/actions/*
-  - scripts/deploy*
-  - scripts/ci*
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/*
+          - .github/actions/*
+          - scripts/deploy*
+          - scripts/ci*
 
 testing:
-  - tests/**/*
-  - test/**/*
-  - "*test*.py"
-  - "*test*.ts"
-  - "*test*.js"
-  - jest.config*
-  - pytest.ini
-  - .coveragerc
+  - changed-files:
+      - any-glob-to-any-file:
+          - tests/**/*
+          - test/**/*
+          - "*test*.py"
+          - "*test*.ts"
+          - "*test*.js"
+          - jest.config*
+          - pytest.ini
+          - .coveragerc
 
 database:
-  - migrations/**/*
-  - alembic/**/*
-  - "*.sql"
-  - schema/**/*
+  - changed-files:
+      - any-glob-to-any-file:
+          - migrations/**/*
+          - alembic/**/*
+          - "*.sql"
+          - schema/**/*
 
 security:
-  - security/**/*
-  - .github/dependabot.yml
-  - SECURITY.md
-  - "*auth*"
-  - "*security*"
+  - changed-files:
+      - any-glob-to-any-file:
+          - security/**/*
+          - .github/dependabot.yml
+          - SECURITY.md
+          - "*auth*"
+          - "*security*"
 
 dependencies:
-  - requirements*.txt
-  - package*.json
-  - Pipfile*
-  - pyproject.toml
-  - pnpm-lock.yaml
-  - poetry.lock
+  - changed-files:
+      - any-glob-to-any-file:
+          - requirements*.txt
+          - package*.json
+          - Pipfile*
+          - pyproject.toml
+          - pnpm-lock.yaml
+          - poetry.lock
 
 configuration:
-  - .editorconfig
-  - .prettierrc*
-  - .eslintrc*
-  - .gitignore
-  - .gitattributes
-  - "*.config.js"
-  - "*.config.ts"
-  - .env.example
+  - changed-files:
+      - any-glob-to-any-file:
+          - .editorconfig
+          - .prettierrc*
+          - .eslintrc*
+          - .gitignore
+          - .gitattributes
+          - "*.config.js"
+          - "*.config.ts"
+          - .env.example
 
 ai/ml:
-  - ml/**/*
-  - prompts/**/*
-  - evaluations/**/*
-  - "*llm*"
-  - "*ai*"
-  - "*vector*"
+  - changed-files:
+      - any-glob-to-any-file:
+          - ml/**/*
+          - prompts/**/*
+          - evaluations/**/*
+          - "*llm*"
+          - "*ai*"
+          - "*vector*"
+
+# 高度な設定例（オプション）
+
+# 複数条件でのラベル付け例
+critical:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/deploy-*.yml
+          - infrastructure/**/*
+          - "*security*"
+
+# ファイル追加時のみラベル付ける例
+new-feature:
+  - head-branch: ['^feature/', '^feat/']
+  - changed-files:
+      - added-files:
+          - "**/*"
+
+# ファイル削除時のラベル例
+cleanup:
+  - changed-files:
+      - deleted-files:
+          - "**/*"
+
+# 特定サイズ以上の変更にラベル付け
+large:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*"
+      - file-count: ">10"
+
+# 特定ブランチパターンでのラベル
+hotfix:
+  - head-branch: ['^hotfix/']
+
+bugfix:
+  - head-branch: ['^fix/', '^bugfix/']
+
+enhancement:
+  - head-branch: ['^enhance/', '^improvement/']
+
+# 特定ファイルが変更された場合の重要度ラベル
+needs-review:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "*.sql"
+          - "**/migrations/**"
+          - ".github/workflows/**"
+          - "*security*"
