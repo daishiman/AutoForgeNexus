@@ -99,8 +99,8 @@ jobs:
         if: matrix.check-type == 'type-check'
         run: |
           echo "::notice::Clearing TypeScript incremental build cache"
-          rm -f ./frontend/tsconfig.tsbuildinfo
-          rm -rf ./frontend/.next ./frontend/node_modules/.cache
+          rm -f tsconfig.tsbuildinfo
+          rm -rf .next node_modules/.cache
         continue-on-error: true
 
       - name: 🎯 Run ${{ matrix.name }}
