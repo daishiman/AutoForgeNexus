@@ -127,25 +127,19 @@ critical:
           - infrastructure/**/*
           - "*security*"
 
-# ファイル追加時のみラベル付ける例
+# ブランチパターンでのラベル（v5準拠）
 new-feature:
   - head-branch: ['^feature/', '^feat/']
-  - changed-files:
-      - added-files:
-          - "**/*"
 
-# ファイル削除時のラベル例
 cleanup:
-  - changed-files:
-      - deleted-files:
-          - "**/*"
+  - head-branch: ['^cleanup/', '^refactor/']
 
 # 特定サイズ以上の変更にラベル付け
-large:
-  - changed-files:
-      - any-glob-to-any-file:
-          - "**/*"
-      - file-count: ">10"
+# Note: file-count はactions/labeler@v5では別の方法で実装
+# 代わりにPRサイズラベラー（codelytv/pr-size-labeler）を使用
+# large:
+#   - changed-files:
+#       - any-glob-to-any-file: "**/*"
 
 # 特定ブランチパターンでのラベル
 hotfix:
