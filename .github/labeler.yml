@@ -1,5 +1,13 @@
 # GitHub Labeler configuration for auto-labeling PRs
 # v5 syntax: Each label must have an array of match objects
+# Reference: https://github.com/actions/labeler/blob/v5/README.md
+#
+# Usage in workflow:
+#   uses: actions/labeler@v5
+#   with:
+#     configuration-path: .github/labeler.yml
+#     sync-labels: false
+#     dot: true
 
 backend:
   - changed-files:
