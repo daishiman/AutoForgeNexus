@@ -354,34 +354,10 @@ jobs:
               // ジョブは失敗させない（他のチェック継続）
             }
 
-  # Test coverage report
-  coverage-report:
-    name: Coverage Report
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: 🟢 Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: 📊 Generate coverage comment
-        uses: py-cov-action/python-coverage-comment-action@v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # Final status
   pr-status:
     name: PR Status Check
-    needs: [validate-pr, code-quality, claude-review, coverage-report]
+    needs: [validate-pr, code-quality, claude-review]
     runs-on: ubuntu-latest
     if: always()
 
