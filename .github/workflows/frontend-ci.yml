@@ -31,9 +31,88 @@ env:
   PNPM_VERSION: "9"
 
 jobs:
+  # ========== Phase検証ジョブ（Phase 3追加） ==========
+  validate-phase:
+    name: 📋 Phase検証
+    runs-on: ubuntu-latest
+    outputs:
+      phase: ${{ steps.check.outputs.phase }}
+      frontend-ready: ${{ steps.check.outputs.frontend-ready }}
+      run-quality-checks: ${{ steps.check.outputs.run-quality-checks }}
+      run-tests: ${{ steps.check.outputs.run-tests }}
+      run-build: ${{ steps.check.outputs.run-build }}
+      run-performance: ${{ steps.check.outputs.run-performance }}
+
+    steps:
+      - name: 📥 コードのチェックアウト
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: 🔍 Phase状態とフロントエンド環境準備チェック
+        id: check
+        run: |
+          # Phase環境変数確認（デフォルト: 3）
+          PHASE="${{ vars.CURRENT_PHASE || '3' }}"
+          echo "phase=${PHASE}" >> $GITHUB_OUTPUT
+          echo "::notice::📊 現在のPhase: ${PHASE}"
+
+          # フロントエンド環境チェック
+          if [ -f "frontend/package.json" ] && [ -f "frontend/pnpm-lock.yaml" ]; then
+            echo "frontend-ready=true" >> $GITHUB_OUTPUT
+            echo "::notice::✅ フロントエンド環境を検出しました (Phase ${PHASE})"
+          else
+            echo "frontend-ready=false" >> $GITHUB_OUTPUT
+            echo "::warning::⚠️ フロントエンド環境が未準備です (Phase 5+が必要)"
+            echo "::warning::📋 必要なファイル: frontend/package.json, frontend/pnpm-lock.yaml"
+          fi
+
+          # Phase別実行制御フラグ設定
+          if [ "$PHASE" -ge 3 ]; then
+            echo "run-quality-checks=true" >> $GITHUB_OUTPUT
+            echo "run-build=true" >> $GITHUB_OUTPUT
+            echo "::notice::✅ Phase ${PHASE}: 品質チェックとビルドを有効化"
+          else
+            echo "run-quality-checks=false" >> $GITHUB_OUTPUT
+            echo "run-build=false" >> $GITHUB_OUTPUT
+            echo "::notice::⏭️ Phase ${PHASE}: 品質チェックとビルドをスキップ (Phase 3+が必要)"
+          fi
+
+          if [ "$PHASE" -ge 5 ]; then
+            echo "run-tests=true" >> $GITHUB_OUTPUT
+            echo "run-performance=true" >> $GITHUB_OUTPUT
+            echo "::notice::✅ Phase ${PHASE}: テストとパフォーマンス監査を有効化"
+          else
+            echo "run-tests=false" >> $GITHUB_OUTPUT
+            echo "run-performance=false" >> $GITHUB_OUTPUT
+            echo "::notice::⏭️ Phase ${PHASE}: テストとパフォーマンス監査をスキップ (Phase 5+が必要)"
+          fi
+
+      - name: 📊 Phase検証サマリー作成
+        run: |
+          echo "## 📋 Phase検証サマリー" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 項目 | 状態 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **現在のPhase** | Phase ${{ steps.check.outputs.phase }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **フロントエンド環境** | ${{ steps.check.outputs.frontend-ready == 'true' && '✅ 準備完了' || '❌ 未準備 (Phase 5+が必要)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **品質チェック** | ${{ steps.check.outputs.run-quality-checks == 'true' && '✅ 有効' || '⏭️ スキップ' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **ビルド** | ${{ steps.check.outputs.run-build == 'true' && '✅ 有効' || '⏭️ スキップ' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **テスト** | ${{ steps.check.outputs.run-tests == 'true' && '✅ 有効' || '⏭️ スキップ (Phase 5+が必要)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **パフォーマンス監査** | ${{ steps.check.outputs.run-performance == 'true' && '✅ 有効' || '⏭️ スキップ (Phase 5+が必要)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📚 Phase定義" >> $GITHUB_STEP_SUMMARY
+          echo "- **Phase 1-2**: インフラ構築（フロントエンドCI/CDスキップ）" >> $GITHUB_STEP_SUMMARY
+          echo "- **Phase 3-4**: 基本検証（lint、型チェック、ビルド検証のみ）" >> $GITHUB_STEP_SUMMARY
+          echo "- **Phase 5+**: 完全なCI/CDパイプライン（全ジョブ有効）" >> $GITHUB_STEP_SUMMARY
+
   # Shared setup for all jobs
   setup-environment:
     name: 🔧 Setup Environment
+    needs: validate-phase
+    if: |
+      needs.validate-phase.outputs.frontend-ready == 'true' &&
+      needs.validate-phase.outputs.run-quality-checks == 'true'
     uses: ./.github/workflows/shared-setup-node.yml
     with:
       node-version: "22"
@@ -46,9 +125,11 @@ jobs:
   quality-checks:
     name: 🔍 Quality Checks
     runs-on: ubuntu-latest
-    needs: setup-environment
-    # Phase 3以降で実行（TypeScriptファイル存在時）
-    if: ${{ fromJSON(vars.CURRENT_PHASE || '3') >= 3 || github.event_name == 'workflow_dispatch' }}
+    needs: [validate-phase, setup-environment]
+    if: |
+      !failure() &&
+      needs.validate-phase.outputs.frontend-ready == 'true' &&
+      needs.validate-phase.outputs.run-quality-checks == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -123,9 +204,11 @@ jobs:
   test-suite:
     name: 🧪 Test Suite
     runs-on: ubuntu-latest
-    needs: setup-environment
-    # Phase 5以降のみ実行
-    if: ${{ fromJSON(vars.CURRENT_PHASE || '3') >= 5 || github.event_name == 'workflow_dispatch' }}
+    needs: [validate-phase, setup-environment]
+    if: |
+      !failure() &&
+      needs.validate-phase.outputs.frontend-ready == 'true' &&
+      needs.validate-phase.outputs.run-tests == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -229,11 +312,11 @@ jobs:
   production-build:
     name: 🏗️ Production Build
     uses: ./.github/workflows/shared-build-cache.yml
-    needs: [quality-checks]
-    # Phase 3以降で実行
+    needs: [validate-phase, quality-checks]
     if: |
       !failure() &&
-      (fromJSON(vars.CURRENT_PHASE || '3') >= 3 || github.event_name == 'workflow_dispatch')
+      needs.validate-phase.outputs.frontend-ready == 'true' &&
+      needs.validate-phase.outputs.run-build == 'true'
     with:
       build-type: "frontend"
       working-directory: "./frontend"
@@ -248,11 +331,12 @@ jobs:
   performance-audit:
     name: ⚡ Performance Audit
     runs-on: ubuntu-latest
-    needs: [setup-environment, production-build]
-    # Phase 5以降 かつ main/developブランチのみ実行
+    needs: [validate-phase, setup-environment, production-build]
     if: |
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-      fromJSON(vars.CURRENT_PHASE || '3') >= 5
+      !failure() &&
+      needs.validate-phase.outputs.frontend-ready == 'true' &&
+      needs.validate-phase.outputs.run-performance == 'true' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     defaults:
       run:
         working-directory: ./frontend
@@ -309,12 +393,12 @@ jobs:
   docker-build:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
-    needs: [production-build]
-    # Phase 5以降 かつ main/developブランチのみ実行
+    needs: [validate-phase, production-build]
     if: |
       !failure() &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-      (fromJSON(vars.CURRENT_PHASE || '3') >= 5 || github.event_name == 'workflow_dispatch')
+      needs.validate-phase.outputs.frontend-ready == 'true' &&
+      needs.validate-phase.outputs.run-build == 'true' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
 
     steps:
       - name: 📥 Checkout code
@@ -347,11 +431,12 @@ jobs:
   deployment-prep:
     name: 📦 Deployment Preparation
     runs-on: ubuntu-latest
-    needs: [production-build, test-suite, docker-build]
-    # Phase 5以降 かつ main/developブランチのみ実行
+    needs: [validate-phase, production-build, test-suite, docker-build]
     if: |
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-      fromJSON(vars.CURRENT_PHASE || '3') >= 5
+      !failure() &&
+      needs.validate-phase.outputs.frontend-ready == 'true' &&
+      needs.validate-phase.outputs.run-build == 'true' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
 
     steps:
       - name: 📥 Checkout code
@@ -387,6 +472,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       [
+        validate-phase,
         setup-environment,
         quality-checks,
         test-suite,
