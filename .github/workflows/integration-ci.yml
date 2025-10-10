@@ -1,0 +1,351 @@
+name: Integration CI/CD Pipeline - Optimized
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Global optimization settings
+concurrency:
+  group: integration-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  security-events: write
+  actions: read
+  checks: write
+
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
+  # Phase管理: 段階的環境構築に対応
+  # Phase 3: バックエンド実装中、Phase 5: フロントエンド未実装
+  CURRENT_PHASE: "3"
+
+jobs:
+  # Python environment setup
+  setup-python:
+    name: 🐍 Setup Python Environment
+    uses: ./.github/workflows/shared-setup-python.yml
+    with:
+      python-version: "3.13"
+      working-directory: "./backend"
+      cache-key-suffix: "-integration"
+      install-dev-deps: true
+
+  # Node.js environment setup
+  setup-node:
+    name: 🟢 Setup Node.js Environment
+    uses: ./.github/workflows/shared-setup-node.yml
+    with:
+      node-version: "22"
+      pnpm-version: "9"
+      working-directory: "./frontend"
+      cache-key-suffix: "-integration"
+      install-playwright: true
+
+  # Full stack integration tests
+  full-stack-integration:
+    name: 🔗 Full Stack Integration Tests
+    runs-on: ubuntu-latest
+    needs: [setup-python, setup-node]
+
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: 🐍 Setup Python # 必要最小限のセットアップ
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Setup pnpm # 必要最小限のセットアップ
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🟢 Setup Node.js # 必要最小限のセットアップ
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
+
+      - name: 📦 Install frontend dependencies (using pnpm cache)
+        id: install-deps
+        working-directory: ./frontend
+        timeout-minutes: 5
+        run: |
+          echo "::notice::Installing dependencies (pnpm cache enabled)"
+          pnpm install --frozen-lockfile
+          echo "::notice::Dependencies installed successfully"
+
+      - name: 🎭 Install Playwright browsers
+        working-directory: ./frontend
+        timeout-minutes: 3
+        run: |
+          # E2Eテスト用にChromiumブラウザをインストール
+          pnpm exec playwright install --with-deps chromium
+
+      - name: 🚀 Start services in parallel
+        run: |
+          # Start backend server
+          cd backend
+          source venv/bin/activate
+          uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          BACKEND_PID=$!
+
+          # Start frontend server
+          cd ../frontend
+          pnpm build
+          pnpm start &
+          FRONTEND_PID=$!
+
+          # Wait for services to be ready
+          echo "Waiting for backend..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+              echo "✅ Backend ready"
+              break
+            fi
+            sleep 2
+          done
+
+          # Phase 5以降のみフロントエンド待機
+          if [ "$CURRENT_PHASE" -ge 5 ]; then
+            echo "Waiting for frontend..."
+            for i in {1..30}; do
+              if curl -f http://localhost:3000 > /dev/null 2>&1; then
+                echo "✅ Frontend ready"
+                break
+              fi
+              sleep 2
+            done
+          else
+            echo "ℹ️  Phase $CURRENT_PHASE: Frontend not implemented yet, skipping"
+          fi
+
+          # Save PIDs for cleanup
+          echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
+          echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
+
+      - name: 🧪 Run integration test suite
+        run: |
+          # Run E2E tests
+          cd frontend
+          pnpm test:e2e --project=chromium --reporter=list &
+          E2E_PID=$!
+
+          # Run API integration tests
+          cd ../backend
+          source venv/bin/activate
+          FRONTEND_URL=http://localhost:3000 \
+          pytest tests/integration/ -v --tb=short --junit-xml=integration-results.xml &
+          API_PID=$!
+
+          # Wait for both test suites
+          wait $E2E_PID
+          E2E_EXIT=$?
+          wait $API_PID
+          API_EXIT=$?
+
+          echo "E2E Tests Exit Code: $E2E_EXIT"
+          echo "API Tests Exit Code: $API_EXIT"
+
+          # Exit with error if any tests failed
+          if [ $E2E_EXIT -ne 0 ] || [ $API_EXIT -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: 📊 Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        with:
+          name: integration-test-results-${{ github.run_id }}
+          path: |
+            backend/integration-results.xml
+            backend/test-results/
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 7
+
+  # Docker Compose統合テスト
+  docker-integration:
+    name: Docker Compose Integration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build services
+        run: |
+          docker-compose -f docker-compose.dev.yml build
+
+      - name: 🚀 Start services
+        run: |
+          docker-compose -f docker-compose.dev.yml up -d
+          sleep 15
+
+      - name: 🧪 Health check
+        run: |
+          # バックエンドヘルスチェック
+          curl -f http://localhost:8000/health || exit 1
+
+          # フロントエンドヘルスチェック（Phase 5以降のみ）
+          if [ "$CURRENT_PHASE" -ge 5 ]; then
+            curl -f http://localhost:3000 || exit 1
+          else
+            echo "ℹ️  Phase $CURRENT_PHASE: Frontend health check skipped"
+          fi
+
+          # Redisチェック
+          docker-compose -f docker-compose.dev.yml exec -T redis redis-cli ping
+
+      - name: 🧪 Run integration tests
+        run: |
+          # バックエンドからフロントエンドへの接続テスト
+          docker-compose -f docker-compose.dev.yml exec -T backend \
+            python -c "import requests; r = requests.get('http://frontend:3000'); assert r.status_code == 200"
+
+          # フロントエンドからバックエンドへのAPIコール
+          docker-compose -f docker-compose.dev.yml exec -T frontend \
+            sh -c "curl -f http://backend:8000/api/v1/health"
+
+      - name: 📊 Container logs
+        if: failure()
+        run: |
+          docker-compose -f docker-compose.dev.yml logs
+
+      - name: 🛑 Stop services
+        if: always()
+        run: |
+          docker-compose -f docker-compose.dev.yml down -v
+
+  # 全体的なセキュリティスキャン
+  security-integration:
+    name: Security Integration Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔒 Run Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+
+      - name: 📤 Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: 🔒 OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "AutoForgeNexus"
+          path: "."
+          format: "HTML"
+          args: >
+            --enableRetired
+            --enableExperimental
+
+      - name: 📁 Upload OWASP results
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check
+          path: reports/
+
+  # パフォーマンステスト（Phase 5以降のみ）
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: [docker-integration]
+    # Phase 5（フロントエンド実装）以降のみ実行
+    if: ${{ vars.CURRENT_PHASE >= 5 || env.CURRENT_PHASE >= 5 }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Start services
+        run: |
+          docker-compose -f docker-compose.dev.yml up -d
+          sleep 15
+
+      - name: 🚀 Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/dashboard
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configPath: ./lighthouse.ci.json
+
+      - name: 🚀 Run k6 load tests
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/performance/k6-scenario.js
+          flags: --out json=k6-results.json
+
+      - name: 📊 Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: |
+            .lighthouseci/
+            k6-results.json
+
+      - name: 🛑 Stop services
+        if: always()
+        run: |
+          docker-compose -f docker-compose.dev.yml down -v
+
+  # ステータスチェック
+  integration-status:
+    name: Integration Status
+    runs-on: ubuntu-latest
+    needs: [full-stack-integration, docker-integration, security-integration]
+    if: always()
+
+    steps:
+      - name: ✅ All integration checks passed
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: |
+          echo "🎉 Integration CI passed successfully!"
+          echo "Frontend and Backend are working together properly"
+          exit 0
+
+      - name: ❌ Some integration checks failed
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: |
+          echo "❌ Integration CI failed!"
+          echo "Please check the failed jobs for details"
+          exit 1

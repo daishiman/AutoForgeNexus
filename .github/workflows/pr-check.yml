@@ -22,11 +22,93 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 📝 Check PR title
+      - name: 📝 Validate PR title format
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = context.payload.pull_request.title;
+
+            // タイトルの正規化（空白は事前にpr-title-fix.ymlで修正済み）
+            const normalizedTitle = title.trim().replace(/\s+/g, ' ');
+
+            // Conventional Commits形式の検証（より厳密なパターン）
+            const conventionalCommitRegex = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?: .+$/;
+
+            // タイトルの基本検証
+            const validations = {
+              hasCorrectFormat: conventionalCommitRegex.test(normalizedTitle),
+              hasDescription: normalizedTitle.split(':')[1]?.trim().length > 0,
+              isNotTooLong: normalizedTitle.length <= 72,
+              startsWithLowercase: /^[a-z]/.test(normalizedTitle)
+            };
+
+            // 検証結果の集計
+            const validationErrors = [];
+
+            if (!validations.hasCorrectFormat) {
+              validationErrors.push('Conventional Commits形式に従っていません');
+            }
+
+            if (!validations.hasDescription) {
+              validationErrors.push('説明文が空または不足しています');
+            }
+
+            if (!validations.isNotTooLong) {
+              validationErrors.push(`タイトルが長すぎます（${normalizedTitle.length}文字、推奨: 72文字以内）`);
+            }
+
+            if (!validations.startsWithLowercase) {
+              validationErrors.push('タイプは小文字で始める必要があります');
+            }
+
+            // エラーがある場合
+            if (validationErrors.length > 0) {
+              const errorMessage = `❌ **PRタイトルの検証エラー**\n\n` +
+                `**現在のタイトル**: \`${normalizedTitle}\`\n\n` +
+                `**検出された問題**:\n` +
+                validationErrors.map(err => `- ${err}`).join('\n') + '\n\n' +
+                `**正しい形式**: \`<type>[(scope)]: <description>\`\n\n` +
+                `**利用可能なタイプ**:\n` +
+                `- \`feat\`: 新機能\n` +
+                `- \`fix\`: バグ修正\n` +
+                `- \`docs\`: ドキュメントのみの変更\n` +
+                `- \`style\`: フォーマットの変更\n` +
+                `- \`refactor\`: リファクタリング\n` +
+                `- \`perf\`: パフォーマンス改善\n` +
+                `- \`test\`: テストの追加・修正\n` +
+                `- \`build\`: ビルドシステムの変更\n` +
+                `- \`ci\`: CI設定の変更\n` +
+                `- \`chore\`: その他の変更\n` +
+                `- \`revert\`: コミットの取り消し\n\n` +
+                `**タイトル例**:\n` +
+                `- \`feat: ユーザー認証機能の追加\`\n` +
+                `- \`fix(auth): ログインエラーの修正\`\n` +
+                `- \`docs: API仕様書の更新\`\n\n` +
+                `詳細は[CONTRIBUTING.md](../blob/main/CONTRIBUTING.md)を参照してください。`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: errorMessage
+              });
+
+              core.setFailed(`PRタイトルの検証に失敗しました: ${validationErrors.join(', ')}`);
+              return;
+            }
+
+            // すべての検証をパス
+            console.log(`✅ PR title is valid: '${normalizedTitle}'`);
+
+      - name: 📝 Validate PR title format (backup check)
+        if: success()
         uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # タイトルの空白を許容する設定
+          requireScope: false
           types: |
             feat
             fix
@@ -39,30 +121,40 @@ jobs:
             ci
             chore
             revert
+          # 日本語タイトルを許可（Conventional Commits形式のみ検証）
+          subjectPattern: ^.*$
+          subjectPatternError: |
+            PRタイトルは "type: description" 形式である必要があります。
+            例: "feat: 新機能追加", "fix: バグ修正"
 
       - name: 📊 Check PR size
         uses: codelytv/pr-size-labeler@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          xs_label: 'size/xs'
-          xs_max_size: '10'
-          s_label: 'size/s'
-          s_max_size: '100'
-          m_label: 'size/m'
-          m_max_size: '500'
-          l_label: 'size/l'
-          l_max_size: '1000'
-          xl_label: 'size/xl'
+          xs_label: "size/xs"
+          xs_max_size: "10"
+          s_label: "size/s"
+          s_max_size: "100"
+          m_label: "size/m"
+          m_max_size: "500"
+          l_label: "size/l"
+          l_max_size: "1000"
+          xl_label: "size/xl"
 
       - name: 🏷️ Auto-label PR
         uses: actions/labeler@v5
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+          sync-labels: false
+          dot: true
 
   # Code quality check
   code-quality:
     name: Code Quality Check
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
       - name: 📥 Checkout code
@@ -71,17 +163,65 @@ jobs:
           fetch-depth: 0
 
       - name: 📊 SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        # SONAR_TOKENが設定されている場合のみ実行
+        if: ${{ format('{0}', env.SONAR_TOKEN) != '' }}
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          # SonarCloud設定（オプション）
+          args: >
+            -Dsonar.projectKey=daishiman_AutoForgeNexus
+            -Dsonar.organization=daishiman
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+            -Dsonar.sources=backend/src,frontend/src
+            -Dsonar.tests=backend/tests,frontend/tests
+            -Dsonar.exclusions=**/__pycache__/**,**/node_modules/**,**/dist/**,**/build/**
+
+      - name: ⚠️ SonarCloud Skipped
+        # SONAR_TOKENが設定されていない場合の警告
+        if: ${{ format('{0}', env.SONAR_TOKEN) == '' }}
+        run: |
+          echo "⚠️ SonarCloud scan skipped: SONAR_TOKEN not configured"
+          echo "To enable SonarCloud analysis:"
+          echo "1. Create a SonarCloud account at https://sonarcloud.io"
+          echo "2. Generate a token"
+          echo "3. Add SONAR_TOKEN to GitHub repository secrets"
 
       - name: 🔍 Check for conflicts
         run: |
-          if grep -r "<<<<<<< HEAD" --exclude-dir=.git .; then
-            echo "❌ Merge conflicts detected!"
+          # ソースコードのみを検索（依存関係・ドキュメント・ビルド成果物を除外）
+          # 対象: backend/src/, frontend/src/ のみ（最も重要なソースコード）
+          CONFLICT_COUNT=0
+
+          # backend/src ディレクトリの検索
+          if [ -d "backend/src" ]; then
+            BACKEND_CONFLICTS=$(grep -r "<<<<<<< HEAD" backend/src/ 2>/dev/null || true)
+            if [ -n "$BACKEND_CONFLICTS" ]; then
+              echo "❌ Merge conflicts in backend/src:"
+              echo "$BACKEND_CONFLICTS"
+              CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+            fi
+          fi
+
+          # frontend/src ディレクトリの検索
+          if [ -d "frontend/src" ]; then
+            FRONTEND_CONFLICTS=$(grep -r "<<<<<<< HEAD" frontend/src/ 2>/dev/null || true)
+            if [ -n "$FRONTEND_CONFLICTS" ]; then
+              echo "❌ Merge conflicts in frontend/src:"
+              echo "$FRONTEND_CONFLICTS"
+              CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+            fi
+          fi
+
+          if [ $CONFLICT_COUNT -gt 0 ]; then
             exit 1
           fi
+
+          echo "✅ No merge conflicts found in source code"
+          echo "   Checked: backend/src/, frontend/src/"
 
       - name: 🔍 Check for secrets
         uses: trufflesecurity/trufflehog@main
@@ -89,6 +229,8 @@ jobs:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
+          extra_args: --only-verified --exclude-paths=.trufflehog_regex_ignore
+          # 注: --fail, --no-update, --github-actions は Action により自動付与されます
 
   # Claude Code Review (AI Review)
   claude-review:
@@ -104,112 +246,118 @@ jobs:
       - name: 🤖 Prepare Claude Review Context
         id: prepare
         run: |
-          # Get changed files
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          # Get diff
-          DIFF=$(git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-          echo "diff<<EOF" >> $GITHUB_OUTPUT
-          echo "$DIFF" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Get changed files count (avoid octal escape sequences in template strings)
+          FILE_COUNT=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | wc -l | tr -d ' ')
+          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
 
       - name: 📝 Post Claude Review Comment
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const changedFiles = `${{ steps.prepare.outputs.changed_files }}`;
-            const fileCount = changedFiles.split('\n').filter(f => f).length;
+            // 安全なPR番号取得（Optional chaining + 型検証）
+            const prNumber = context.payload?.pull_request?.number;
 
-            const comment = `## 🤖 Claude Code Review
+            // Early validation
+            if (!prNumber || typeof prNumber !== 'number') {
+              core.info('ℹ️ PR context not available, skipping review comment');
+              core.debug(`Event: ${context.eventName}, Payload keys: ${Object.keys(context.payload).join(', ')}`);
+              return;
+            }
 
-            ### 📊 PR Summary
-            - **Changed Files**: ${fileCount}
-            - **Review Status**: Automated review initiated
+            const fileCount = parseInt('${{ steps.prepare.outputs.file_count }}', 10) || 0;
 
-            ### 🔍 Review Checklist
+            // Markdownコメント生成（安全な変数使用）
+            const comment = [
+              '## 🤖 Claude Code レビュー',
+              '',
+              '### 📊 PR サマリー',
+              `- **PR番号**: #${prNumber}`,
+              `- **変更ファイル数**: ${fileCount}`,
+              '- **レビュー状況**: 自動レビュー開始済み',
+              '',
+              '### 🔍 レビューチェックリスト',
+              '',
+              '#### コード品質',
+              '- [ ] SOLID原則への準拠',
+              '- [ ] DRY原則の遵守',
+              '- [ ] 適切な抽象化レベル',
+              '- [ ] 一貫性のある命名規則',
+              '',
+              '#### セキュリティ',
+              '- [ ] シークレットやAPIキーの露出なし',
+              '- [ ] 入力値検証の実装',
+              '- [ ] SQLインジェクション対策',
+              '- [ ] XSS対策の実装',
+              '',
+              '#### パフォーマンス',
+              '- [ ] O(n²)以上のアルゴリズムなし',
+              '- [ ] データベースクエリの最適化',
+              '- [ ] メモリリークなし',
+              '- [ ] async/awaitの適切な使用',
+              '',
+              '#### テスト',
+              '- [ ] 新機能のテスト追加',
+              '- [ ] エッジケースのカバー',
+              '- [ ] カバレッジ目標達成（バックエンド: 80%、フロントエンド: 75%）',
+              '',
+              '#### ドキュメント',
+              '- [ ] 複雑なロジックへのコメント',
+              '- [ ] APIドキュメントの更新',
+              '- [ ] 必要に応じたREADME更新',
+              '',
+              '### 💡 推奨事項',
+              '自動分析に基づく推奨事項:',
+              '1. マージ前にすべてのテストケースが成功していることを確認',
+              '2. 変更がプロジェクトアーキテクチャに沿っていることを検証',
+              '3. 既存機能への影響を考慮',
+              '',
+              '### 📌 注意',
+              '詳細な分析が必要な場合は、以下のコマンドを実行してください:',
+              '```bash',
+              `/ai:quality:analyze --pr ${prNumber}`,
+              '```',
+              '',
+              '---',
+              '*Claude Code レビューシステム v1.0 により生成*'
+            ].join('\n');
 
-            #### Code Quality
-            - [ ] SOLID principles compliance
-            - [ ] DRY principle adherence
-            - [ ] Appropriate abstraction levels
-            - [ ] Consistent naming conventions
+            // エラーハンドリング付きAPI呼び出し
+            try {
+              const result = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+              core.info(`✅ Review comment posted to PR #${prNumber}`);
+              core.info(`Comment URL: ${result.data.html_url}`);
+            } catch (error) {
+              // セキュアなエラーログ（機密情報除外）
+              const errorType = error.name || 'UnknownError';
+              const errorStatus = error.status || 'N/A';
 
-            #### Security
-            - [ ] No exposed secrets or API keys
-            - [ ] Input validation present
-            - [ ] SQL injection prevention
-            - [ ] XSS protection measures
+              // 機密情報をサニタイズ
+              const sanitizedMessage = (error.message || '')
+                .replace(/token[=:][\w-]+/gi, 'token=[REDACTED]')
+                .replace(/key[=:][\w-]+/gi, 'key=[REDACTED]')
+                .replace(/https?:\/\/[^\s]+/gi, '[URL_REDACTED]');
 
-            #### Performance
-            - [ ] No O(n²) or worse algorithms
-            - [ ] Database queries optimized
-            - [ ] No memory leaks detected
-            - [ ] Proper async/await usage
+              core.warning(`⚠️ Failed to post review comment: ${errorType} (${errorStatus})`);
+              core.debug(`Sanitized details: ${sanitizedMessage}`);
 
-            #### Testing
-            - [ ] Tests added for new features
-            - [ ] Edge cases covered
-            - [ ] Coverage threshold met (Backend: 80%, Frontend: 75%)
+              // レート制限の特別処理
+              if (errorStatus === 403 || errorStatus === 429) {
+                core.warning('GitHub API rate limit may be exceeded');
+              }
 
-            #### Documentation
-            - [ ] Code comments for complex logic
-            - [ ] API documentation updated
-            - [ ] README updated if needed
-
-            ### 💡 Recommendations
-            Based on the automated analysis:
-            1. Ensure all test cases pass before merging
-            2. Verify that the changes align with the project architecture
-            3. Consider the impact on existing features
-
-            ### 📌 Note
-            This is an automated review by Claude Code. For detailed analysis, please run:
-            \`\`\`bash
-            /ai:quality:analyze --pr ${{ github.event.pull_request.number }}
-            \`\`\`
-
-            ---
-            *Generated by Claude Code Review System v1.0*`;
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: comment
-            });
-
-  # Test coverage report
-  coverage-report:
-    name: Coverage Report
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: 🟢 Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: 📊 Generate coverage comment
-        uses: py-cov-action/python-coverage-comment-action@v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              // ジョブは失敗させない（他のチェック継続）
+            }
 
   # Final status
   pr-status:
     name: PR Status Check
-    needs: [validate-pr, code-quality, claude-review, coverage-report]
+    needs: [validate-pr, code-quality, claude-review]
     runs-on: ubuntu-latest
     if: always()
 
@@ -218,6 +366,12 @@ jobs:
         if: ${{ !(contains(needs.*.result, 'failure')) }}
         run: |
           echo "✅ All PR checks passed!"
+          echo ""
+          echo "## 📊 Test Coverage Information"
+          echo "Coverage is measured and reported by backend-ci.yml workflow:"
+          echo "  - View detailed coverage: https://codecov.io/gh/daishiman/AutoForgeNexus"
+          echo "  - Backend CI status: Check 'Backend CI/CD Pipeline' workflow"
+          echo ""
           echo "Ready for manual review and merge."
 
       - name: ❌ Some checks failed

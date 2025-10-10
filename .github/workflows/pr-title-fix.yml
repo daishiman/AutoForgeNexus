@@ -1,0 +1,76 @@
+name: PR Title Auto-Fix
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-fix-title:
+    name: Auto-fix PR Title
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧹 Auto-fix PR title whitespace
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const originalTitle = pr.title;
+
+            // 先頭・末尾の空白を除去
+            const sanitizedTitle = originalTitle.trim();
+
+            // 複数の連続空白を1つに正規化
+            const normalizedTitle = sanitizedTitle.replace(/\s+/g, ' ');
+
+            // 修正が必要かチェック
+            if (originalTitle !== normalizedTitle) {
+              console.log(`Fixing PR title: '${originalTitle}' -> '${normalizedTitle}'`);
+
+              try {
+                // PRタイトルを更新
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  title: normalizedTitle
+                });
+
+                console.log('✅ PR title fixed successfully');
+
+                // 修正内容を通知
+                const fixDetails = [];
+                if (originalTitle.trim() !== originalTitle) {
+                  fixDetails.push('先頭・末尾の空白を除去');
+                }
+                if (sanitizedTitle !== normalizedTitle) {
+                  fixDetails.push('連続する空白を正規化');
+                }
+
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: `🧹 **PRタイトルを自動修正しました**\n\n` +
+                        `以下の修正を自動的に適用しました：\n` +
+                        fixDetails.map(fix => `- ${fix}`).join('\n') + '\n\n' +
+                        `- **修正前**: \`${originalTitle}\`\n` +
+                        `- **修正後**: \`${normalizedTitle}\`\n\n` +
+                        `💡 **今後のPR作成時の注意点**:\n` +
+                        `- タイトルの先頭・末尾に空白を含めない\n` +
+                        `- 連続する空白は使用しない\n` +
+                        `- [Conventional Commits](https://www.conventionalcommits.org/)形式を遵守\n\n` +
+                        `詳細は[CONTRIBUTING.md](../blob/main/CONTRIBUTING.md)を参照してください。`
+                });
+              } catch (error) {
+                console.error('Failed to update PR title:', error);
+                core.setFailed(`PRタイトルの更新に失敗しました: ${error.message}`);
+              }
+            } else {
+              console.log('✅ PR title is clean (no whitespace to fix)');
+            }

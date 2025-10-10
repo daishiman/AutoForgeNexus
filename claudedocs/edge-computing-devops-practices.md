@@ -7,7 +7,9 @@ AutoForgeNexusのエッジコンピューティング環境におけるインフ
 ## 1. GitOps Edge Deployment Pipeline
 
 ### 目的
-継続的デリバリーによる自動化されたエッジデプロイメント。GitHub ActionsとWrangler CLIを組み合わせた宣言的インフラ管理。
+
+継続的デリバリーによる自動化されたエッジデプロイメント。GitHub ActionsとWrangler
+CLIを組み合わせた宣言的インフラ管理。
 
 ### 実装方法
 
@@ -30,35 +32,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       # Backend Tests (Python/FastAPI)
       - name: Setup Python 3.13
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          
+
       - name: Install Python dependencies
         run: |
           cd backend
           pip install -e .[dev]
-          
+
       - name: Run Backend Tests
         run: |
           cd backend
           pytest tests/ --cov=src --cov-fail-under=80
-          
+
       # Frontend Tests (Next.js 15.5)
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          
+
       - name: Install Frontend dependencies
         run: |
           cd frontend
           npm install -g pnpm
           pnpm install
-          
+
       - name: Run Frontend Tests
         run: |
           cd frontend
@@ -74,28 +76,28 @@ jobs:
         environment: [staging, production]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: 'backend'
           command: deploy --env ${{ matrix.environment }}
-          
+
   deploy-pages:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build Frontend
         run: |
           cd frontend
           npm install -g pnpm
           pnpm install
           pnpm build
-          
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
@@ -111,12 +113,13 @@ jobs:
 ```bash
 # GitFlow + エッジ環境マッピング
 main        → production.autoforgenexus.com
-staging     → staging.autoforgenexus.com  
+staging     → staging.autoforgenexus.com
 develop     → dev.autoforgenexus.com
 feature/*   → preview.autoforgenexus.com
 ```
 
 ### KPI・メトリクス
+
 - デプロイ時間: < 3分
 - テスト実行時間: < 5分
 - 失敗率: < 2%
@@ -125,6 +128,7 @@ feature/*   → preview.autoforgenexus.com
 ## 2. Infrastructure as Code (Terraform)
 
 ### 目的
+
 宣言的インフラ管理によるマルチ環境の一貫性確保。Terraformを使用したCloudflareリソースの完全自動化。
 
 ### 実装方法
@@ -156,17 +160,17 @@ resource "cloudflare_zone" "main" {
 resource "cloudflare_worker_script" "backend_api" {
   name    = "autoforgenexus-backend-${var.environment}"
   content = file("../../../backend/dist/index.js")
-  
+
   kv_namespace_binding {
     name         = "PROMPT_CACHE"
     namespace_id = cloudflare_workers_kv_namespace.prompt_cache.id
   }
-  
+
   r2_bucket_binding {
     name        = "ASSETS"
     bucket_name = cloudflare_r2_bucket.assets.name
   }
-  
+
   analytics_engine_binding {
     name = "ANALYTICS"
   }
@@ -201,13 +205,13 @@ resource "cloudflare_pages_project" "frontend" {
   account_id        = var.cloudflare_account_id
   name              = "autoforgenexus-${var.environment}"
   production_branch = var.production_branch
-  
+
   build_config {
     build_command   = "pnpm build"
     destination_dir = "out"
     root_dir        = "frontend"
   }
-  
+
   deployment_configs {
     production {
       environment_variables = {
@@ -259,7 +263,7 @@ terraform init
 terraform plan -var-file="staging.tfvars"
 terraform apply
 
-cd ../production  
+cd ../production
 terraform init
 terraform plan -var-file="production.tfvars"
 terraform apply
@@ -286,6 +290,7 @@ bot_fight_mode = true
 ```
 
 ### KPI・メトリクス
+
 - インフラプロビジョニング時間: < 5分
 - 設定ドリフト検出: 0件
 - 環境間一貫性: 100%
@@ -294,6 +299,7 @@ bot_fight_mode = true
 ## 3. Intelligent Edge Caching Strategy
 
 ### 目的
+
 プロンプト評価結果とメタデータの戦略的キャッシングによるレイテンシ最小化。階層キャッシングとスマート無効化の実装。
 
 ### 実装方法
@@ -310,31 +316,31 @@ export class EdgeCacheManager {
   getCacheConfig(requestType) {
     const strategies = {
       'prompt-evaluation': {
-        ttl: 3600,           // 1時間
-        edge_ttl: 300,       // 5分
+        ttl: 3600, // 1時間
+        edge_ttl: 300, // 5分
         stale_while_revalidate: 86400,
-        vary: ['Authorization', 'Accept-Language']
+        vary: ['Authorization', 'Accept-Language'],
       },
       'llm-provider-meta': {
-        ttl: 86400,          // 24時間
-        edge_ttl: 7200,      // 2時間
+        ttl: 86400, // 24時間
+        edge_ttl: 7200, // 2時間
         stale_while_revalidate: 604800,
-        vary: ['CF-IPCountry']
+        vary: ['CF-IPCountry'],
       },
       'user-preferences': {
-        ttl: 1800,           // 30分
-        edge_ttl: 60,        // 1分
+        ttl: 1800, // 30分
+        edge_ttl: 60, // 1分
         stale_while_revalidate: 3600,
-        vary: ['Authorization']
+        vary: ['Authorization'],
       },
       'prompt-templates': {
-        ttl: 604800,         // 7日
-        edge_ttl: 86400,     // 24時間
+        ttl: 604800, // 7日
+        edge_ttl: 86400, // 24時間
         stale_while_revalidate: 2592000,
-        vary: ['Accept-Language']
-      }
+        vary: ['Accept-Language'],
+      },
     };
-    
+
     return strategies[requestType] || strategies['default'];
   }
 
@@ -344,16 +350,16 @@ export class EdgeCacheManager {
     const userId = context.userId;
     const region = request.cf.colo;
     const language = request.headers.get('Accept-Language')?.split(',')[0];
-    
+
     // ハッシュベースキー生成
     const keyComponents = [
       url.pathname,
       url.searchParams.toString(),
       userId ? `user:${userId}` : 'anonymous',
       `region:${region}`,
-      `lang:${language}`
+      `lang:${language}`,
     ].filter(Boolean);
-    
+
     return `cache:${btoa(keyComponents.join('|'))}`;
   }
 
@@ -361,7 +367,7 @@ export class EdgeCacheManager {
   async get(request, context) {
     const cacheKey = this.generateCacheKey(request, context);
     const config = this.getCacheConfig(context.requestType);
-    
+
     // KV から取得
     const cached = await this.kv.get(cacheKey, { type: 'json' });
     if (cached && !this.isStale(cached, config)) {
@@ -369,12 +375,12 @@ export class EdgeCacheManager {
       await this.analytics.writeDataPoint({
         blobs: [cacheKey],
         doubles: [Date.now()],
-        indexes: ['cache-hit']
+        indexes: ['cache-hit'],
       });
-      
+
       return cached.data;
     }
-    
+
     return null;
   }
 
@@ -383,50 +389,50 @@ export class EdgeCacheManager {
     const cacheKey = this.generateCacheKey(request, context);
     const config = this.getCacheConfig(context.requestType);
     const ttl = customTTL || config.ttl;
-    
+
     const cacheData = {
       data,
       timestamp: Date.now(),
       ttl,
-      version: context.version || '1.0'
+      version: context.version || '1.0',
     };
-    
+
     await this.kv.put(cacheKey, JSON.stringify(cacheData), {
-      expirationTtl: ttl
+      expirationTtl: ttl,
     });
-    
+
     // キャッシュ更新ログ
     await this.analytics.writeDataPoint({
       blobs: [cacheKey],
       doubles: [Date.now(), ttl],
-      indexes: ['cache-set']
+      indexes: ['cache-set'],
     });
   }
 
   // キャッシュ無効化
   async invalidate(pattern) {
     const listResponse = await this.kv.list({ prefix: pattern });
-    const deletePromises = listResponse.keys.map(key => 
+    const deletePromises = listResponse.keys.map((key) =>
       this.kv.delete(key.name)
     );
-    
+
     await Promise.all(deletePromises);
-    
+
     return {
       invalidated: listResponse.keys.length,
-      pattern
+      pattern,
     };
   }
 
   // 地理的キャッシュ最適化
   getRegionalStrategy(country, colo) {
     const regionalStrategies = {
-      'JP': { ttl_multiplier: 1.5, prefer_tokyo: true },
-      'US': { ttl_multiplier: 1.2, prefer_east: true },
-      'EU': { ttl_multiplier: 1.0, gdpr_compliance: true },
-      'AU': { ttl_multiplier: 1.3, prefer_sydney: true }
+      JP: { ttl_multiplier: 1.5, prefer_tokyo: true },
+      US: { ttl_multiplier: 1.2, prefer_east: true },
+      EU: { ttl_multiplier: 1.0, gdpr_compliance: true },
+      AU: { ttl_multiplier: 1.3, prefer_sydney: true },
     };
-    
+
     return regionalStrategies[country] || { ttl_multiplier: 1.0 };
   }
 
@@ -444,28 +450,28 @@ export default {
     const context = {
       requestType: 'prompt-evaluation',
       userId: getUserId(request),
-      version: '1.0'
+      version: '1.0',
     };
-    
+
     // キャッシュから取得試行
     let response = await cacheManager.get(request, context);
-    
+
     if (!response) {
       // オリジンから取得
       response = await processPromptEvaluation(request);
-      
+
       // キャッシュに保存
       await cacheManager.set(request, context, response);
     }
-    
+
     return new Response(JSON.stringify(response), {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': `max-age=${cacheManager.getCacheConfig(context.requestType).edge_ttl}`,
-        'CF-Cache-Status': response ? 'HIT' : 'MISS'
-      }
+        'CF-Cache-Status': response ? 'HIT' : 'MISS',
+      },
     });
-  }
+  },
 };
 ```
 
@@ -475,35 +481,36 @@ export default {
 // Cloudflare Page Rules設定
 const pageRules = [
   {
-    pattern: "autoforgenexus.com/api/prompts/templates/*",
+    pattern: 'autoforgenexus.com/api/prompts/templates/*',
     settings: {
-      cache_level: "cache_everything",
-      edge_cache_ttl: 86400,        // 24時間
-      browser_cache_ttl: 7200,      // 2時間
-      rocket_loader: "off"
-    }
+      cache_level: 'cache_everything',
+      edge_cache_ttl: 86400, // 24時間
+      browser_cache_ttl: 7200, // 2時間
+      rocket_loader: 'off',
+    },
   },
   {
-    pattern: "autoforgenexus.com/api/llm/providers/meta",
+    pattern: 'autoforgenexus.com/api/llm/providers/meta',
     settings: {
-      cache_level: "cache_everything", 
-      edge_cache_ttl: 7200,         // 2時間
+      cache_level: 'cache_everything',
+      edge_cache_ttl: 7200, // 2時間
       vary_for_device_type: true,
-      rocket_loader: "off"
-    }
+      rocket_loader: 'off',
+    },
   },
   {
-    pattern: "autoforgenexus.com/api/evaluate/*",
+    pattern: 'autoforgenexus.com/api/evaluate/*',
     settings: {
-      cache_level: "bypass",        // 動的コンテンツ
-      security_level: "high",
-      waf: "on"
-    }
-  }
+      cache_level: 'bypass', // 動的コンテンツ
+      security_level: 'high',
+      waf: 'on',
+    },
+  },
 ];
 ```
 
 ### KPI・メトリクス
+
 - キャッシュヒット率: > 85%
 - エッジレスポンス時間: < 50ms
 - オリジン負荷削減: 70%
@@ -512,6 +519,7 @@ const pageRules = [
 ## 4. Multi-Region LLM Optimization
 
 ### 目的
+
 100+LLMプロバイダーの地理的最適化とレイテンシ最小化。リージョン別ルーティングとフォールバック戦略の実装。
 
 ### 実装方法
@@ -529,35 +537,83 @@ export class LLMRegionRouter {
     return {
       'asia-pacific': {
         primary: [
-          { name: 'openai-tokyo', endpoint: 'https://api.openai.com', latency_avg: 45 },
-          { name: 'anthropic-sydney', endpoint: 'https://api.anthropic.com', latency_avg: 52 },
-          { name: 'google-singapore', endpoint: 'https://generativelanguage.googleapis.com', latency_avg: 38 }
+          {
+            name: 'openai-tokyo',
+            endpoint: 'https://api.openai.com',
+            latency_avg: 45,
+          },
+          {
+            name: 'anthropic-sydney',
+            endpoint: 'https://api.anthropic.com',
+            latency_avg: 52,
+          },
+          {
+            name: 'google-singapore',
+            endpoint: 'https://generativelanguage.googleapis.com',
+            latency_avg: 38,
+          },
         ],
         fallback: [
-          { name: 'azure-eastasia', endpoint: 'https://eastasia.api.cognitive.microsoft.com', latency_avg: 65 }
-        ]
+          {
+            name: 'azure-eastasia',
+            endpoint: 'https://eastasia.api.cognitive.microsoft.com',
+            latency_avg: 65,
+          },
+        ],
       },
       'north-america': {
         primary: [
-          { name: 'openai-us-east', endpoint: 'https://api.openai.com', latency_avg: 35 },
-          { name: 'anthropic-us-west', endpoint: 'https://api.anthropic.com', latency_avg: 42 },
-          { name: 'cohere-us-central', endpoint: 'https://api.cohere.ai', latency_avg: 38 }
+          {
+            name: 'openai-us-east',
+            endpoint: 'https://api.openai.com',
+            latency_avg: 35,
+          },
+          {
+            name: 'anthropic-us-west',
+            endpoint: 'https://api.anthropic.com',
+            latency_avg: 42,
+          },
+          {
+            name: 'cohere-us-central',
+            endpoint: 'https://api.cohere.ai',
+            latency_avg: 38,
+          },
         ],
         fallback: [
-          { name: 'huggingface-us', endpoint: 'https://api-inference.huggingface.co', latency_avg: 55 }
-        ]
+          {
+            name: 'huggingface-us',
+            endpoint: 'https://api-inference.huggingface.co',
+            latency_avg: 55,
+          },
+        ],
       },
-      'europe': {
+      europe: {
         primary: [
-          { name: 'openai-dublin', endpoint: 'https://api.openai.com', latency_avg: 41 },
-          { name: 'mistral-paris', endpoint: 'https://api.mistral.ai', latency_avg: 35 },
-          { name: 'anthropic-london', endpoint: 'https://api.anthropic.com', latency_avg: 48 }
+          {
+            name: 'openai-dublin',
+            endpoint: 'https://api.openai.com',
+            latency_avg: 41,
+          },
+          {
+            name: 'mistral-paris',
+            endpoint: 'https://api.mistral.ai',
+            latency_avg: 35,
+          },
+          {
+            name: 'anthropic-london',
+            endpoint: 'https://api.anthropic.com',
+            latency_avg: 48,
+          },
         ],
         fallback: [
-          { name: 'azure-westeurope', endpoint: 'https://westeurope.api.cognitive.microsoft.com', latency_avg: 58 }
+          {
+            name: 'azure-westeurope',
+            endpoint: 'https://westeurope.api.cognitive.microsoft.com',
+            latency_avg: 58,
+          },
         ],
-        gdpr_compliant: true
-      }
+        gdpr_compliant: true,
+      },
     };
   }
 
@@ -565,18 +621,18 @@ export class LLMRegionRouter {
   async selectOptimalProvider(request, model_requirements) {
     const region = this.getRegionFromRequest(request);
     const providers = this.getRegionalProviders()[region];
-    
+
     if (!providers) {
       throw new Error(`No providers configured for region: ${region}`);
     }
 
     // リアルタイムレイテンシ情報を取得
     const healthChecks = await this.getProviderHealth(providers.primary);
-    
+
     // 最適プロバイダーをソート
     const rankedProviders = this.rankProviders(
-      providers.primary, 
-      healthChecks, 
+      providers.primary,
+      healthChecks,
       model_requirements
     );
 
@@ -584,7 +640,10 @@ export class LLMRegionRouter {
       primary: rankedProviders[0],
       fallback: providers.fallback,
       region,
-      selection_reason: this.getSelectionReason(rankedProviders[0], model_requirements)
+      selection_reason: this.getSelectionReason(
+        rankedProviders[0],
+        model_requirements
+      ),
     };
   }
 
@@ -593,23 +652,23 @@ export class LLMRegionRouter {
     const healthPromises = providers.map(async (provider) => {
       try {
         const start = Date.now();
-        
+
         // Health Check エンドポイント
         const response = await fetch(`${provider.endpoint}/health`, {
           method: 'GET',
           timeout: 2000,
-          headers: { 'User-Agent': 'AutoForgeNexus-HealthCheck/1.0' }
+          headers: { 'User-Agent': 'AutoForgeNexus-HealthCheck/1.0' },
         });
-        
+
         const latency = Date.now() - start;
         const isHealthy = response.ok;
-        
+
         return {
           name: provider.name,
           latency,
           healthy: isHealthy,
           status_code: response.status,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       } catch (error) {
         return {
@@ -617,19 +676,17 @@ export class LLMRegionRouter {
           latency: 9999,
           healthy: false,
           error: error.message,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       }
     });
 
     const results = await Promise.all(healthPromises);
-    
+
     // 健全性データをKVに保存
-    await this.kv.put(
-      `health:${Date.now()}`,
-      JSON.stringify(results),
-      { expirationTtl: 300 }
-    );
+    await this.kv.put(`health:${Date.now()}`, JSON.stringify(results), {
+      expirationTtl: 300,
+    });
 
     return results;
   }
@@ -637,13 +694,17 @@ export class LLMRegionRouter {
   // プロバイダーランキング
   rankProviders(providers, healthChecks, requirements) {
     return providers
-      .map(provider => {
-        const health = healthChecks.find(h => h.name === provider.name);
-        const score = this.calculateProviderScore(provider, health, requirements);
-        
+      .map((provider) => {
+        const health = healthChecks.find((h) => h.name === provider.name);
+        const score = this.calculateProviderScore(
+          provider,
+          health,
+          requirements
+        );
+
         return { ...provider, health, score };
       })
-      .filter(p => p.health?.healthy)
+      .filter((p) => p.health?.healthy)
       .sort((a, b) => b.score - a.score);
   }
 
@@ -651,29 +712,29 @@ export class LLMRegionRouter {
     if (!health?.healthy) return 0;
 
     let score = 100;
-    
+
     // レイテンシスコア (50% weight)
     const latencyScore = Math.max(0, 100 - (health.latency - 30) * 2);
     score *= (latencyScore / 100) * 0.5;
-    
+
     // モデル対応スコア (30% weight)
     const modelScore = this.getModelCompatibilityScore(provider, requirements);
     score *= (modelScore / 100) * 0.3;
-    
+
     // 信頼性スコア (20% weight)
     const reliabilityScore = this.getReliabilityScore(provider.name);
     score *= (reliabilityScore / 100) * 0.2;
-    
+
     return Math.round(score);
   }
 
   getModelCompatibilityScore(provider, requirements) {
     const compatibility = {
-      'openai': { 'gpt-4': 100, 'gpt-3.5': 100, 'embedding': 95 },
-      'anthropic': { 'claude-3': 100, 'claude-2': 95, 'embedding': 80 },
-      'google': { 'gemini': 100, 'palm': 90, 'embedding': 85 }
+      openai: { 'gpt-4': 100, 'gpt-3.5': 100, embedding: 95 },
+      anthropic: { 'claude-3': 100, 'claude-2': 95, embedding: 80 },
+      google: { gemini: 100, palm: 90, embedding: 85 },
     };
-    
+
     const providerCompat = compatibility[provider.name.split('-')[0]] || {};
     return providerCompat[requirements.model_type] || 70;
   }
@@ -682,27 +743,28 @@ export class LLMRegionRouter {
     // 過去24時間の成功率を取得
     const key = `reliability:${providerName}:24h`;
     const stored = await this.kv.get(key, { type: 'json' });
-    
+
     if (!stored) return 85; // デフォルト値
-    
-    const successRate = (stored.successful_requests / stored.total_requests) * 100;
+
+    const successRate =
+      (stored.successful_requests / stored.total_requests) * 100;
     return Math.min(100, successRate);
   }
 
   getRegionFromRequest(request) {
     const country = request.cf?.country;
     const continent = request.cf?.continent;
-    
+
     // 地域マッピング
     const regionMap = {
-      'AS': 'asia-pacific',
-      'OC': 'asia-pacific',
-      'NA': 'north-america', 
-      'SA': 'north-america',
-      'EU': 'europe',
-      'AF': 'europe'
+      AS: 'asia-pacific',
+      OC: 'asia-pacific',
+      NA: 'north-america',
+      SA: 'north-america',
+      EU: 'europe',
+      AF: 'europe',
     };
-    
+
     return regionMap[continent] || 'north-america';
   }
 
@@ -714,9 +776,9 @@ export class LLMRegionRouter {
       score: provider.score,
       selection_factors: [
         'optimal_latency',
-        'model_compatibility', 
-        'regional_preference'
-      ]
+        'model_compatibility',
+        'regional_preference',
+      ],
     };
   }
 }
@@ -729,30 +791,41 @@ export class LLMLoadBalancer {
   }
 
   async executeWithFallback(request, model_requirements) {
-    const selection = await this.router.selectOptimalProvider(request, model_requirements);
-    
+    const selection = await this.router.selectOptimalProvider(
+      request,
+      model_requirements
+    );
+
     try {
       // プライマリプロバイダー試行
-      return await this.callProvider(selection.primary, request, model_requirements);
+      return await this.callProvider(
+        selection.primary,
+        request,
+        model_requirements
+      );
     } catch (error) {
       console.warn(`Primary provider failed: ${error.message}`);
-      
+
       // フォールバックプロバイダー試行
       for (const fallbackProvider of selection.fallback) {
         try {
-          return await this.callProvider(fallbackProvider, request, model_requirements);
+          return await this.callProvider(
+            fallbackProvider,
+            request,
+            model_requirements
+          );
         } catch (fallbackError) {
           console.warn(`Fallback provider failed: ${fallbackError.message}`);
         }
       }
-      
+
       throw new Error('All providers failed');
     }
   }
 
   async callProvider(provider, request, requirements) {
     const circuitBreaker = this.getCircuitBreaker(provider.name);
-    
+
     if (circuitBreaker.isOpen()) {
       throw new Error(`Circuit breaker open for ${provider.name}`);
     }
@@ -761,16 +834,16 @@ export class LLMLoadBalancer {
       const response = await fetch(`${provider.endpoint}/v1/completions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${provider.api_key}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${provider.api_key}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           model: requirements.model,
           prompt: request.prompt,
           max_tokens: requirements.max_tokens || 150,
-          temperature: requirements.temperature || 0.7
+          temperature: requirements.temperature || 0.7,
         }),
-        timeout: 10000
+        timeout: 10000,
       });
 
       if (!response.ok) {
@@ -779,7 +852,6 @@ export class LLMLoadBalancer {
 
       circuitBreaker.recordSuccess();
       return await response.json();
-      
     } catch (error) {
       circuitBreaker.recordFailure();
       throw error;
@@ -788,10 +860,13 @@ export class LLMLoadBalancer {
 
   getCircuitBreaker(providerName) {
     if (!this.circuitBreakers.has(providerName)) {
-      this.circuitBreakers.set(providerName, new CircuitBreaker({
-        failureThreshold: 5,
-        resetTimeout: 30000
-      }));
+      this.circuitBreakers.set(
+        providerName,
+        new CircuitBreaker({
+          failureThreshold: 5,
+          resetTimeout: 30000,
+        })
+      );
     }
     return this.circuitBreakers.get(providerName);
   }
@@ -822,6 +897,7 @@ GOOGLE_API_KEY = "YOUR_GOOGLE_KEY"
 ```
 
 ### KPI・メトリクス
+
 - LLMレスポンス時間: P95 < 200ms
 - プロバイダー可用性: > 99.5%
 - 地域最適化効率: 30%改善
@@ -830,7 +906,9 @@ GOOGLE_API_KEY = "YOUR_GOOGLE_KEY"
 ## 5. Comprehensive Edge Observability
 
 ### 目的
-Cloudflare Analytics、LangFuse、カスタムメトリクスを統合した包括的な監視・アラート体系。エッジパフォーマンスとLLM実行の完全な可視化。
+
+Cloudflare
+Analytics、LangFuse、カスタムメトリクスを統合した包括的な監視・アラート体系。エッジパフォーマンスとLLM実行の完全な可視化。
 
 ### 実装方法
 
@@ -843,7 +921,7 @@ export class EdgeObservabilityManager {
     this.langfuse = new LangFuse({
       secret_key: env.LANGFUSE_SECRET_KEY,
       public_key: env.LANGFUSE_PUBLIC_KEY,
-      base_url: env.LANGFUSE_BASE_URL
+      base_url: env.LANGFUSE_BASE_URL,
     });
   }
 
@@ -856,29 +934,29 @@ export class EdgeObservabilityManager {
       method: request.method,
       url: request.url,
       user_agent: request.headers.get('User-Agent'),
-      
+
       // Cloudflare メトリクス
       colo: request.cf?.colo,
       country: request.cf?.country,
       region: request.cf?.region,
       asn: request.cf?.asn,
-      
+
       // レスポンスメトリクス
       status_code: response.status,
       content_length: response.headers.get('Content-Length'),
       cache_status: response.headers.get('CF-Cache-Status'),
-      
+
       // パフォーマンスメトリクス
       response_time: context.response_time,
       cpu_time: context.cpu_time,
       memory_usage: context.memory_usage,
-      
+
       // ビジネスメトリクス
       user_id: context.user_id,
       organization_id: context.organization_id,
       feature_used: context.feature_used,
       prompt_length: context.prompt_length,
-      tokens_generated: context.tokens_generated
+      tokens_generated: context.tokens_generated,
     };
 
     // Analytics Engine に送信
@@ -887,13 +965,13 @@ export class EdgeObservabilityManager {
         metrics.status_code.toString(),
         metrics.colo,
         metrics.country,
-        metrics.feature_used
+        metrics.feature_used,
       ],
       doubles: [
         metrics.response_time,
         metrics.cpu_time,
         metrics.memory_usage,
-        metrics.tokens_generated || 0
+        metrics.tokens_generated || 0,
       ],
       blobs: [
         metrics.request_id,
@@ -901,9 +979,9 @@ export class EdgeObservabilityManager {
         JSON.stringify({
           method: metrics.method,
           cache_status: metrics.cache_status,
-          user_agent: metrics.user_agent?.substring(0, 100)
-        })
-      ]
+          user_agent: metrics.user_agent?.substring(0, 100),
+        }),
+      ],
     });
 
     // 高レイテンシアラートチェック
@@ -917,7 +995,7 @@ export class EdgeObservabilityManager {
   // LLM実行トレーシング
   async traceLLMExecution(llm_request, llm_response, context) {
     const trace = this.langfuse.trace({
-      name: "llm_execution",
+      name: 'llm_execution',
       id: context.trace_id,
       user_id: context.user_id,
       session_id: context.session_id,
@@ -925,35 +1003,35 @@ export class EdgeObservabilityManager {
         region: context.region,
         provider: context.provider,
         model: context.model,
-        colo: context.colo
-      }
+        colo: context.colo,
+      },
     });
 
     const span = trace.span({
-      name: "llm_generation",
+      name: 'llm_generation',
       input: {
         prompt: llm_request.prompt,
         model: llm_request.model,
-        parameters: llm_request.parameters
+        parameters: llm_request.parameters,
       },
       output: {
         content: llm_response.content,
-        tokens: llm_response.usage
+        tokens: llm_response.usage,
       },
       metadata: {
         provider: context.provider,
         latency_ms: context.llm_latency,
         cost_usd: context.estimated_cost,
-        cache_hit: context.cache_hit
-      }
+        cache_hit: context.cache_hit,
+      },
     });
 
     // 品質スコア評価
     if (context.quality_score) {
       span.score({
-        name: "quality",
+        name: 'quality',
         value: context.quality_score,
-        comment: context.quality_feedback
+        comment: context.quality_feedback,
       });
     }
 
@@ -961,8 +1039,8 @@ export class EdgeObservabilityManager {
       output: llm_response,
       metadata: {
         total_duration: context.total_duration,
-        success: true
-      }
+        success: true,
+      },
     });
 
     return trace;
@@ -976,17 +1054,17 @@ export class EdgeObservabilityManager {
       error_type: error.constructor.name,
       error_message: error.message,
       stack_trace: error.stack,
-      
+
       // コンテキスト情報
       url: context.url,
       method: context.method,
       user_id: context.user_id,
       colo: context.colo,
       country: context.country,
-      
+
       // 環境情報
       worker_version: context.worker_version,
-      deployment_id: context.deployment_id
+      deployment_id: context.deployment_id,
     };
 
     // Analytics Engine にエラーログ送信
@@ -995,7 +1073,7 @@ export class EdgeObservabilityManager {
         'error',
         errorData.error_type,
         errorData.colo,
-        errorData.country
+        errorData.country,
       ],
       doubles: [Date.now()],
       blobs: [
@@ -1006,10 +1084,10 @@ export class EdgeObservabilityManager {
           context: {
             url: errorData.url,
             method: errorData.method,
-            user_id: errorData.user_id
-          }
-        })
-      ]
+            user_id: errorData.user_id,
+          },
+        }),
+      ],
     });
 
     // 重要なエラーはSlack通知
@@ -1017,7 +1095,7 @@ export class EdgeObservabilityManager {
       await this.sendSlackAlert({
         type: 'critical_error',
         message: `Critical error in ${context.colo}: ${error.message}`,
-        details: errorData
+        details: errorData,
       });
     }
   }
@@ -1030,25 +1108,25 @@ export class EdgeObservabilityManager {
 
     // SLO定義
     const slos = {
-      availability: { target: 99.9, threshold: 0.1 },  // 99.9%
-      latency_p95: { target: 200, threshold: 50 },      // P95 < 200ms
-      error_rate: { target: 1.0, threshold: 0.5 }       // < 1%
+      availability: { target: 99.9, threshold: 0.1 }, // 99.9%
+      latency_p95: { target: 200, threshold: 50 }, // P95 < 200ms
+      error_rate: { target: 1.0, threshold: 0.5 }, // < 1%
     };
 
     // メトリクス集計クエリ（Analytics Engine）
     const metrics = await this.queryMetrics(windowStart, now);
-    
+
     const currentSLOs = {
       availability: this.calculateAvailability(metrics),
       latency_p95: this.calculateP95Latency(metrics),
-      error_rate: this.calculateErrorRate(metrics)
+      error_rate: this.calculateErrorRate(metrics),
     };
 
     // SLO違反チェック
     for (const [slo, config] of Object.entries(slos)) {
       const current = currentSLOs[slo];
       const violation = this.checkSLOViolation(slo, current, config);
-      
+
       if (violation.violated) {
         await this.handleSLOViolation(slo, violation, config);
       }
@@ -1082,12 +1160,12 @@ export class EdgeObservabilityManager {
         }
       }
     `;
-    
+
     // GraphQL実装省略（実際のプロジェクトでは実装必要）
     return {
       total_requests: 1000,
       successful_requests: 995,
-      response_times: [45, 62, 78, 95, 120, 156, 189, 220, 280, 350]
+      response_times: [45, 62, 78, 95, 120, 156, 189, 220, 280, 350],
     };
   }
 
@@ -1114,7 +1192,7 @@ export class EdgeObservabilityManager {
       target_value: config.target,
       severity: violation.severity,
       timestamp: Date.now(),
-      details: violation.details
+      details: violation.details,
     };
 
     // Slack通知
@@ -1124,8 +1202,8 @@ export class EdgeObservabilityManager {
       fields: [
         { title: 'Current Value', value: violation.current, short: true },
         { title: 'Target Value', value: config.target, short: true },
-        { title: 'Severity', value: violation.severity, short: true }
-      ]
+        { title: 'Severity', value: violation.severity, short: true },
+      ],
     });
 
     // PagerDuty統合（高重要度の場合）
@@ -1140,26 +1218,26 @@ export class EdgeObservabilityManager {
 
     const payload = {
       text: alert.message,
-      username: "AutoForgeNexus Monitor",
-      icon_emoji: ":warning:",
-      fields: alert.fields || []
+      username: 'AutoForgeNexus Monitor',
+      icon_emoji: ':warning:',
+      fields: alert.fields || [],
     };
 
     await fetch(webhook_url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
   }
 
   isCriticalError(error) {
     const criticalTypes = [
       'SecurityError',
-      'DatabaseConnectionError', 
+      'DatabaseConnectionError',
       'LLMProviderDownError',
-      'QuotaExceededError'
+      'QuotaExceededError',
     ];
-    
+
     return criticalTypes.includes(error.constructor.name);
   }
 }
@@ -1180,28 +1258,29 @@ export class MetricsDashboard {
       performance: {
         avg_response_time: this.calculateAverage(metrics.response_times),
         p95_response_time: this.obs.calculateP95Latency(metrics),
-        throughput: metrics.total_requests / (this.parseTimeRange(timeRange) / 1000 / 60), // req/min
-        cache_hit_rate: this.calculateCacheHitRate(metrics)
+        throughput:
+          metrics.total_requests / (this.parseTimeRange(timeRange) / 1000 / 60), // req/min
+        cache_hit_rate: this.calculateCacheHitRate(metrics),
       },
       reliability: {
         uptime: this.obs.calculateAvailability(metrics),
         error_rate: this.obs.calculateErrorRate(metrics),
-        slo_compliance: await this.calculateSLOCompliance()
+        slo_compliance: await this.calculateSLOCompliance(),
       },
       geographic: {
         top_regions: this.getTopRegions(metrics),
-        regional_latency: this.getRegionalLatency(metrics)
+        regional_latency: this.getRegionalLatency(metrics),
       },
       llm_metrics: {
         total_tokens: await this.getTotalTokenUsage(timeRange),
         avg_cost_per_request: await this.getAverageCost(timeRange),
-        provider_performance: await this.getProviderPerformance(timeRange)
-      }
+        provider_performance: await this.getProviderPerformance(timeRange),
+      },
     };
   }
 
   parseTimeRange(range) {
-    const units = { 'm': 60000, 'h': 3600000, 'd': 86400000 };
+    const units = { m: 60000, h: 3600000, d: 86400000 };
     const match = range.match(/^(\d+)([mhd])$/);
     return match ? parseInt(match[1]) * units[match[2]] : 3600000;
   }
@@ -1241,7 +1320,7 @@ export class MetricsDashboard {
         ]
       },
       {
-        "title": "LLM Provider Performance", 
+        "title": "LLM Provider Performance",
         "type": "table",
         "targets": [
           {
@@ -1265,6 +1344,7 @@ export class MetricsDashboard {
 ```
 
 ### KPI・メトリクス
+
 - SLO準拠率: > 99%
 - アラート精度: > 95% (false positive < 5%)
 - 平均検出時間: < 2分
@@ -1273,6 +1353,7 @@ export class MetricsDashboard {
 ## 6. Dynamic Traffic Routing & A/B Testing
 
 ### 目的
+
 エッジでのA/Bテスト、カナリアリリース、ブルーグリーンデプロイメント。トラフィック分散とフィーチャーフラグによる段階的機能展開。
 
 ### 実装方法
@@ -1292,59 +1373,59 @@ export class DynamicTrafficRouter {
       id: config.id,
       name: config.name,
       description: config.description,
-      
+
       // トラフィック分散設定
       variants: {
         control: {
           name: 'control',
           traffic_percentage: config.control_percentage || 50,
           deployment: config.control_deployment || 'stable',
-          features: config.control_features || {}
+          features: config.control_features || {},
         },
         treatment: {
-          name: 'treatment', 
+          name: 'treatment',
           traffic_percentage: config.treatment_percentage || 50,
           deployment: config.treatment_deployment || 'canary',
-          features: config.treatment_features || {}
-        }
+          features: config.treatment_features || {},
+        },
       },
-      
+
       // ターゲティング条件
       targeting: {
         user_segments: config.user_segments || ['all'],
         geographic_regions: config.regions || ['all'],
         device_types: config.device_types || ['all'],
-        custom_attributes: config.custom_attributes || {}
+        custom_attributes: config.custom_attributes || {},
       },
-      
+
       // 期間設定
       schedule: {
         start_date: config.start_date,
         end_date: config.end_date,
-        timezone: config.timezone || 'UTC'
+        timezone: config.timezone || 'UTC',
       },
-      
+
       // 成功指標
       metrics: {
         primary_metric: config.primary_metric,
         secondary_metrics: config.secondary_metrics || [],
         significance_level: config.significance_level || 0.05,
-        minimum_sample_size: config.minimum_sample_size || 1000
+        minimum_sample_size: config.minimum_sample_size || 1000,
       },
-      
+
       // 安全性設定
       safeguards: {
         max_error_rate: config.max_error_rate || 5.0,
         min_conversion_rate: config.min_conversion_rate || null,
-        auto_stop_on_significance: config.auto_stop || false
+        auto_stop_on_significance: config.auto_stop || false,
       },
-      
+
       created_at: Date.now(),
-      status: 'active'
+      status: 'active',
     };
 
     await this.kv.put(`ab_test:${config.id}`, JSON.stringify(abTest), {
-      expirationTtl: 90 * 24 * 3600  // 90日
+      expirationTtl: 90 * 24 * 3600, // 90日
     });
 
     return abTest;
@@ -1375,7 +1456,9 @@ export class DynamicTrafficRouter {
     let assigned_variant = 'control';
     let cumulative_percentage = 0;
 
-    for (const [variant_name, variant_config] of Object.entries(test.variants)) {
+    for (const [variant_name, variant_config] of Object.entries(
+      test.variants
+    )) {
       cumulative_percentage += variant_config.traffic_percentage;
       if (assignment_percentage < cumulative_percentage) {
         assigned_variant = variant_name;
@@ -1392,15 +1475,15 @@ export class DynamicTrafficRouter {
       request_context: {
         colo: request.cf?.colo,
         country: request.cf?.country,
-        user_agent: request.headers.get('User-Agent')?.substring(0, 100)
-      }
+        user_agent: request.headers.get('User-Agent')?.substring(0, 100),
+      },
     });
 
     return {
       variant: assigned_variant,
       reason: 'assigned',
       test_config: test.variants[assigned_variant],
-      assignment_id: `${test_id}:${userId}:${assigned_variant}`
+      assignment_id: `${test_id}:${userId}:${assigned_variant}`,
     };
   }
 
@@ -1409,42 +1492,42 @@ export class DynamicTrafficRouter {
     const canary = {
       deployment_id: config.deployment_id,
       name: config.name,
-      
+
       // トラフィック段階設定
       traffic_stages: config.stages || [
-        { percentage: 5, duration: 300, max_error_rate: 2.0 },   // 5% for 5min
-        { percentage: 25, duration: 600, max_error_rate: 1.5 },  // 25% for 10min
-        { percentage: 50, duration: 900, max_error_rate: 1.0 },  // 50% for 15min
-        { percentage: 100, duration: 0, max_error_rate: 0.5 }    // 100%
+        { percentage: 5, duration: 300, max_error_rate: 2.0 }, // 5% for 5min
+        { percentage: 25, duration: 600, max_error_rate: 1.5 }, // 25% for 10min
+        { percentage: 50, duration: 900, max_error_rate: 1.0 }, // 50% for 15min
+        { percentage: 100, duration: 0, max_error_rate: 0.5 }, // 100%
       ],
-      
+
       current_stage: 0,
       started_at: Date.now(),
-      
+
       // 健全性チェック
       health_checks: {
         endpoint: config.health_endpoint || '/health',
         interval: config.check_interval || 30,
         timeout: config.check_timeout || 5,
         success_threshold: config.success_threshold || 3,
-        failure_threshold: config.failure_threshold || 2
+        failure_threshold: config.failure_threshold || 2,
       },
-      
+
       // 自動ロールバック設定
       rollback_triggers: {
         error_rate_threshold: config.error_threshold || 2.0,
         latency_threshold: config.latency_threshold || 500,
-        health_check_failures: config.health_failures || 3
+        health_check_failures: config.health_failures || 3,
       },
-      
-      status: 'active'
+
+      status: 'active',
     };
 
     await this.kv.put(`canary:${config.deployment_id}`, JSON.stringify(canary));
-    
+
     // 段階的トラフィック増加スケジューラー
     await this.scheduleCanaryProgression(canary);
-    
+
     return canary;
   }
 
@@ -1454,9 +1537,9 @@ export class DynamicTrafficRouter {
       timestamp: Date.now(),
       request_id: crypto.randomUUID(),
       user_id: user_context.user_id,
-      deployment: 'stable',  // デフォルト
+      deployment: 'stable', // デフォルト
       features: {},
-      routing_reason: []
+      routing_reason: [],
     };
 
     // アクティブなカナリアデプロイメントチェック
@@ -1473,19 +1556,31 @@ export class DynamicTrafficRouter {
     // A/Bテストバリアント適用
     const active_tests = await this.getActiveABTests();
     for (const test of active_tests) {
-      const variant_assignment = await this.assignUserVariant(request, test.id, user_context);
+      const variant_assignment = await this.assignUserVariant(
+        request,
+        test.id,
+        user_context
+      );
       if (variant_assignment.variant !== 'control') {
         routing_decision.features = {
           ...routing_decision.features,
-          ...variant_assignment.test_config.features
+          ...variant_assignment.test_config.features,
         };
-        routing_decision.routing_reason.push(`ab_test_${test.id}_${variant_assignment.variant}`);
+        routing_decision.routing_reason.push(
+          `ab_test_${test.id}_${variant_assignment.variant}`
+        );
       }
     }
 
     // フィーチャーフラグ適用
-    const feature_flags = await this.evaluateFeatureFlags(request, user_context);
-    routing_decision.features = { ...routing_decision.features, ...feature_flags };
+    const feature_flags = await this.evaluateFeatureFlags(
+      request,
+      user_context
+    );
+    routing_decision.features = {
+      ...routing_decision.features,
+      ...feature_flags,
+    };
 
     // ルーティング決定をログ
     await this.logRoutingDecision(routing_decision);
@@ -1500,35 +1595,37 @@ export class DynamicTrafficRouter {
       blue_deployment: deployment_config.current_deployment,
       green_deployment: deployment_config.new_deployment,
       switch_strategy: deployment_config.strategy || 'instant', // instant, gradual, dns
-      
+
       // 事前チェック
       pre_switch_checks: [
         'health_check_green',
         'smoke_tests',
         'performance_baseline',
-        'security_scan'
+        'security_scan',
       ],
-      
+
       // スイッチ後検証
       post_switch_validation: [
         'traffic_distribution_check',
         'error_rate_monitoring',
         'performance_validation',
-        'user_feedback_monitoring'
+        'user_feedback_monitoring',
       ],
-      
+
       // ロールバック計画
       rollback_plan: {
         trigger_conditions: deployment_config.rollback_triggers,
         rollback_strategy: 'instant',
-        notification_channels: ['slack', 'pagerduty']
-      }
+        notification_channels: ['slack', 'pagerduty'],
+      },
     };
 
     // 事前チェック実行
     const pre_checks = await this.executePreSwitchChecks(switch_plan);
     if (!pre_checks.all_passed) {
-      throw new Error(`Pre-switch checks failed: ${pre_checks.failures.join(', ')}`);
+      throw new Error(
+        `Pre-switch checks failed: ${pre_checks.failures.join(', ')}`
+      );
     }
 
     // トラフィックスイッチ実行
@@ -1554,7 +1651,7 @@ export class DynamicTrafficRouter {
       switch_id: switch_plan.switch_id,
       status: post_validation.all_passed ? 'success' : 'rolled_back',
       execution_time: Date.now() - switch_plan.started_at,
-      details: { pre_checks, post_validation }
+      details: { pre_checks, post_validation },
     };
   }
 
@@ -1563,13 +1660,13 @@ export class DynamicTrafficRouter {
     await this.updateDNSRecord({
       name: 'api.autoforgenexus.com',
       target: switch_plan.green_deployment.endpoint,
-      ttl: 60  // 短いTTLで素早い切り替え
+      ttl: 60, // 短いTTLで素早い切り替え
     });
 
     // ロードバランサー設定更新
     await this.updateLoadBalancerConfig({
       upstream: switch_plan.green_deployment.endpoint,
-      backup: switch_plan.blue_deployment.endpoint
+      backup: switch_plan.blue_deployment.endpoint,
     });
 
     switch_plan.switched_at = Date.now();
@@ -1582,7 +1679,7 @@ export class DynamicTrafficRouter {
       active_experiments: 0,
       total_traffic_routed: 0,
       routing_decisions: {},
-      health_metrics: {}
+      health_metrics: {},
     };
 
     // アクティブなA/Bテスト監視
@@ -1591,16 +1688,20 @@ export class DynamicTrafficRouter {
 
     for (const test of active_tests) {
       const test_metrics = await this.getABTestMetrics(test.id);
-      
+
       // 統計的有意性チェック
       if (test_metrics.sample_size >= test.metrics.minimum_sample_size) {
-        const significance = await this.calculateStatisticalSignificance(test_metrics);
-        
-        if (significance.is_significant && test.safeguards.auto_stop_on_significance) {
+        const significance =
+          await this.calculateStatisticalSignificance(test_metrics);
+
+        if (
+          significance.is_significant &&
+          test.safeguards.auto_stop_on_significance
+        ) {
           await this.stopABTest(test.id, 'statistical_significance_reached');
         }
       }
-      
+
       // セーフガードチェック
       if (test_metrics.error_rate > test.safeguards.max_error_rate) {
         await this.stopABTest(test.id, 'error_rate_exceeded');
@@ -1611,10 +1712,13 @@ export class DynamicTrafficRouter {
     const active_canaries = await this.getActiveCanaries();
     for (const canary of active_canaries) {
       const canary_metrics = await this.getCanaryMetrics(canary.deployment_id);
-      
+
       // 自動進行 or ロールバック判定
-      const progression_decision = await this.evaluateCanaryProgression(canary, canary_metrics);
-      
+      const progression_decision = await this.evaluateCanaryProgression(
+        canary,
+        canary_metrics
+      );
+
       if (progression_decision.action === 'advance') {
         await this.advanceCanaryStage(canary);
       } else if (progression_decision.action === 'rollback') {
@@ -1631,16 +1735,19 @@ export class DynamicTrafficRouter {
     const data = encoder.encode(`${userId}:${testId}:salt`);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = new Uint8Array(hashBuffer);
-    return hashArray.reduce((hash, byte) => (hash << 5) - hash + byte, 0) & 0x7fffffff;
+    return (
+      hashArray.reduce((hash, byte) => (hash << 5) - hash + byte, 0) &
+      0x7fffffff
+    );
   }
 
   generateSessionId(request) {
     const fingerprint = [
       request.cf?.colo,
       request.headers.get('User-Agent'),
-      request.cf?.country
+      request.cf?.country,
     ].join('|');
-    
+
     return btoa(fingerprint).substring(0, 16);
   }
 
@@ -1656,15 +1763,21 @@ export class DynamicTrafficRouter {
 
   matchesTargeting(request, user_context, targeting) {
     // 地理的ターゲティング
-    if (targeting.geographic_regions?.length > 0 && !targeting.geographic_regions.includes('all')) {
+    if (
+      targeting.geographic_regions?.length > 0 &&
+      !targeting.geographic_regions.includes('all')
+    ) {
       const user_region = request.cf?.country;
       if (!targeting.geographic_regions.includes(user_region)) {
         return false;
       }
     }
 
-    // ユーザーセグメンテーション  
-    if (targeting.user_segments?.length > 0 && !targeting.user_segments.includes('all')) {
+    // ユーザーセグメンテーション
+    if (
+      targeting.user_segments?.length > 0 &&
+      !targeting.user_segments.includes('all')
+    ) {
       const user_segment = user_context.segment;
       if (!targeting.user_segments.includes(user_segment)) {
         return false;
@@ -1684,26 +1797,26 @@ const trafficRoutingConfig = {
       control_percentage: 70,
       treatment_percentage: 30,
       treatment_features: {
-        'new_evaluation_ui': true,
-        'enhanced_analytics': true
+        new_evaluation_ui: true,
+        enhanced_analytics: true,
       },
       primary_metric: 'user_satisfaction_score',
       regions: ['US', 'EU', 'JP'],
       start_date: Date.now(),
-      end_date: Date.now() + 14 * 24 * 3600 * 1000  // 2週間
-    }
+      end_date: Date.now() + 14 * 24 * 3600 * 1000, // 2週間
+    },
   ],
   canary_deployments: [
     {
       deployment_id: 'backend_v2_1_0',
       name: 'Backend API v2.1.0 Rollout',
       stages: [
-        { percentage: 5, duration: 600 },    // 5% for 10 min
-        { percentage: 25, duration: 1800 },  // 25% for 30 min
-        { percentage: 100, duration: 0 }     // 100%
-      ]
-    }
-  ]
+        { percentage: 5, duration: 600 }, // 5% for 10 min
+        { percentage: 25, duration: 1800 }, // 25% for 30 min
+        { percentage: 100, duration: 0 }, // 100%
+      ],
+    },
+  ],
 };
 ```
 
@@ -1727,7 +1840,7 @@ jobs:
           # Wrangler でカナリアデプロイメント
           cd backend
           wrangler deploy --env canary
-          
+
           # トラフィックルーティング設定
           curl -X POST "${{ secrets.TRAFFIC_ROUTER_API }}/canary" \
             -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" \
@@ -1766,6 +1879,7 @@ jobs:
 ```
 
 ### KPI・メトリクス
+
 - A/Bテスト統計的信頼度: > 95%
 - カナリア成功率: > 98%
 - 平均デプロイ時間: < 10分
@@ -1775,7 +1889,9 @@ jobs:
 ## 7. Zero Trust Edge Security
 
 ### 目的
-Cloudflare Access、Workers KV暗号化、地理的アクセス制御による包括的エッジセキュリティ。ゼロトラストアーキテクチャとDDoS保護の実装。
+
+Cloudflare Access、Workers
+KV暗号化、地理的アクセス制御による包括的エッジセキュリティ。ゼロトラストアーキテクチャとDDoS保護の実装。
 
 ### 実装方法
 
@@ -1797,7 +1913,7 @@ export class ZeroTrustSecurityManager {
       user_context: null,
       security_level: 'unknown',
       risk_score: 0,
-      applied_policies: []
+      applied_policies: [],
     };
 
     try {
@@ -1815,35 +1931,41 @@ export class ZeroTrustSecurityManager {
       // Cloudflare Access ヘッダー検証（管理者エンドポイント用）
       const cf_access_jwt = request.headers.get('CF-Access-Jwt-Assertion');
       if (cf_access_jwt) {
-        const access_validation = await this.validateCloudflareAccess(cf_access_jwt);
+        const access_validation =
+          await this.validateCloudflareAccess(cf_access_jwt);
         if (access_validation.valid) {
           auth_result.authenticated = true;
           auth_result.security_level = 'high';
           auth_result.user_context = {
             ...auth_result.user_context,
-            ...access_validation.claims
+            ...access_validation.claims,
           };
         }
       }
 
       // リスクスコア計算
-      auth_result.risk_score = await this.calculateRiskScore(request, auth_result.user_context);
+      auth_result.risk_score = await this.calculateRiskScore(
+        request,
+        auth_result.user_context
+      );
 
       // 認可チェック
       if (auth_result.authenticated) {
-        const authorization = await this.checkAuthorization(request, auth_result.user_context);
+        const authorization = await this.checkAuthorization(
+          request,
+          auth_result.user_context
+        );
         auth_result.authorized = authorization.authorized;
         auth_result.applied_policies = authorization.applied_policies;
       }
 
       return auth_result;
-
     } catch (error) {
       console.error('Authentication failed:', error);
       return {
         ...auth_result,
         error: error.message,
-        risk_score: 100  // 認証エラー時は最高リスク
+        risk_score: 100, // 認証エラー時は最高リスク
       };
     }
   }
@@ -1852,45 +1974,49 @@ export class ZeroTrustSecurityManager {
   async enforceRateLimit(request, user_context) {
     const client_id = this.getClientIdentifier(request, user_context);
     const endpoint = this.getEndpointCategory(request.url);
-    
+
     // 階層的レート制限設定
     const rate_limits = {
-      'auth': {
-        anonymous: { requests: 10, window: 60 },      // 10 req/min
-        authenticated: { requests: 60, window: 60 },  // 60 req/min
-        premium: { requests: 200, window: 60 }        // 200 req/min
+      auth: {
+        anonymous: { requests: 10, window: 60 }, // 10 req/min
+        authenticated: { requests: 60, window: 60 }, // 60 req/min
+        premium: { requests: 200, window: 60 }, // 200 req/min
       },
       'llm-evaluation': {
-        anonymous: { requests: 5, window: 300 },      // 5 req/5min
+        anonymous: { requests: 5, window: 300 }, // 5 req/5min
         authenticated: { requests: 100, window: 60 }, // 100 req/min
-        premium: { requests: 1000, window: 60 }       // 1000 req/min
+        premium: { requests: 1000, window: 60 }, // 1000 req/min
       },
-      'admin': {
-        anonymous: { requests: 0, window: 60 },       // 禁止
-        authenticated: { requests: 10, window: 60 },  // 10 req/min
-        admin: { requests: 100, window: 60 }          // 100 req/min
-      }
+      admin: {
+        anonymous: { requests: 0, window: 60 }, // 禁止
+        authenticated: { requests: 10, window: 60 }, // 10 req/min
+        admin: { requests: 100, window: 60 }, // 100 req/min
+      },
     };
 
     const user_tier = this.getUserTier(user_context);
     const limit_config = rate_limits[endpoint]?.[user_tier];
-    
+
     if (!limit_config) {
       return { allowed: false, reason: 'no_rate_limit_defined' };
     }
 
     // トークンバケット実装
     const bucket_key = `rate_limit:${client_id}:${endpoint}`;
-    const current_bucket = await this.kv.get(bucket_key, { type: 'json' }) || {
+    const current_bucket = (await this.kv.get(bucket_key, {
+      type: 'json',
+    })) || {
       tokens: limit_config.requests,
-      last_refill: Date.now()
+      last_refill: Date.now(),
     };
 
     // バケット補充
     const now = Date.now();
     const time_passed = (now - current_bucket.last_refill) / 1000;
-    const tokens_to_add = Math.floor(time_passed * (limit_config.requests / limit_config.window));
-    
+    const tokens_to_add = Math.floor(
+      time_passed * (limit_config.requests / limit_config.window)
+    );
+
     current_bucket.tokens = Math.min(
       limit_config.requests,
       current_bucket.tokens + tokens_to_add
@@ -1900,16 +2026,16 @@ export class ZeroTrustSecurityManager {
     // リクエスト許可判定
     if (current_bucket.tokens >= 1) {
       current_bucket.tokens -= 1;
-      
+
       // バケット状態保存
       await this.kv.put(bucket_key, JSON.stringify(current_bucket), {
-        expirationTtl: limit_config.window * 2
+        expirationTtl: limit_config.window * 2,
       });
 
       return {
         allowed: true,
         remaining_tokens: current_bucket.tokens,
-        reset_time: now + (limit_config.window * 1000)
+        reset_time: now + limit_config.window * 1000,
       };
     } else {
       // レート制限超過ログ
@@ -1917,13 +2043,13 @@ export class ZeroTrustSecurityManager {
         client_id,
         endpoint,
         user_tier,
-        timestamp: now
+        timestamp: now,
       });
 
       return {
         allowed: false,
         reason: 'rate_limit_exceeded',
-        retry_after: limit_config.window - time_passed
+        retry_after: limit_config.window - time_passed,
       };
     }
   }
@@ -1932,25 +2058,28 @@ export class ZeroTrustSecurityManager {
   async enforceGeoRestrictions(request, endpoint) {
     const country = request.cf?.country;
     const region = this.getRegion(country);
-    
+
     // エンドポイント別地理制限設定
     const geo_policies = {
       '/admin/*': {
         allowed_countries: ['US', 'JP', 'GB', 'DE'],
         blocked_countries: ['CN', 'RU', 'KP'],
-        require_vpn_detection: true
+        require_vpn_detection: true,
       },
       '/api/llm/providers/restricted/*': {
         allowed_regions: ['north-america', 'europe'],
-        gdpr_compliance_required: true
+        gdpr_compliance_required: true,
       },
       '/api/export/data/*': {
         gdpr_countries: ['EU'],
-        data_residency_check: true
-      }
+        data_residency_check: true,
+      },
     };
 
-    const applicable_policy = this.findMatchingGeoPolicy(endpoint, geo_policies);
+    const applicable_policy = this.findMatchingGeoPolicy(
+      endpoint,
+      geo_policies
+    );
     if (!applicable_policy) {
       return { allowed: true, reason: 'no_geo_restrictions' };
     }
@@ -1960,24 +2089,26 @@ export class ZeroTrustSecurityManager {
       await this.logSecurityEvent('geo_restriction_blocked', {
         country,
         endpoint,
-        reason: 'blocked_country'
+        reason: 'blocked_country',
       });
-      
-      return { 
-        allowed: false, 
+
+      return {
+        allowed: false,
         reason: 'geo_blocked',
         country,
-        policy: 'blocked_countries'
+        policy: 'blocked_countries',
       };
     }
 
-    if (applicable_policy.allowed_countries && 
-        !applicable_policy.allowed_countries.includes(country)) {
+    if (
+      applicable_policy.allowed_countries &&
+      !applicable_policy.allowed_countries.includes(country)
+    ) {
       return {
         allowed: false,
         reason: 'geo_not_allowed',
         country,
-        policy: 'allowed_countries_only'
+        policy: 'allowed_countries_only',
       };
     }
 
@@ -1988,7 +2119,7 @@ export class ZeroTrustSecurityManager {
         return {
           allowed: false,
           reason: 'untrusted_vpn_detected',
-          vpn_info: vpn_detected
+          vpn_info: vpn_detected,
         };
       }
     }
@@ -2000,16 +2131,16 @@ export class ZeroTrustSecurityManager {
         return {
           allowed: false,
           reason: 'gdpr_consent_required',
-          region
+          region,
         };
       }
     }
 
-    return { 
-      allowed: true, 
+    return {
+      allowed: true,
       applied_policy: applicable_policy,
       country,
-      region 
+      region,
     };
   }
 
@@ -2035,7 +2166,7 @@ export class ZeroTrustSecurityManager {
         encryption_algorithm: encryption_config.algorithm,
         key_version: encryption_config.key_version,
         data_classification: classification,
-        encrypted_at: Date.now()
+        encrypted_at: Date.now(),
       };
     }
 
@@ -2047,12 +2178,14 @@ export class ZeroTrustSecurityManager {
       return encrypted_data.plaintext_data;
     }
 
-    const decryption_key = await this.getDecryptionKey(encrypted_data.key_version);
+    const decryption_key = await this.getDecryptionKey(
+      encrypted_data.key_version
+    );
     const decrypted = await crypto.subtle.decrypt(
       {
         name: encrypted_data.encryption_algorithm,
         iv: this.base64ToArrayBuffer(encrypted_data.iv),
-        tagLength: 128
+        tagLength: 128,
       },
       decryption_key,
       this.base64ToArrayBuffer(encrypted_data.encrypted_data)
@@ -2067,31 +2200,36 @@ export class ZeroTrustSecurityManager {
     const risk_indicators = {
       sql_injection: this.detectSQLInjection(request),
       xss_attempt: this.detectXSS(request),
-      unusual_patterns: await this.detectAnomalousPatterns(request, user_context),
+      unusual_patterns: await this.detectAnomalousPatterns(
+        request,
+        user_context
+      ),
       suspicious_headers: this.analyzeSuspiciousHeaders(request),
-      bot_behavior: await this.detectBotBehavior(request, user_context)
+      bot_behavior: await this.detectBotBehavior(request, user_context),
     };
 
     // 脅威検出結果の評価
-    for (const [threat_type, detection_result] of Object.entries(risk_indicators)) {
+    for (const [threat_type, detection_result] of Object.entries(
+      risk_indicators
+    )) {
       if (detection_result.detected) {
         threats.push({
           type: threat_type,
           severity: detection_result.severity,
           confidence: detection_result.confidence,
           indicators: detection_result.indicators,
-          recommended_action: detection_result.action
+          recommended_action: detection_result.action,
         });
       }
     }
 
     // 高リスク脅威の場合は即座にブロック
-    const high_risk_threats = threats.filter(t => t.severity === 'high');
+    const high_risk_threats = threats.filter((t) => t.severity === 'high');
     if (high_risk_threats.length > 0) {
       await this.logSecurityEvent('high_risk_threat_detected', {
         threats: high_risk_threats,
         request_details: this.sanitizeRequestForLogging(request),
-        user_context: user_context?.user_id || 'anonymous'
+        user_context: user_context?.user_id || 'anonymous',
       });
     }
 
@@ -2100,7 +2238,7 @@ export class ZeroTrustSecurityManager {
       threat_count: threats.length,
       high_risk_count: high_risk_threats.length,
       threats,
-      block_request: high_risk_threats.length > 0
+      block_request: high_risk_threats.length > 0,
     };
   }
 
@@ -2110,9 +2248,9 @@ export class ZeroTrustSecurityManager {
     const bot_management = {
       is_bot: bot_score.score > 80,
       bot_score: bot_score.score,
-      bot_type: bot_score.type,  // 'search_engine', 'malicious', 'good', 'unknown'
+      bot_type: bot_score.type, // 'search_engine', 'malicious', 'good', 'unknown'
       action: 'allow',
-      challenge_required: false
+      challenge_required: false,
     };
 
     // Bot種別による処理分岐
@@ -2122,13 +2260,13 @@ export class ZeroTrustSecurityManager {
         bot_management.action = 'allow';
         bot_management.apply_rate_limit = true;
         break;
-        
+
       case 'malicious':
         // 悪意のあるボットはブロック
         bot_management.action = 'block';
         await this.addToBlocklist(request.cf?.ray_id, 'malicious_bot', 3600);
         break;
-        
+
       case 'suspicious':
         // 疑わしいボットにはCAPTCHA チャレンジ
         if (bot_score.score > 60) {
@@ -2137,7 +2275,7 @@ export class ZeroTrustSecurityManager {
           bot_management.challenge_type = 'turnstile';
         }
         break;
-        
+
       case 'good':
       case 'unknown':
       default:
@@ -2153,7 +2291,7 @@ export class ZeroTrustSecurityManager {
         bot_type: bot_score.type,
         action: bot_management.action,
         user_agent: request.headers.get('User-Agent')?.substring(0, 200),
-        cf_ray_id: request.cf?.ray_id
+        cf_ray_id: request.cf?.ray_id,
       });
     }
 
@@ -2172,9 +2310,9 @@ export class ZeroTrustSecurityManager {
 
     // 認証状態
     if (!user_context) {
-      risk_score += 20;  // 未認証
+      risk_score += 20; // 未認証
     } else if (!user_context.verified_email) {
-      risk_score += 10;  // メール未認証
+      risk_score += 10; // メール未認証
     }
 
     // アクセス時間（深夜・早朝アクセス）
@@ -2197,11 +2335,11 @@ export class ZeroTrustSecurityManager {
     if (user_context?.user_id) {
       return `user:${user_context.user_id}`;
     }
-    
+
     const ip = request.headers.get('CF-Connecting-IP');
     const user_agent = request.headers.get('User-Agent') || 'unknown';
     const fingerprint = btoa(`${ip}:${user_agent}`).substring(0, 16);
-    
+
     return `anon:${fingerprint}`;
   }
 
@@ -2209,7 +2347,7 @@ export class ZeroTrustSecurityManager {
     try {
       // JWT署名検証とペイロード取得
       const jwt_payload = await this.verifyJWTSignature(token);
-      
+
       // トークン有効期限チェック
       if (jwt_payload.exp < Date.now() / 1000) {
         return { valid: false, reason: 'token_expired' };
@@ -2221,7 +2359,7 @@ export class ZeroTrustSecurityManager {
       return {
         valid: true,
         payload: jwt_payload,
-        security_level
+        security_level,
       };
     } catch (error) {
       return { valid: false, reason: error.message };
@@ -2236,17 +2374,21 @@ export class ZeroTrustSecurityManager {
       /(\bDELETE\b.*\bFROM\b)/i,
       /(\bDROP\b.*\bTABLE\b)/i,
       /(\'.*(\bOR\b|\bAND\b).*\')/i,
-      /(\-\-|\#|\/\*|\*\/)/
+      /(\-\-|\#|\/\*|\*\/)/,
     ];
 
     const suspicious_params = [];
     const url = new URL(request.url);
-    
+
     // URLパラメータチェック
     url.searchParams.forEach((value, key) => {
       for (const pattern of sql_patterns) {
         if (pattern.test(value)) {
-          suspicious_params.push({ param: key, value, pattern: pattern.source });
+          suspicious_params.push({
+            param: key,
+            value,
+            pattern: pattern.source,
+          });
         }
       }
     });
@@ -2256,23 +2398,23 @@ export class ZeroTrustSecurityManager {
       severity: suspicious_params.length > 2 ? 'high' : 'medium',
       confidence: suspicious_params.length * 25,
       indicators: suspicious_params,
-      action: suspicious_params.length > 0 ? 'block' : 'allow'
+      action: suspicious_params.length > 0 ? 'block' : 'allow',
     };
   }
 
   classifyData(data) {
     const data_str = JSON.stringify(data).toLowerCase();
-    
+
     // PII (個人識別情報) 検出
     const pii_patterns = {
       email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
       phone: /(\+\d{1,3}[- ]?)?\d{10}/,
       ssn: /\b\d{3}-\d{2}-\d{4}\b/,
-      credit_card: /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/
+      credit_card: /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/,
     };
 
     let classification = 'public';
-    
+
     for (const [type, pattern] of Object.entries(pii_patterns)) {
       if (pattern.test(data_str)) {
         classification = 'pii';
@@ -2286,7 +2428,7 @@ export class ZeroTrustSecurityManager {
       /secret/i,
       /token/i,
       /password/i,
-      /private[_-]?key/i
+      /private[_-]?key/i,
     ];
 
     for (const pattern of secret_patterns) {
@@ -2301,28 +2443,28 @@ export class ZeroTrustSecurityManager {
 
   getEncryptionConfig(classification) {
     const configs = {
-      'public': { encrypt: false },
-      'internal': { 
-        encrypt: true,
-        algorithm: 'AES-GCM',
-        key_version: 'v1',
-        key: this.encryption_key
-      },
-      'pii': {
+      public: { encrypt: false },
+      internal: {
         encrypt: true,
         algorithm: 'AES-GCM',
         key_version: 'v1',
         key: this.encryption_key,
-        additional_protection: true
       },
-      'secret': {
+      pii: {
         encrypt: true,
-        algorithm: 'AES-GCM', 
+        algorithm: 'AES-GCM',
         key_version: 'v1',
         key: this.encryption_key,
         additional_protection: true,
-        audit_log: true
-      }
+      },
+      secret: {
+        encrypt: true,
+        algorithm: 'AES-GCM',
+        key_version: 'v1',
+        key: this.encryption_key,
+        additional_protection: true,
+        audit_log: true,
+      },
     };
 
     return configs[classification] || configs['internal'];
@@ -2334,17 +2476,20 @@ export class ZeroTrustSecurityManager {
       event_type,
       severity: this.getEventSeverity(event_type),
       details,
-      source: 'edge_security_manager'
+      source: 'edge_security_manager',
     };
 
     // セキュリティログをKVに保存
     const log_key = `security_log:${Date.now()}:${crypto.randomUUID()}`;
     await this.kv.put(log_key, JSON.stringify(security_log), {
-      expirationTtl: 30 * 24 * 3600  // 30日保持
+      expirationTtl: 30 * 24 * 3600, // 30日保持
     });
 
     // 重要度の高いイベントは即座に通知
-    if (security_log.severity === 'critical' || security_log.severity === 'high') {
+    if (
+      security_log.severity === 'critical' ||
+      security_log.severity === 'high'
+    ) {
       await this.sendSecurityAlert(security_log);
     }
   }
@@ -2355,54 +2500,50 @@ export const securityConfig = {
   cloudflare_access: {
     applications: [
       {
-        name: "AutoForgeNexus Admin Panel",
-        domain: "admin.autoforgenexus.com",
+        name: 'AutoForgeNexus Admin Panel',
+        domain: 'admin.autoforgenexus.com',
         policies: [
           {
-            name: "Admin Access",
-            decision: "allow",
+            name: 'Admin Access',
+            decision: 'allow',
             include: [
-              { email_domain: "autoforgenexus.com" },
-              { email: ["admin@autoforgenexus.com"] }
+              { email_domain: 'autoforgenexus.com' },
+              { email: ['admin@autoforgenexus.com'] },
             ],
-            require: [
-              { mfa: true },
-              { country: ["US", "JP", "GB"] }
-            ]
-          }
-        ]
+            require: [{ mfa: true }, { country: ['US', 'JP', 'GB'] }],
+          },
+        ],
       },
       {
-        name: "AutoForgeNexus API Management",
-        domain: "api-admin.autoforgenexus.com",
+        name: 'AutoForgeNexus API Management',
+        domain: 'api-admin.autoforgenexus.com',
         policies: [
           {
-            name: "Developer Access",
-            decision: "allow",
-            include: [
-              { github: { teams: ["autoforgenexus/developers"] } }
-            ]
-          }
-        ]
-      }
-    ]
+            name: 'Developer Access',
+            decision: 'allow',
+            include: [{ github: { teams: ['autoforgenexus/developers'] } }],
+          },
+        ],
+      },
+    ],
   },
   waf_rules: [
     {
-      description: "Block suspicious SQL injection patterns",
-      expression: "(http.request.uri.query contains \"union select\") or (http.request.uri.query contains \"drop table\")",
-      action: "block"
+      description: 'Block suspicious SQL injection patterns',
+      expression:
+        '(http.request.uri.query contains "union select") or (http.request.uri.query contains "drop table")',
+      action: 'block',
     },
     {
-      description: "Rate limit API endpoints",
-      expression: "(http.request.uri.path matches \"^/api/.*\")",
-      action: "challenge",
+      description: 'Rate limit API endpoints',
+      expression: '(http.request.uri.path matches "^/api/.*")',
+      action: 'challenge',
       rate_limit: {
         threshold: 100,
-        period: 60
-      }
-    }
-  ]
+        period: 60,
+      },
+    },
+  ],
 };
 ```
 
@@ -2416,7 +2557,7 @@ resource "cloudflare_access_application" "admin_panel" {
   domain           = "admin.autoforgenexus.com"
   type             = "self_hosted"
   session_duration = "24h"
-  
+
   cors_headers {
     allowed_methods = ["GET", "POST", "OPTIONS"]
     allowed_origins = ["https://autoforgenexus.com"]
@@ -2493,6 +2634,7 @@ resource "cloudflare_rate_limit" "api_rate_limit" {
 ```
 
 ### KPI・メトリクス
+
 - セキュリティインシデント検出率: 99%+
 - false positive率: < 5%
 - 脅威ブロック成功率: > 98%
@@ -2505,6 +2647,7 @@ resource "cloudflare_rate_limit" "api_rate_limit" {
 これらの7つのベストプラクティスにより、AutoForgeNexusのエッジコンピューティング環境において以下を実現します：
 
 ### 期待効果
+
 - **パフォーマンス**: P95レスポンス時間 < 200ms
 - **可用性**: 99.9%+ SLA達成
 - **スケーラビリティ**: グローバル分散による無制限スケーリング
@@ -2513,6 +2656,7 @@ resource "cloudflare_rate_limit" "api_rate_limit" {
 - **コスト最適化**: エッジキャッシングによる50%のインフラコスト削減
 
 ### 実装優先順位
+
 1. **Phase 1** (即座): GitOps Pipeline + IaC基盤
 2. **Phase 2** (1-2週間): Edge Caching + Multi-Region LLM
 3. **Phase 3** (2-4週間): Observability + Traffic Routing

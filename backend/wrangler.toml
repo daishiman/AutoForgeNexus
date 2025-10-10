@@ -1,0 +1,72 @@
+name = "autoforgenexus-backend"
+main = "src/main.py"
+compatibility_date = "2025-09-30"
+
+# ==========================================
+# Staging Environment
+# ==========================================
+[env.staging]
+name = "autoforgenexus-backend-staging"
+workers_dev = true  # 開発環境でのみ有効化
+# route設定はドメイン取得後に有効化
+# route = { pattern = "api-staging.autoforgenexus.com/*", zone_name = "autoforgenexus.com" }
+
+[env.staging.vars]
+APP_ENV = "staging"
+APP_NAME = "AutoForgeNexus-Backend-Staging"
+DEBUG = "false"
+LOG_LEVEL = "INFO"
+CORS_ORIGINS = "*"  # 開発環境では全許可
+
+[env.staging.observability]
+enabled = true
+head_sampling_rate = 1.0  # 100%サンプリング（詳細トレース）
+
+# ==========================================
+# Production Environment
+# ==========================================
+[env.production]
+name = "autoforgenexus-backend-production"
+workers_dev = false  # 本番環境では無効化
+# route設定はドメイン取得後に有効化
+# route = { pattern = "api.autoforgenexus.com/*", zone_name = "autoforgenexus.com" }
+
+[env.production.vars]
+APP_ENV = "production"
+APP_NAME = "AutoForgeNexus-Backend-Production"
+DEBUG = "false"
+LOG_LEVEL = "WARNING"
+CORS_ORIGINS = "https://autoforgenexus.com,https://staging.autoforgenexus.com"
+
+[env.production.observability]
+enabled = true
+head_sampling_rate = 0.1  # 10%サンプリング（コスト最適化）
+
+# ==========================================
+# Build Configuration (Python Workers用)
+# ==========================================
+[build]
+command = ""  # Python Workersは自動ビルド
+
+# ==========================================
+# Secrets (GitHub Actionsで設定)
+# ==========================================
+#
+# 【バックエンド認証】
+# CLERK_SECRET_KEY
+#
+# 【LLMプロバイダー】
+# OPENAI_API_KEY
+# ANTHROPIC_API_KEY
+#
+# 【データベース】
+# TURSO_DATABASE_URL
+# TURSO_AUTH_TOKEN
+#
+# 【Redis（REST API用）】
+# REDIS_REST_URL       # 例: https://lucky-marten-17516.upstash.io
+# REDIS_REST_TOKEN     # 例: AURsAAInc...
+#
+# 【観測性（オプション）】
+# LANGFUSE_PUBLIC_KEY
+# LANGFUSE_SECRET_KEY

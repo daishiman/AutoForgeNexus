@@ -15,8 +15,19 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# ===========================
+# Python仮想環境
+# ===========================
+# 注意: frontend/src/lib/はアプリケーションコードのため、
+#       以下のパターンは仮想環境のlib/のみにマッチするよう限定
+/lib/                    # プロジェクトルートのlib/のみ
+/lib64/                  # プロジェクトルートのlib64/のみ
+backend/lib/             # バックエンドディレクトリのlib/
+backend/lib64/           # バックエンドディレクトリのlib64/
+**/venv/lib/             # すべてのvenv内のlib/
+**/venv/lib64/           # すべてのvenv内のlib64/
+**/.venv/lib/            # すべての.venv内のlib/
+**/.venv/lib64/          # すべての.venv内のlib64/
 parts/
 sdist/
 var/
@@ -26,6 +37,13 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+backend/.venv.sha256
+
+# Test/Quality check results
+backend/coverage.json
+backend/mypy_result.txt
+backend/bandit-report.json
+**/bandit-report.json
 
 # PyInstaller
 *.manifest
@@ -106,6 +124,9 @@ celerybeat.pid
 # Environments
 .env
 .env.*
+# 例外: 環境変数テンプレートは開発者向けドキュメントとして追跡
+!.env.example
+!**/.env.example
 .venv
 env/
 venv/
@@ -217,9 +238,9 @@ out/
 .nuxt
 dist
 
-# Gatsby files
+# Gatsby files（未使用フレームワークのためpublicパターンを削除）
+# 注意: Next.jsのpublicディレクトリは静的ファイル配信に必要なため追跡する
 .cache/
-public
 
 # Storybook build outputs
 .out
@@ -346,4 +367,17 @@ llm_responses/
 .claude/*.key
 .claude/api_keys.*
 .claude/tokens.*
-.claude/credentials.*
+.claude/credentials.**
+
+# Security file patterns
+*.pyc
+*.log
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.secret
+*.private
+private/
+config/local/

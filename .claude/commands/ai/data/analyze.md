@@ -1,6 +1,6 @@
 ---
 name: analyze
-description: "データ分析と洞察抽出"
+description: 'データ分析と洞察抽出'
 category: data
 complexity: high
 agents:

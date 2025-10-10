@@ -2,8 +2,7 @@
 
 ## 🎯 アーキテクチャ概要
 
-AutoForgeNexusは**DDD + イベント駆動 + クリーンアーキテクチャ**を採用し、
-複雑なプロンプトエンジニアリングドメインを効率的かつ保守しやすい形で実装します。
+AutoForgeNexusは**DDD + イベント駆動 + クリーンアーキテクチャ**を採用し、複雑なプロンプトエンジニアリングドメインを効率的かつ保守しやすい形で実装します。
 
 ## 🏗️ 全体アーキテクチャ
 
@@ -57,6 +56,7 @@ AutoForgeNexusは**DDD + イベント駆動 + クリーンアーキテクチャ*
 ### 1. Presentation Layer (プレゼンテーション層)
 
 #### Frontend (Next.js 15.5 + React 19)
+
 ```typescript
 // App Router構成
 app/
@@ -81,6 +81,7 @@ app/
 ```
 
 #### Backend API (FastAPI 0.116.1)
+
 ```python
 # API構成
 api/
@@ -106,6 +107,7 @@ api/
 ### 2. Application Layer (アプリケーション層)
 
 #### CQRS実装
+
 ```python
 # Command側
 @dataclass
@@ -159,6 +161,7 @@ class GetPromptQueryHandler:
 ```
 
 #### Event Bus実装
+
 ```python
 class EventBus:
     def __init__(self):
@@ -189,6 +192,7 @@ class EventBus:
 ### 3. Domain Layer (ドメイン層)
 
 #### 集約実装例
+
 ```python
 class Prompt(AggregateRoot):
     def __init__(self,
@@ -254,6 +258,7 @@ class Prompt(AggregateRoot):
 ```
 
 #### ドメインサービス実装
+
 ```python
 class PromptOptimizationService:
     def __init__(self,
@@ -307,6 +312,7 @@ class PromptOptimizationService:
 ### 4. Infrastructure Layer (インフラ層)
 
 #### リポジトリ実装
+
 ```python
 class SqlPromptRepository(PromptRepository):
     def __init__(self, session_factory: SessionFactory):
@@ -337,6 +343,7 @@ class SqlPromptRepository(PromptRepository):
 ```
 
 #### イベントストア実装
+
 ```python
 class TursoEventStore(EventStore):
     def __init__(self, session_factory: SessionFactory):
@@ -381,17 +388,21 @@ class TursoEventStore(EventStore):
 **検証結果: Turso > Supabase**
 
 #### Turso優位性
+
 - **エッジパフォーマンス**:
+
   - Cloudflare Workers統合で50ms以下のレイテンシ
   - 東京リージョン対応で日本からのアクセス最適化
   - SQLite基盤でクエリ実行が高速
 
 - **コスト効率性**:
+
   - 無料枠: 100データベース
   - 月額$5で無制限データベース
   - トラフィック課金なし
 
 - **開発効率性**:
+
   - Docker不要のローカル開発環境
   - ブランチ機能でGit-likeなデータベース管理
   - 標準SQLのシンプルな操作
@@ -402,20 +413,23 @@ class TursoEventStore(EventStore):
   - RAG用途に最適化
 
 #### Supabase比較
-| 機能 | Turso | Supabase | 勝者 |
-|------|-------|----------|------|
-| エッジレイテンシ | <50ms | 100-200ms | **Turso** |
-| 無料データベース数 | 100個 | 2個 | **Turso** |
-| ベクトル検索 | ネイティブlibSQL | pgvector拡張 | **Turso** |
-| 認証機能 | 外部統合推奨 | 内蔵 | Supabase |
-| 管理UI | シンプル | 豊富 | Supabase |
-| エコシステム | 新興 | 成熟 | Supabase |
 
-**総合判定**: AutoForgeNexusの要件（エッジパフォーマンス、ベクトル検索、コスト効率）においてTursoが優位
+| 機能               | Turso            | Supabase     | 勝者      |
+| ------------------ | ---------------- | ------------ | --------- |
+| エッジレイテンシ   | <50ms            | 100-200ms    | **Turso** |
+| 無料データベース数 | 100個            | 2個          | **Turso** |
+| ベクトル検索       | ネイティブlibSQL | pgvector拡張 | **Turso** |
+| 認証機能           | 外部統合推奨     | 内蔵         | Supabase  |
+| 管理UI             | シンプル         | 豊富         | Supabase  |
+| エコシステム       | 新興             | 成熟         | Supabase  |
+
+**総合判定**:
+AutoForgeNexusの要件（エッジパフォーマンス、ベクトル検索、コスト効率）においてTursoが優位
 
 ### Turso実装詳細
 
 #### データベース接続設定
+
 ```python
 # Turso SQLAlchemy設定
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -453,6 +467,7 @@ turso_client = libsql_client.create_client(
 ```
 
 #### ベクトル検索実装
+
 ```python
 # libSQL Vector統合
 class TursoVectorRepository:
@@ -505,6 +520,7 @@ class TursoVectorRepository:
 ```
 
 #### マイグレーション管理
+
 ```python
 # Turso対応マイグレーション
 class TursoMigrationManager:
@@ -580,6 +596,7 @@ class TursoMigrationManager:
 ## 🚀 デプロイメントアーキテクチャ
 
 ### Cloudflare統合アーキテクチャ
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Cloudflare Edge Network                  │
@@ -601,6 +618,7 @@ class TursoMigrationManager:
 ```
 
 ### Turso統合開発環境
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
@@ -640,7 +658,7 @@ services:
       - NEXTAUTH_SECRET=your-secret
       - NEXTAUTH_URL=http://localhost:3001
     ports:
-      - "3001:3000"
+      - '3001:3000'
     depends_on:
       - langfuse-db
 
@@ -661,6 +679,7 @@ volumes:
 ## 📊 パフォーマンス要件実装
 
 ### スケーラビリティ対応
+
 ```python
 # 接続プール設定
 async_engine = create_async_engine(
@@ -701,6 +720,7 @@ class CachedPromptQueryService:
 ```
 
 ### 非同期処理設計
+
 ```python
 # バックグラウンドタスク
 class EvaluationTaskProcessor:
@@ -744,6 +764,7 @@ class EvaluationTaskProcessor:
 #### 認証ライブラリ選定: **Clerk**
 
 **選定理由**:
+
 - Tursoとの公式統合とベストプラクティス
 - 包括的な認証機能（OAuth、MFA、組織管理）
 - Edge-firstアーキテクチャでCloudflare Workersと最適化
@@ -751,6 +772,7 @@ class EvaluationTaskProcessor:
 - 日本語対応とエンタープライズ準備
 
 **実装例**:
+
 ```python
 # Clerk統合認証
 class ClerkAuthenticationService:
@@ -807,6 +829,7 @@ class RBACAuthorizationService:
 **LangFuse**は、AutoForgeNexusの全LLM実行を観測・分析・評価するコア観測ツールとして統合します。
 
 #### 主要統合機能
+
 - **LLMトレーシング**: 全プロンプト実行の完全トレース
 - **評価メトリクス**: 17の革新機能の効果測定
 - **プロンプト管理**: バージョニングと実験管理
@@ -815,6 +838,7 @@ class RBACAuthorizationService:
 ### LangFuse実装詳細
 
 #### Python SDK統合
+
 ```python
 # LangFuse Client設定
 from langfuse import Langfuse
@@ -911,6 +935,7 @@ async def monitor_prompt_slo(prompt_id: str, slo_config: SLOConfig):
 ```
 
 #### React/Next.js統合
+
 ```typescript
 // LangFuse Frontend統合
 import { LangfuseWeb } from "langfuse";
@@ -972,6 +997,7 @@ export function PromptExecutionTrace({ traceId }: { traceId: string }) {
 ### LangFuse評価パイプライン
 
 #### 17革新機能の評価実装
+
 ```python
 # AutoForgeNexus専用評価メトリクス
 class AutoForgeNexusEvaluator:
@@ -1023,6 +1049,7 @@ class AutoForgeNexusEvaluator:
 ### LangFuseデータセット管理
 
 #### プロンプトテンプレートの管理
+
 ```python
 # プロンプトデータセット管理
 class PromptDatasetManager:
@@ -1069,6 +1096,7 @@ class PromptDatasetManager:
 ### LangFuse設定・デプロイ
 
 #### 環境変数設定
+
 ```env
 # LangFuse 設定
 LANGFUSE_SECRET_KEY=sk-lf-...
@@ -1080,6 +1108,7 @@ LANGFUSE_HOST=https://cloud.langfuse.com
 ```
 
 #### Docker Compose統合
+
 ```yaml
 # LangFuse Self-hosted (オプション)
 langfuse:
@@ -1090,7 +1119,7 @@ langfuse:
     - NEXTAUTH_URL=http://localhost:3001
     - LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES=true
   ports:
-    - "3001:3000"
+    - '3001:3000'
   depends_on:
     - langfuse-db
 
@@ -1107,6 +1136,7 @@ langfuse-db:
 ## 📈 監視・ロギング
 
 ### 分散トレーシング
+
 ```python
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
@@ -1130,6 +1160,7 @@ class TracedPromptService:
 ```
 
 ### メトリクス収集
+
 ```python
 from prometheus_client import Counter, Histogram, Gauge
 
@@ -1156,74 +1187,77 @@ active_users = Gauge(
 
 ### バックエンド技術
 
-| カテゴリ | 技術 | バージョン | 用途 |
-|---------|------|-----------|-----|
-| 言語 | Python | 3.13 | 主要言語 |
-| フレームワーク | FastAPI | 0.116.1 | Web API |
-| DB | Turso (libSQL) | latest | エッジデータ永続化 |
-| ベクトルDB | libSQL Vector | latest | 埋め込み検索 |
-| キャッシュ | Redis | 7 | セッション・キャッシュ |
-| ORM | SQLAlchemy | 2.0.32 | データマッピング |
-| 認証 | Clerk | latest | 認証・認可 |
-| タスクキュー | Celery | 5.4.0 | 非同期処理 |
-| LLM統合 | LangChain | 0.3.27 | LLMチェーン |
-| ワークフロー | LangGraph | 0.6.7 | フロー管理 |
-| LLMゲートウェイ | LiteLLM | 1.76.1 | 統一API |
-| LLM観測 | LangFuse | 2.0+ | トレーシング・評価 |
+| カテゴリ        | 技術           | バージョン | 用途                   |
+| --------------- | -------------- | ---------- | ---------------------- |
+| 言語            | Python         | 3.13       | 主要言語               |
+| フレームワーク  | FastAPI        | 0.116.1    | Web API                |
+| DB              | Turso (libSQL) | latest     | エッジデータ永続化     |
+| ベクトルDB      | libSQL Vector  | latest     | 埋め込み検索           |
+| キャッシュ      | Redis          | 7          | セッション・キャッシュ |
+| ORM             | SQLAlchemy     | 2.0.32     | データマッピング       |
+| 認証            | Clerk          | latest     | 認証・認可             |
+| タスクキュー    | Celery         | 5.4.0      | 非同期処理             |
+| LLM統合         | LangChain      | 0.3.27     | LLMチェーン            |
+| ワークフロー    | LangGraph      | 0.6.7      | フロー管理             |
+| LLMゲートウェイ | LiteLLM        | 1.76.1     | 統一API                |
+| LLM観測         | LangFuse       | 2.0+       | トレーシング・評価     |
 
 ### フロントエンド技術
 
-| カテゴリ | 技術 | バージョン | 用途 |
-|---------|------|-----------|-----|
-| フレームワーク | Next.js | 15.5.0 | SSR/SSG |
-| UI ライブラリ | React | 19.0.0 | UIコンポーネント |
-| 言語 | TypeScript | 5.x | 型安全性 |
-| スタイリング | Tailwind CSS | 4.0.0 | ユーティリティCSS |
-| コンポーネント | shadcn/ui | latest | UIキット |
-| 状態管理 | Zustand | 5.0.0 | グローバル状態 |
-| データフェッチ | TanStack Query | 5.87.4 | サーバー状態 |
-| エディタ | Monaco Editor | latest | コードエディタ |
-| フロー図 | React Flow | 11.11.0 | ワークフロー表示 |
+| カテゴリ       | 技術           | バージョン | 用途              |
+| -------------- | -------------- | ---------- | ----------------- |
+| フレームワーク | Next.js        | 15.5.0     | SSR/SSG           |
+| UI ライブラリ  | React          | 19.0.0     | UIコンポーネント  |
+| 言語           | TypeScript     | 5.x        | 型安全性          |
+| スタイリング   | Tailwind CSS   | 4.0.0      | ユーティリティCSS |
+| コンポーネント | shadcn/ui      | latest     | UIキット          |
+| 状態管理       | Zustand        | 5.0.0      | グローバル状態    |
+| データフェッチ | TanStack Query | 5.87.4     | サーバー状態      |
+| エディタ       | Monaco Editor  | latest     | コードエディタ    |
+| フロー図       | React Flow     | 11.11.0    | ワークフロー表示  |
 
 ### インフラストラクチャ
 
-| カテゴリ | 技術 | 用途 |
-|---------|------|-----|
-| データベース | Turso | Edge SQLite、ベクトル検索 |
-| 認証プラットフォーム | Clerk | 認証・認可・組織管理 |
-| エッジコンピューティング | Cloudflare Workers | Python実行環境 |
-| CDN | Cloudflare Pages | 静的ホスティング |
-| オブジェクトストレージ | Cloudflare R2 | ファイル保存 |
-| ベクトルDB | libSQL Vector | 埋め込み検索 |
-| コンテナ | Docker | 開発・本番環境 |
-| オーケストレーション | Docker Compose | ローカル開発 |
-| CI/CD | GitHub Actions | 自動化パイプライン |
+| カテゴリ                 | 技術               | 用途                      |
+| ------------------------ | ------------------ | ------------------------- |
+| データベース             | Turso              | Edge SQLite、ベクトル検索 |
+| 認証プラットフォーム     | Clerk              | 認証・認可・組織管理      |
+| エッジコンピューティング | Cloudflare Workers | Python実行環境            |
+| CDN                      | Cloudflare Pages   | 静的ホスティング          |
+| オブジェクトストレージ   | Cloudflare R2      | ファイル保存              |
+| ベクトルDB               | libSQL Vector      | 埋め込み検索              |
+| コンテナ                 | Docker             | 開発・本番環境            |
+| オーケストレーション     | Docker Compose     | ローカル開発              |
+| CI/CD                    | GitHub Actions     | 自動化パイプライン        |
 
 ### 観測・評価ツール
 
-| カテゴリ | 技術 | 用途 |
-|---------|------|-----|
-| LLM観測 | LangFuse | トレーシング・評価 |
-| 品質評価 | DeepEval | 単体テスト |
-| RAG評価 | Ragas | RAG特化メトリクス |
-| リアルタイム分析 | TruLens | 品質監視 |
-| メトリクス | Prometheus | 時系列データ |
-| 可視化 | Grafana | ダッシュボード |
-| トレーシング | OpenTelemetry | 分散トレース |
+| カテゴリ         | 技術          | 用途               |
+| ---------------- | ------------- | ------------------ |
+| LLM観測          | LangFuse      | トレーシング・評価 |
+| 品質評価         | DeepEval      | 単体テスト         |
+| RAG評価          | Ragas         | RAG特化メトリクス  |
+| リアルタイム分析 | TruLens       | 品質監視           |
+| メトリクス       | Prometheus    | 時系列データ       |
+| 可視化           | Grafana       | ダッシュボード     |
+| トレーシング     | OpenTelemetry | 分散トレース       |
 
 ## 🎯 パフォーマンス要件
 
 ### レスポンスタイム目標
+
 - **p50**: < 200ms
 - **p95**: < 500ms
 - **p99**: < 1000ms
 
 ### スループット目標
+
 - **API**: 1000 req/sec
 - **WebSocket**: 10000 同時接続
 - **バッチ処理**: 100000 records/hour
 
 ### 可用性目標
+
 - **SLA**: 99.9% (月間43分以内のダウンタイム)
 - **RTO**: 2時間
 - **RPO**: 1時間
@@ -1232,6 +1266,7 @@ active_users = Gauge(
 ---
 
 **ドキュメント情報**
+
 - 作成日: 2025-09-22
 - バージョン: 1.0
 - アーキテクチャパターン: DDD + Event-Driven + Clean Architecture

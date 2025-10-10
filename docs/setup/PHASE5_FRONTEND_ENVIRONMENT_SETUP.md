@@ -3,17 +3,19 @@
 ## 1. 概要と前提条件
 
 ### 背景
-AutoForgeNexusのフロントエンドは、ユーザーインターフェースとユーザーエクスペリエンスの中核を担います。
-最新のWeb技術スタックを活用し、高速で応答性の高い、アクセシブルなアプリケーションを構築します。
+
+AutoForgeNexusのフロントエンドは、ユーザーインターフェースとユーザーエクスペリエンスの中核を担います。最新のWeb技術スタックを活用し、高速で応答性の高い、アクセシブルなアプリケーションを構築します。
 
 ### 目的
+
 - Next.js 15.5とReact 19による高性能フロントエンド環境の構築
-- TypeScript 5.xによる型安全な開発環境の確立
+- TypeScript 5.9.2による型安全な開発環境の確立
 - Tailwind CSS 4.0とshadcn/uiによる統一的なデザインシステム
 - Clerkによる認証・認可の統合
 - M1 Mac（ARM64）に最適化された開発環境
 
 ### 担当エージェント
+
 - **メイン**: frontend-architect（フロントエンドアーキテクチャ設計主導）
 - **サポート**:
   - ui-ux-designer（UIコンポーネント設計）
@@ -21,6 +23,7 @@ AutoForgeNexusのフロントエンドは、ユーザーインターフェース
   - security-architect（セキュリティ設定）
 
 ### 関連AIコマンド
+
 ```bash
 /ai:architecture:design frontend-layer
 /sc:design ui-components
@@ -28,16 +31,18 @@ AutoForgeNexusのフロントエンドは、ユーザーインターフェース
 ```
 
 ### 技術スタック
-- **フレームワーク**: Next.js 14.2（App Router、安定版）
-- **ライブラリ**: React 18.3
-- **言語**: TypeScript 5.x
-- **スタイリング**: Tailwind CSS 3.4
-- **UIコンポーネント**: shadcn/ui
-- **状態管理**: Zustand 5.x
-- **認証**: Clerk
-- **パッケージマネージャー**: pnpm（必須）
+
+- **フレームワーク**: Next.js 15.5.4（App Router、Turbopack対応）
+- **ライブラリ**: React 19.0.0（Server Components標準）
+- **言語**: TypeScript 5.9.2
+- **スタイリング**: Tailwind CSS 4.0（OKLCH色空間）
+- **UIコンポーネント**: shadcn/ui 3.3.1
+- **状態管理**: Zustand 5.0.8
+- **認証**: Clerk 6.32.0
+- **パッケージマネージャー**: pnpm 9.x（必須）
 
 ### 前提条件
+
 - Node.js 22.x（ARM64対応）
 - pnpm 9.x
 - Docker Desktop for Mac（M1対応）
@@ -49,19 +54,23 @@ AutoForgeNexusのフロントエンドは、ユーザーインターフェース
 ## 2. Node.js環境セットアップ
 
 ### 背景
-Node.jsは JavaScript/TypeScriptランタイムとして、フロントエンド開発の基盤となります。
-M1 Macに最適化されたバージョンを使用することで、ビルド時間の短縮と開発効率の向上を実現します。
+
+Node.jsは JavaScript/TypeScriptランタイムとして、フロントエンド開発の基盤となります。M1
+Macに最適化されたバージョンを使用することで、ビルド時間の短縮と開発効率の向上を実現します。
 
 ### 目的
+
 - ARM64ネイティブNode.jsのインストール
 - pnpmパッケージマネージャーの設定
 - グローバルツールの最適化
 
 ### 担当エージェント
+
 - **メイン**: devops-coordinator（開発環境最適化）
 - **サポート**: performance-optimizer（パフォーマンスチューニング）
 
 ### 関連AIコマンド
+
 ```bash
 /sc:build setup-node
 /ai:operations:deploy development-environment
@@ -112,22 +121,26 @@ source ~/.zshrc
 
 ---
 
-## 3. Next.js 14.2プロジェクト初期化
+## 3. Next.js 15.5プロジェクト初期化
 
 ### 背景
-Next.js 14.2は安定版のApp Routerを採用し、React Server Componentsによる
-効率的なレンダリングとStreaming SSRを提供します。
+
+Next.js 15.5は最新のApp RouterとTurbopackを採用し、React Server
+Componentsによる効率的なレンダリングとStreaming SSRを提供します。
 
 ### 目的
-- Next.js 14.2（安定版）プロジェクトの初期化
+
+- Next.js 15.5（Turbopack対応）プロジェクトの初期化
 - App Router構造の設定
 - 開発サーバーの最適化
 
 ### 担当エージェント
+
 - **メイン**: frontend-architect（フロントエンド設計）
 - **サポート**: performance-engineer（パフォーマンス最適化）
 
 ### 関連AIコマンド
+
 ```bash
 /ai:development:implement nextjs-setup
 /sc:design app-structure
@@ -143,27 +156,28 @@ cd /Users/dm/dev/dev/個人開発/AutoForgeNexus
 mkdir -p frontend
 cd frontend
 
-# Next.js 14.2プロジェクト初期化（安定版）
-pnpm create next-app@14.2.0 . \
+# Next.js 15.5プロジェクト初期化（Turbopack対応）
+pnpm create next-app@15.5.4 . \
   --typescript \
   --tailwind \
   --app \
   --src-dir \
   --import-alias "@/*" \
+  --turbo \
   --no-eslint
 
 # 必要な依存関係の追加（バージョン固定）
-pnpm add next@14.2.0 react@18.3.1 react-dom@18.3.1
-pnpm add -D @types/node@20.14.0 @types/react@18.3.3 @types/react-dom@18.3.0
+pnpm add next@15.5.4 react@19.0.0 react-dom@19.0.0
+pnpm add -D @types/node@22.10.5 @types/react@19.0.6 @types/react-dom@19.0.2
 ```
 
 #### 3.2 Next.js設定ファイル（next.config.ts）
 
 ```typescript
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // React 18.3対応
+  // React 19対応
   reactStrictMode: true,
 
   // App Router設定
@@ -176,7 +190,7 @@ const nextConfig: NextConfig = {
     },
     // Parallel Routes & Intercepting Routes
     parallelRoutes: true,
-    // React 18 Features
+    // React 19 Features
     // reactCompiler: false,  // React 19で有効化
     // Server Actions
     serverActions: {
@@ -197,7 +211,7 @@ const nextConfig: NextConfig = {
   webpack: (config, { dev, isServer }) => {
     // ARM64ネイティブ最適化
     if (!isServer && !dev) {
-      config.target = 'web'
+      config.target = 'web';
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {
@@ -220,19 +234,21 @@ const nextConfig: NextConfig = {
             enforce: true,
           },
         },
-      }
+      };
     }
-    return config
+    return config;
   },
 
   // 環境変数の型安全性
   env: {
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    NEXT_PUBLIC_APP_URL:
+      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
 ```
 
 #### 3.3 プロジェクト構造
@@ -255,22 +271,26 @@ touch .env.development
 
 ---
 
-## 4. TypeScript 5.x設定
+## 4. TypeScript 5.9.2設定
 
 ### 背景
-TypeScript 5.xは最新の型機能とパフォーマンス改善を提供し、
-大規模アプリケーションの保守性と開発効率を向上させます。
+
+TypeScript
+5.9.2は最新の型機能とパフォーマンス改善を提供し、大規模アプリケーションの保守性と開発効率を向上させます。
 
 ### 目的
+
 - 厳密な型チェックの設定
 - パスエイリアスの設定
 - 開発体験の最適化
 
 ### 担当エージェント
+
 - **メイン**: frontend-architect（型設計）
 - **サポート**: quality-engineer（品質保証）
 
 ### 関連AIコマンド
+
 ```bash
 /ai:quality:analyze typescript-config
 /sc:analyze type-coverage
@@ -340,18 +360,8 @@ TypeScript 5.xは最新の型機能とパフォーマンス改善を提供し、
       }
     ]
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "out",
-    "public"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next", "out", "public"]
 }
 ```
 
@@ -362,51 +372,55 @@ TypeScript 5.xは最新の型機能とパフォーマンス改善を提供し、
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      NODE_ENV: 'development' | 'production' | 'test'
-      NEXT_PUBLIC_APP_URL: string
-      NEXT_PUBLIC_API_URL: string
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: string
-      CLERK_SECRET_KEY: string
+      NODE_ENV: 'development' | 'production' | 'test';
+      NEXT_PUBLIC_APP_URL: string;
+      NEXT_PUBLIC_API_URL: string;
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: string;
+      CLERK_SECRET_KEY: string;
     }
   }
 }
 
-export {}
+export {};
 
 // src/types/index.ts
 export interface User {
-  id: string
-  email: string
-  name: string
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  email: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ApiResponse<T = unknown> {
-  data?: T
-  error?: string
-  status: number
+  data?: T;
+  error?: string;
+  status: number;
 }
 ```
 
 ---
 
-## 5. Tailwind CSS 3.4とshadcn/ui
+## 5. Tailwind CSS 4.0とshadcn/ui
 
 ### 背景
-Tailwind CSS 3.4とshadcn/uiの組み合わせにより、
-一貫性のある美しいUIを効率的に構築できます。
+
+Tailwind CSS
+4.0とshadcn/uiの組み合わせにより、一貫性のある美しいUIを効率的に構築できます。
 
 ### 目的
-- Tailwind CSS 3.4の設定
-- shadcn/uiコンポーネントの統合
+
+- Tailwind CSS 4.0の設定（OKLCH色空間対応）
+- shadcn/ui 3.3.1コンポーネントの統合
 - カスタムテーマの設定
 
 ### 担当エージェント
+
 - **メイン**: ui-ux-designer（デザインシステム）
 - **サポート**: frontend-architect（UI実装）
 
 ### 関連AIコマンド
+
 ```bash
 /sc:design ui-system
 /ai:development:implement design-tokens
@@ -417,96 +431,103 @@ Tailwind CSS 3.4とshadcn/uiの組み合わせにより、
 #### 5.1 Tailwind CSS設定
 
 ```bash
-# Tailwind CSS 3.4と関連パッケージのインストール
-pnpm add -D tailwindcss@3.4.0 postcss autoprefixer
+# Tailwind CSS 4.0と関連パッケージのインストール
+pnpm add -D tailwindcss@4.0.0 postcss autoprefixer
 pnpm add -D @tailwindcss/forms @tailwindcss/typography @tailwindcss/aspect-ratio
 ```
 
-```javascript
-// tailwind.config.ts
-import type { Config } from 'tailwindcss'
+```css
+/* tailwind.config.css - Tailwind CSS v4.0形式 */
+@import 'tailwindcss';
 
-const config: Config = {
-  darkMode: ['class'],
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    container: {
-      center: true,
-      padding: '2rem',
-      screens: {
-        '2xl': '1400px',
-      },
-    },
-    extend: {
-      colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
-    },
-  },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/aspect-ratio'),
-    require('tailwindcss-animate'),
-  ],
+/* カスタムテーマ設定 */
+@theme {
+  /* OKLCH色空間を使用した色定義 - より正確な色相と明度制御 */
+  --color-border: oklch(90% 0.01 264);
+  --color-input: oklch(90% 0.01 264);
+  --color-ring: oklch(59.4% 0.238 251.4);
+  --color-background: oklch(100% 0 0);
+  --color-foreground: oklch(9% 0 0);
+
+  /* プライマリカラー - ブランドカラー */
+  --color-primary: oklch(59.4% 0.238 251.4);
+  --color-primary-foreground: oklch(98% 0 0);
+
+  /* セカンダリカラー */
+  --color-secondary: oklch(96% 0.002 264);
+  --color-secondary-foreground: oklch(9% 0 0);
+
+  /* 危険色 */
+  --color-destructive: oklch(62.8% 0.25 27);
+  --color-destructive-foreground: oklch(98% 0 0);
+
+  /* ミュートカラー */
+  --color-muted: oklch(96% 0.002 264);
+  --color-muted-foreground: oklch(45.3% 0.02 264);
+
+  /* アクセントカラー */
+  --color-accent: oklch(96% 0.002 264);
+  --color-accent-foreground: oklch(9% 0 0);
+
+  /* ポップオーバー */
+  --color-popover: oklch(100% 0 0);
+  --color-popover-foreground: oklch(9% 0 0);
+
+  /* カード */
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(9% 0 0);
+
+  /* ボーダー半径 */
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-sm: 0.375rem;
+
+  /* フォント */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* スペーシング */
+  --spacing-unit: 0.25rem;
+
+  /* ダークモード用の色定義 */
+  @media (prefers-color-scheme: dark) {
+    --color-background: oklch(9% 0 0);
+    --color-foreground: oklch(98% 0 0);
+    --color-primary: oklch(62% 0.238 251.4);
+    --color-card: oklch(9% 0 0);
+    --color-popover: oklch(9% 0 0);
+    --color-muted: oklch(15% 0.02 264);
+    --color-accent: oklch(15% 0.02 264);
+  }
 }
 
-export default config
+/* カスタムユーティリティ */
+@utility accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+@utility accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+/* キーフレーム定義 */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
 ```
 
 #### 5.2 shadcn/ui設定
@@ -650,26 +671,26 @@ export function IconButton() {
 export const iconSizes = {
   xs: 12,
   sm: 16,
-  md: 20,  // 日本のUIで最も使用される標準サイズ
+  md: 20, // 日本のUIで最も使用される標準サイズ
   lg: 24,
   xl: 32,
-} as const
+} as const;
 
 export const iconStrokes = {
-  thin: 1,      // 繊細なデザイン向け
-  light: 1.5,   // 標準（日本のUIに推奨）
-  regular: 2,   // 強調表示向け
-  bold: 2.5,    // 特別な強調向け
-} as const
+  thin: 1, // 繊細なデザイン向け
+  light: 1.5, // 標準（日本のUIに推奨）
+  regular: 2, // 強調表示向け
+  bold: 2.5, // 特別な強調向け
+} as const;
 
 export const iconColors = {
   default: 'text-gray-600 dark:text-gray-400',
   primary: 'text-blue-600 dark:text-blue-400',
   success: 'text-green-600 dark:text-green-400',
-  warning: 'text-amber-600 dark:text-amber-400',  // 日本向けに amber を使用
+  warning: 'text-amber-600 dark:text-amber-400', // 日本向けに amber を使用
   danger: 'text-red-600 dark:text-red-400',
   info: 'text-sky-600 dark:text-sky-400',
-} as const
+} as const;
 
 // Material Icons使用例（代替案）
 // import HomeIcon from '@mui/icons-material/Home'
@@ -738,7 +759,9 @@ export const iconColors = {
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 }
 
@@ -823,65 +846,73 @@ AccessibleButton.displayName = 'AccessibleButton'
 ```typescript
 // src/hooks/use-keyboard-navigation.ts
 // キーボードナビゲーション用カスタムフック
-import { useEffect } from 'react'
+import { useEffect } from 'react';
 
 export function useKeyboardNavigation() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escapeキーでモーダル/ダイアログを閉じる
       if (e.key === 'Escape') {
-        const activeModal = document.querySelector('[role="dialog"]')
+        const activeModal = document.querySelector('[role="dialog"]');
         if (activeModal) {
-          const closeButton = activeModal.querySelector('[aria-label="Close"]') as HTMLElement
-          closeButton?.click()
+          const closeButton = activeModal.querySelector(
+            '[aria-label="Close"]'
+          ) as HTMLElement;
+          closeButton?.click();
         }
       }
 
       // Tab トラップ（モーダル内でのフォーカス制御）
       if (e.key === 'Tab') {
-        const modal = document.querySelector('[role="dialog"]')
+        const modal = document.querySelector('[role="dialog"]');
         if (modal) {
           const focusableElements = modal.querySelectorAll(
             'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select'
-          )
-          const firstFocusable = focusableElements[0] as HTMLElement
-          const lastFocusable = focusableElements[focusableElements.length - 1] as HTMLElement
+          );
+          const firstFocusable = focusableElements[0] as HTMLElement;
+          const lastFocusable = focusableElements[
+            focusableElements.length - 1
+          ] as HTMLElement;
 
           if (e.shiftKey && document.activeElement === firstFocusable) {
-            e.preventDefault()
-            lastFocusable?.focus()
+            e.preventDefault();
+            lastFocusable?.focus();
           } else if (!e.shiftKey && document.activeElement === lastFocusable) {
-            e.preventDefault()
-            firstFocusable?.focus()
+            e.preventDefault();
+            firstFocusable?.focus();
           }
         }
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 }
 ```
 
 ---
 
-## 6. 状態管理（Zustand）
+## 6. 状態管理（Zustand 5.0.8）
 
 ### 背景
-Zustandは軽量で使いやすい状態管理ライブラリで、
-React 18のConcurrent Featuresと完全に互換性があります。
+
+Zustand 5.0.8は軽量で使いやすい状態管理ライブラリで、React
+19の最新機能と完全に互換性があります。
 
 ### 目的
+
 - グローバル状態管理の設定
 - 永続化とミドルウェアの設定
 - TypeScript統合
 
 ### 担当エージェント
+
 - **メイン**: frontend-architect（状態設計）
 - **サポート**: performance-engineer（最適化）
 
 ### 関連AIコマンド
+
 ```bash
 /ai:development:implement state-management
 /sc:analyze state-flow
@@ -892,35 +923,35 @@ React 18のConcurrent Featuresと完全に互換性があります。
 #### 6.1 Zustandインストールと設定
 
 ```bash
-# Zustandと関連パッケージのインストール
-pnpm add zustand
-pnpm add immer
-pnpm add -D @types/immer
+# Zustand 5.0.8と関連パッケージのインストール
+pnpm add zustand@5.0.8
+pnpm add immer@10.1.1
+pnpm add -D @types/immer@1.12.5
 ```
 
 #### 6.2 ストア設定
 
 ```typescript
 // src/stores/index.ts
-import { create } from 'zustand'
-import { devtools, persist, subscribeWithSelector } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
+import { create } from 'zustand';
+import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
 
 // ユーザーストアの型定義
 interface UserState {
-  user: User | null
-  isLoading: boolean
-  error: string | null
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
 }
 
 interface UserActions {
-  setUser: (user: User | null) => void
-  setLoading: (loading: boolean) => void
-  setError: (error: string | null) => void
-  reset: () => void
+  setUser: (user: User | null) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  reset: () => void;
 }
 
-type UserStore = UserState & UserActions
+type UserStore = UserState & UserActions;
 
 // ユーザーストア
 export const useUserStore = create<UserStore>()(
@@ -935,24 +966,24 @@ export const useUserStore = create<UserStore>()(
         // アクション
         setUser: (user) =>
           set((state) => {
-            state.user = user
+            state.user = user;
           }),
 
         setLoading: (loading) =>
           set((state) => {
-            state.isLoading = loading
+            state.isLoading = loading;
           }),
 
         setError: (error) =>
           set((state) => {
-            state.error = error
+            state.error = error;
           }),
 
         reset: () =>
           set((state) => {
-            state.user = null
-            state.isLoading = false
-            state.error = null
+            state.user = null;
+            state.isLoading = false;
+            state.error = null;
           }),
       })),
       {
@@ -964,23 +995,23 @@ export const useUserStore = create<UserStore>()(
       name: 'user-store',
     }
   )
-)
+);
 
 // アプリケーションストアの型定義
 interface AppState {
-  theme: 'light' | 'dark' | 'system'
-  sidebarOpen: boolean
-  notifications: Notification[]
+  theme: 'light' | 'dark' | 'system';
+  sidebarOpen: boolean;
+  notifications: Notification[];
 }
 
 interface AppActions {
-  setTheme: (theme: AppState['theme']) => void
-  toggleSidebar: () => void
-  addNotification: (notification: Notification) => void
-  removeNotification: (id: string) => void
+  setTheme: (theme: AppState['theme']) => void;
+  toggleSidebar: () => void;
+  addNotification: (notification: Notification) => void;
+  removeNotification: (id: string) => void;
 }
 
-type AppStore = AppState & AppActions
+type AppStore = AppState & AppActions;
 
 // アプリケーションストア
 export const useAppStore = create<AppStore>()(
@@ -996,24 +1027,24 @@ export const useAppStore = create<AppStore>()(
           // アクション
           setTheme: (theme) =>
             set((state) => {
-              state.theme = theme
+              state.theme = theme;
             }),
 
           toggleSidebar: () =>
             set((state) => {
-              state.sidebarOpen = !state.sidebarOpen
+              state.sidebarOpen = !state.sidebarOpen;
             }),
 
           addNotification: (notification) =>
             set((state) => {
-              state.notifications.push(notification)
+              state.notifications.push(notification);
             }),
 
           removeNotification: (id) =>
             set((state) => {
               state.notifications = state.notifications.filter(
                 (n) => n.id !== id
-              )
+              );
             }),
         }))
       ),
@@ -1026,26 +1057,31 @@ export const useAppStore = create<AppStore>()(
       name: 'app-store',
     }
   )
-)
+);
 ```
 
 ---
 
-## 7. Clerk認証統合
+## 7. Clerk認証統合（v6.32.0）
 
 ### 背景
-Clerkは最新の認証・認可サービスで、OAuth 2.0、MFA、組織管理機能を提供します。
+
+Clerk 6.32.0は最新の認証・認可サービスで、OAuth
+2.0、MFA、組織管理機能を提供します。
 
 ### 目的
+
 - Clerk SDKの統合
 - 認証フローの設定
 - 保護されたルートの実装
 
 ### 担当エージェント
+
 - **メイン**: security-architect（セキュリティ設計）
 - **サポート**: frontend-architect（統合実装）
 
 ### 関連AIコマンド
+
 ```bash
 /ai:quality:security authentication
 /sc:implement auth-flow
@@ -1056,8 +1092,8 @@ Clerkは最新の認証・認可サービスで、OAuth 2.0、MFA、組織管理
 #### 7.1 Clerkインストールと設定
 
 ```bash
-# Clerk SDKのインストール
-pnpm add @clerk/nextjs @clerk/themes
+# Clerk SDK 6.32.0のインストール
+pnpm add @clerk/nextjs@6.32.0 @clerk/themes@2.1.52
 
 # 環境変数の設定
 cat >> .env.local << EOL
@@ -1116,8 +1152,8 @@ export default function RootLayout({
 
 ```typescript
 // src/middleware.ts
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 // パブリックルートの定義
 const isPublicRoute = createRouteMatcher([
@@ -1125,48 +1161,41 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/public(.*)',
-])
+]);
 
 // 管理者ルートの定義
-const isAdminRoute = createRouteMatcher([
-  '/admin(.*)',
-  '/api/admin(.*)',
-])
+const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth()
+  const { userId, sessionClaims } = await auth();
 
   // パブリックルートは認証不要
   if (isPublicRoute(req)) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
   // 未認証の場合はサインインへリダイレクト
   if (!userId) {
-    const signInUrl = new URL('/sign-in', req.url)
-    signInUrl.searchParams.set('redirect_url', req.url)
-    return NextResponse.redirect(signInUrl)
+    const signInUrl = new URL('/sign-in', req.url);
+    signInUrl.searchParams.set('redirect_url', req.url);
+    return NextResponse.redirect(signInUrl);
   }
 
   // 管理者ルートの権限チェック
   if (isAdminRoute(req)) {
-    const role = sessionClaims?.metadata?.role as string
+    const role = sessionClaims?.metadata?.role as string;
 
     if (role !== 'admin') {
-      return NextResponse.redirect(new URL('/unauthorized', req.url))
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
   }
 
-  return NextResponse.next()
-})
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: [
-    '/((?!.*\\..*|_next).*)',
-    '/',
-    '/(api|trpc)(.*)',
-  ],
-}
+  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
+};
 ```
 
 ---
@@ -1174,19 +1203,22 @@ export const config = {
 ## 8. 開発環境とビルド設定
 
 ### 背景
-効率的な開発環境と最適化されたビルドプロセスにより、
-開発生産性と本番パフォーマンスを向上させます。
+
+効率的な開発環境と最適化されたビルドプロセスにより、開発生産性と本番パフォーマンスを向上させます。
 
 ### 目的
+
 - ESLintとPrettierの設定
 - Husky/lint-stagedの設定
 - ビルドとデプロイの最適化
 
 ### 担当エージェント
+
 - **メイン**: devops-coordinator（CI/CD設定）
 - **サポート**: quality-engineer（品質保証）
 
 ### 関連AIコマンド
+
 ```bash
 /sc:build frontend-pipeline
 /ai:quality:analyze code-quality
@@ -1250,7 +1282,7 @@ pnpm add -D eslint-plugin-jsx-a11y eslint-plugin-import
 
 ```bash
 # Prettierのインストール
-pnpm add -D prettier eslint-config-prettier
+pnpm add -D prettier@3.4.2 eslint-config-prettier@9.1.0
 ```
 
 ```javascript
@@ -1272,7 +1304,7 @@ pnpm add -D prettier eslint-config-prettier
 
 ```bash
 # Huskyとlint-stagedのインストール
-pnpm add -D husky lint-staged
+pnpm add -D husky@9.1.8 lint-staged@15.3.0
 pnpm exec husky init
 
 # pre-commitフックの設定
@@ -1327,18 +1359,22 @@ chmod +x .husky/pre-commit
 ## 9. テスト環境設定
 
 ### 背景
+
 包括的なテスト戦略により、コードの品質と信頼性を確保します。
 
 ### 目的
+
 - Jest/React Testing Libraryの設定
 - E2Eテスト環境の構築
 - テストカバレッジ目標の設定
 
 ### 担当エージェント
+
 - **メイン**: test-automation-engineer（テスト戦略）
 - **サポート**: quality-engineer（品質保証）
 
 ### 関連AIコマンド
+
 ```bash
 /sc:test frontend-components
 /ai:quality:tdd test-implementation
@@ -1357,11 +1393,11 @@ pnpm add -D jest-environment-jsdom
 
 ```javascript
 // jest.config.js
-const nextJest = require('next/jest')
+const nextJest = require('next/jest');
 
 const createJestConfig = nextJest({
   dir: './',
-})
+});
 
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
@@ -1384,31 +1420,31 @@ const customJestConfig = {
       statements: 80,
     },
   },
-}
+};
 
-module.exports = createJestConfig(customJestConfig)
+module.exports = createJestConfig(customJestConfig);
 ```
 
 ```javascript
 // jest.setup.js
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 
 // モックの設定
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
-}))
+}));
 
 // 環境変数のモック
-process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
+process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
 ```
 
 #### 9.2 E2Eテスト（Playwright）
 
 ```bash
 # Playwrightのインストール
-pnpm add -D @playwright/test
+pnpm add -D @playwright/test@1.50.0
 
 # Playwright設定の初期化
 pnpm exec playwright install
@@ -1416,7 +1452,7 @@ pnpm exec playwright install
 
 ```javascript
 // playwright.config.ts
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
@@ -1457,7 +1493,7 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
-})
+});
 ```
 
 ---
@@ -1465,19 +1501,23 @@ export default defineConfig({
 ## 10. React 19新機能とNode.js 22最適化
 
 ### 背景
-React 19の新しいフックとServer Components機能、Node.js 22のネイティブTypeScript支援により、
-開発効率と実行パフォーマンスが大幅に向上しました。
+
+React 19の新しいフックとServer Components機能、Node.js
+22のネイティブTypeScript支援により、開発効率と実行パフォーマンスが大幅に向上しました。
 
 ### 目的
+
 - React 19の新機能活用
 - Node.js 22の最適化機能利用
 - 最新のWeb標準対応
 
 ### 担当エージェント
+
 - **メイン**: frontend-architect（新機能実装）
 - **サポート**: performance-optimizer（パフォーマンス最適化）
 
 ### 関連AIコマンド
+
 ```bash
 /ai:development:implement react-19-features
 /sc:analyze performance-optimization
@@ -1488,13 +1528,18 @@ React 19の新しいフックとServer Components機能、Node.js 22のネイテ
 #### 10.1 React 19新機能の活用
 
 ```typescript
-// src/hooks/use-async.ts
-// React 19の新しいuseフック活用
+// React 19の主要な新機能と改善
+
+// 1. forwardRef不要 - refが通常のpropとして扱える
+function Button({ ref, children, ...props }) {
+  return <button ref={ref} {...props}>{children}</button>
+}
+
+// 2. use()フック - 非同期データの簡素化
 import { use, Suspense } from 'react'
 
-// サーバーからのデータ取得にuseフックを活用
 export function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
-  // React 19の新しいuseフック - forwardRef不要
+  // Promiseやコンテキストを直接読み取れる
   const user = use(userPromise)
 
   return (
@@ -1505,17 +1550,77 @@ export function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
   )
 }
 
-// src/components/server/async-component.tsx
-// React 19 Server Components活用
-export async function AsyncServerComponent() {
-  // サーバーサイドでの非同期処理
-  const data = await fetch('https://api.example.com/data')
-  const result = await data.json()
+// 3. Server Components by default - 非同期コンポーネント
+export default async function ProductList() {
+  // サーバーで実行、データベースに直接アクセス
+  const products = await db.query('SELECT * FROM products')
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <UserProfile userPromise={Promise.resolve(result)} />
-    </Suspense>
+    <div className="grid grid-cols-3 gap-4">
+      {products.map(product => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  )
+}
+
+// 4. Action関数 - フォーム処理の簡素化
+async function updateProfile(formData: FormData) {
+  'use server'
+
+  const name = formData.get('name')
+  const email = formData.get('email')
+
+  await db.update({ name, email })
+  revalidatePath('/profile')
+}
+
+export function ProfileForm() {
+  return (
+    <form action={updateProfile}>
+      <input name="name" />
+      <input name="email" type="email" />
+      <button type="submit">Update</button>
+    </form>
+  )
+}
+
+// 5. useActionState - 非同期アクションの状態管理
+import { useActionState } from 'react'
+
+function SubmitButton() {
+  const [state, formAction, isPending] = useActionState(updateProfile, null)
+
+  return (
+    <form action={formAction}>
+      <button disabled={isPending}>
+        {isPending ? 'Submitting...' : 'Submit'}
+      </button>
+      {state?.error && <p className="error">{state.error}</p>}
+    </form>
+  )
+}
+
+// 6. useOptimistic - 楽観的更新
+import { useOptimistic } from 'react'
+
+function TodoList({ todos }) {
+  const [optimisticTodos, addOptimisticTodo] = useOptimistic(
+    todos,
+    (state, newTodo) => [...state, newTodo]
+  )
+
+  async function addTodo(formData: FormData) {
+    const todo = formData.get('todo')
+    addOptimisticTodo({ id: Date.now(), text: todo, pending: true })
+    await createTodo(todo)
+  }
+
+  return (
+    <form action={addTodo}>
+      <input name="todo" />
+      <TodoItems todos={optimisticTodos} />
+    </form>
   )
 }
 ```
@@ -1557,36 +1662,38 @@ export async function AsyncServerComponent() {
 ```typescript
 // src/hooks/use-websocket-19.ts
 // React 19のconcurrent features対応WebSocketフック
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use } from 'react';
 
 export function useWebSocket(url: string) {
-  const [socket, setSocket] = useState<WebSocket | null>(null)
-  const [lastMessage, setLastMessage] = useState<string | null>(null)
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<
+    'connecting' | 'connected' | 'disconnected'
+  >('connecting');
 
   useEffect(() => {
     // Node.js 22のネイティブWebSocketクライアント活用
-    const ws = new WebSocket(url)
+    const ws = new WebSocket(url);
 
     ws.onopen = () => {
-      setConnectionStatus('connected')
-      setSocket(ws)
-    }
+      setConnectionStatus('connected');
+      setSocket(ws);
+    };
 
     ws.onmessage = (event) => {
-      setLastMessage(event.data)
-    }
+      setLastMessage(event.data);
+    };
 
     ws.onclose = () => {
-      setConnectionStatus('disconnected')
-    }
+      setConnectionStatus('disconnected');
+    };
 
     return () => {
-      ws.close()
-    }
-  }, [url])
+      ws.close();
+    };
+  }, [url]);
 
-  return { socket, lastMessage, connectionStatus }
+  return { socket, lastMessage, connectionStatus };
 }
 ```
 
@@ -1595,18 +1702,22 @@ export function useWebSocket(url: string) {
 ## 11. パフォーマンス最適化
 
 ### 背景
+
 M1 Macの性能を最大限活用し、最適なビルドとランタイムパフォーマンスを実現します。
 
 ### 目的
+
 - バンドル最適化
 - 画像最適化
 - Web Vitalsモニタリング
 
 ### 担当エージェント
+
 - **メイン**: performance-optimizer（パフォーマンス最適化）
 - **サポート**: observability-engineer（モニタリング）
 
 ### 関連AIコマンド
+
 ```bash
 /ai:operations:monitor web-vitals
 /sc:analyze performance-metrics
@@ -1618,7 +1729,7 @@ M1 Macの性能を最大限活用し、最適なビルドとランタイムパ�
 
 ```bash
 # Bundle Analyzerのインストール
-pnpm add -D @next/bundle-analyzer
+pnpm add -D @next/bundle-analyzer@15.5.4
 
 # 分析スクリプトの追加
 echo 'ANALYZE=true pnpm build' >> package.json
@@ -1628,9 +1739,9 @@ echo 'ANALYZE=true pnpm build' >> package.json
 // next.config.tsに追加
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
-})
+});
 
-module.exports = withBundleAnalyzer(nextConfig)
+module.exports = withBundleAnalyzer(nextConfig);
 ```
 
 #### 10.2 Web Vitalsモニタリング（React 19対応）
@@ -1692,7 +1803,7 @@ export function WebVitalsReporter() {
 
 ```bash
 # Sharp（M1最適化画像処理）のインストール
-pnpm add sharp
+pnpm add sharp@0.33.6
 ```
 
 ```typescript
@@ -1736,18 +1847,22 @@ export function OptimizedImage({
 ## 12. Docker開発環境
 
 ### 背景
+
 Dockerを使用することで、開発環境の一貫性と再現性を確保します。
 
 ### 目的
+
 - フロントエンド用Dockerコンテナの設定
 - Hot Reloadの設定
 - マルチステージビルド
 
 ### 担当エージェント
+
 - **メイン**: devops-coordinator（コンテナ設定）
 - **サポート**: sre-agent（信頼性）
 
 ### 関連AIコマンド
+
 ```bash
 /sc:build docker-frontend
 /ai:operations:deploy container-setup
@@ -1848,7 +1963,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -1867,18 +1982,22 @@ services:
 ## 13. トラブルシューティング
 
 ### 背景
+
 開発中に発生する一般的な問題と解決策を提供します。
 
 ### 目的
+
 - よくある問題の迅速な解決
 - M1 Mac固有の問題への対処
 - パフォーマンス問題の診断
 
 ### 担当エージェント
+
 - **メイン**: root-cause-analyst（問題分析）
 - **サポート**: performance-engineer（パフォーマンス）
 
 ### 関連AIコマンド
+
 ```bash
 /sc:troubleshoot frontend-issues
 /ai:operations:incident resolve
@@ -1900,7 +2019,7 @@ arch -arm64 volta install node@22
 # Sharp画像処理エラー
 # 解決策：再インストール
 pnpm remove sharp
-pnpm add sharp --force
+pnpm add sharp@0.33.6 --force
 
 # ESBuildエラー
 # 解決策：プラットフォーム指定
@@ -1967,36 +2086,42 @@ sudo powermetrics --samplers cpu_power
 ### フロントエンド環境構築完了確認
 
 #### 基本環境
+
 - [ ] Node.js 22.x（ARM64版）インストール完了
 - [ ] pnpm 9.xインストールと設定完了
-- [ ] Next.js 14.2プロジェクト初期化完了
-- [ ] TypeScript 5.x厳密モード設定完了
+- [ ] Next.js 15.5プロジェクト初期化完了
+- [ ] TypeScript 5.9.2厳密モード設定完了
 
 #### UI/UX
-- [ ] Tailwind CSS 3.4設定完了
-- [ ] shadcn/uiコンポーネント統合完了
+
+- [ ] Tailwind CSS 4.0設定完了
+- [ ] shadcn/ui 3.3.1コンポーネント統合完了
 - [ ] ダークモード対応完了
 - [ ] レスポンシブデザイン設定完了
 
 #### 状態管理と認証
-- [ ] Zustand状態管理設定完了
-- [ ] Clerk認証統合完了
+
+- [ ] Zustand 5.0.8状態管理設定完了
+- [ ] Clerk 6.32.0認証統合完了
 - [ ] ミドルウェア設定完了
 - [ ] 保護されたルート実装完了
 
 #### 開発ツール
+
 - [ ] ESLint/Prettier設定完了
 - [ ] Husky/lint-staged設定完了
 - [ ] Jest/Testing Library設定完了
 - [ ] Playwright E2Eテスト設定完了
 
 #### パフォーマンス
+
 - [ ] バンドル最適化設定完了
 - [ ] 画像最適化設定完了
 - [ ] Web Vitalsモニタリング設定完了
 - [ ] M1 Mac最適化完了
 
 #### Docker
+
 - [ ] 開発用Dockerfile作成完了
 - [ ] 本番用Dockerfile作成完了
 - [ ] Docker Compose統合完了
@@ -2007,12 +2132,14 @@ sudo powermetrics --samplers cpu_power
 ## パフォーマンスベンチマーク（2025年9月基準）
 
 ### 開発環境パフォーマンス（Apple Silicon）
+
 - **コールドスタート**: Next.js 15.5 + Turbopack = 1.2s（前版比50%改善）
 - **ホットリロード**: React 19 Fast Refresh = 80ms（前版比30%改善）
 - **TypeScript チェック**: tsc 5.9.2 = 2.1s（前版比40%改善）
 - **ビルド時間**: M3 Max 16GB = 14s（前版比35%改善）
 
 ### ランタイムパフォーマンス
+
 - **First Contentful Paint**: <1.2s
 - **Largest Contentful Paint**: <2.5s
 - **Cumulative Layout Shift**: <0.1
@@ -2020,6 +2147,7 @@ sudo powermetrics --samplers cpu_power
 - **Interaction to Next Paint**: <200ms
 
 ### メモリ使用量最適化
+
 - **開発時メモリ**: 平均 850MB（前版比25%削減）
 - **ビルド時メモリピーク**: 1.2GB（前版比30%削減）
 - **React 19 Server Components**: レンダリングメモリ40%削減
@@ -2027,22 +2155,135 @@ sudo powermetrics --samplers cpu_power
 ## 移行注意事項
 
 ### 既存プロジェクトからの移行
+
+#### React 18 → React 19 移行ガイド
+
 ```bash
-# React 18 → 19 移行チェック
+# 1. パッケージ更新
+pnpm add react@19.0.0 react-dom@19.0.0
+pnpm add -D @types/react@19.0.6 @types/react-dom@19.0.2
+
+# 2. forwardRef自動削除（React 19では不要）
+npx react-codemod@latest react-19/remove-forward-ref ./src
+
+# 3. ReactDOM.render → createRoot移行
 npx react-codemod@latest react-19/replace-reactdom-render ./src
 
-# forwardRef自動削除
-npx react-codemod@latest react-19/replace-forward-ref ./src
-
-# Tailwind CSS 3 → 4 移行
-npx @tailwindcss/upgrade@latest
+# 4. useTransition移行
+npx react-codemod@latest react-19/use-transition ./src
 ```
 
-### ブレイキングチェンジ対応
-- **React 19**: `forwardRef`が不要（自動ref転送）
-- **Tailwind CSS 4.0**: `@import "tailwindcss"`新構文
-- **Next.js 15.5**: `experimental.turbopack`が`turbo`に変更
-- **TypeScript 5.9.2**: より厳密な型チェック
+**主な破壊的変更:**
+
+- `forwardRef`が不要に - refはpropsとして直接受け取り可能
+- `React.FC`の型定義変更 - childrenが自動的に含まれない
+- `useLayoutEffect`がSSRで警告を出さなくなった
+- Server Componentsがデフォルトに（`'use client'`ディレクティブが必要）
+
+#### Next.js 14 → Next.js 15.5 移行ガイド
+
+```bash
+# 1. パッケージ更新
+pnpm add next@15.5.4
+
+# 2. 設定ファイル更新
+# next.config.js内のexperimental.turbopackをturboに変更
+
+# 3. App Routerの動作確認
+pnpm dev --turbo
+```
+
+**主な変更点:**
+
+- Turbopackが安定版に（`--turbo`フラグで有効化）
+- Typed Routesのサポート（`experimental.typedRoutes: true`）
+- React Compilerの実験的サポート
+- パフォーマンス改善（50%高速な冷起動）
+
+#### Tailwind CSS 3 → Tailwind CSS 4.0 移行ガイド
+
+```bash
+# 1. パッケージ更新
+pnpm add -D tailwindcss@4.0.0
+
+# 2. 設定ファイルをCSSベースに変換
+npx @tailwindcss/upgrade@latest
+
+# 3. postcss.config.jsの更新
+```
+
+**設定ファイル変換例:**
+
+```javascript
+// 旧: tailwind.config.js (v3)
+module.exports = {
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#3490dc',
+      },
+    },
+  },
+};
+```
+
+```css
+/* 新: tailwind.config.css (v4) */
+@import 'tailwindcss';
+
+@theme {
+  --color-primary: oklch(59.4% 0.238 251.4);
+}
+```
+
+**OKLCH色空間の利点:**
+
+- より自然なグラデーション
+- 明度の統一性が保たれる
+- ダークモード対応が簡単
+
+#### TypeScript 5.x → 5.9.2 移行ガイド
+
+```bash
+# パッケージ更新
+pnpm add -D typescript@5.9.2
+
+# tsconfig.jsonの更新
+```
+
+**新機能:**
+
+- `verbatimModuleSyntax`オプション
+- より厳密なジェネリック型推論
+- パフォーマンス改善（30%高速な型チェック）
+
+#### Zustand 4 → 5 移行ガイド
+
+```typescript
+// v4 (React 17以下サポート)
+import create from 'zustand';
+
+// v5 (React 18+のみ)
+import { create } from 'zustand';
+```
+
+**破壊的変更:**
+
+- React 18未満のサポート終了
+- `create`がnamed exportに変更
+- TypeScript型定義の改善
+
+### ブレイキングチェンジまとめ
+
+| ライブラリ   | 旧バージョン | 新バージョン | 主な破壊的変更                        |
+| ------------ | ------------ | ------------ | ------------------------------------- |
+| React        | 18.3         | 19.0.0       | forwardRef不要、Server Components標準 |
+| Next.js      | 14.2         | 15.5.4       | Turbopack安定版、設定変更             |
+| TypeScript   | 5.x          | 5.9.2        | より厳密な型チェック                  |
+| Tailwind CSS | 3.4          | 4.0.0        | CSS設定形式、OKLCH色空間              |
+| Zustand      | 4.x          | 5.0.8        | React 18+のみ、import変更             |
+| Clerk        | 5.x          | 6.32.0       | API変更、新認証フロー                 |
 
 ---
 
@@ -2051,10 +2292,12 @@ npx @tailwindcss/upgrade@latest
 ### Phase 6への移行準備
 
 1. **統合テスト環境の準備**
+
    - フロントエンド・バックエンド統合
    - E2Eテストシナリオの作成
 
 2. **CI/CDパイプライン準備**
+
    - GitHub Actions設定
    - 自動テスト・デプロイ設定
 
@@ -2063,10 +2306,12 @@ npx @tailwindcss/upgrade@latest
    - 環境変数管理
 
 ### 担当エージェント
+
 - **メイン**: devops-coordinator（統合管理）
 - **サポート**: 全エージェント協力
 
 ### 関連AIコマンド
+
 ```bash
 /sc:task integrate-systems
 /ai:operations:deploy production-setup
@@ -2076,15 +2321,16 @@ npx @tailwindcss/upgrade@latest
 
 ## 更新履歴
 
-- **2025-09-25**: 最新版対応更新
-  - Next.js 15.5 + React 19.1.0 対応
+- **2025-09-28**: 最新版対応更新
+
+  - Next.js 15.5.4 + React 19.0.0 対応
   - TypeScript 5.9.2 + Node.js 22 LTS 対応
-  - Tailwind CSS 4.0 + shadcn/ui canary 対応
+  - Tailwind CSS 4.0.0 + shadcn/ui 3.3.1 対応
   - Apple Silicon M1/M2/M3 最適化
   - パフォーマンスベンチマーク追加
   - 移行ガイド追加
 
 - **2024-01-XX**: 初版作成
-  - Next.js 14.2環境構築手順
+  - Next.js 15.5環境構築手順
   - M1 Mac最適化設定
   - 全エージェントによるレビュー完了

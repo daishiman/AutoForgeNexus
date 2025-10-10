@@ -1,6 +1,6 @@
 ---
 name: create
-description: "高品質プロンプトの作成と最適化"
+description: '高品質プロンプトの作成と最適化'
 category: prompt
 complexity: high
 agents:

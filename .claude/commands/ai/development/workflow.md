@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: "LangGraphによるワークフロー自動化実装"
+description: 'LangGraphによるワークフロー自動化実装'
 category: development
 complexity: high
 agents:

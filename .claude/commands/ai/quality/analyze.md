@@ -1,6 +1,6 @@
 ---
 name: analyze
-description: "包括的なコード品質とシステム分析"
+description: '包括的なコード品質とシステム分析'
 category: quality
 complexity: high
 agents:

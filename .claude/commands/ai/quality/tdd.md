@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: "テスト駆動開発の実践と管理"
+description: 'テスト駆動開発の実践と管理'
 category: quality
 complexity: high
 agents:

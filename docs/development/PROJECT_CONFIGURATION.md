@@ -7,9 +7,11 @@ AutoForgeNexusプロジェクトの開発環境を統一するための設定フ
 ## 設定ファイル一覧
 
 ### 1. EditorConfig (.editorconfig)
+
 **目的**: エディタ間でのコーディングスタイル統一
 
 **主な設定**:
+
 - 文字コード: UTF-8
 - 改行コード: LF (Unix形式)
 - インデント: スペース使用
@@ -20,9 +22,11 @@ AutoForgeNexusプロジェクトの開発環境を統一するための設定フ
 - 最終行改行: 有効
 
 ### 2. Prettier (.prettierrc)
+
 **目的**: JavaScript/TypeScript/JSON/Markdown等の自動フォーマット
 
 **主な設定**:
+
 - 行幅: 100文字
 - タブ幅: 2スペース
 - セミコロン: 必須
@@ -31,9 +35,11 @@ AutoForgeNexusプロジェクトの開発環境を統一するための設定フ
 - アロー関数括弧: 常に付与
 
 ### 3. Git Attributes (.gitattributes)
+
 **目的**: Git操作時のファイル属性制御
 
 **主な機能**:
+
 - 改行コード自動正規化 (LF)
 - バイナリファイル識別
 - 差分表示の最適化
@@ -43,6 +49,7 @@ AutoForgeNexusプロジェクトの開発環境を統一するための設定フ
 ### 4. VS Code設定 (.vscode/)
 
 #### settings.json
+
 - 保存時自動フォーマット
 - Python: Black + Ruff + mypy
 - TypeScript: ESLint + Prettier
@@ -50,7 +57,9 @@ AutoForgeNexusプロジェクトの開発環境を統一するための設定フ
 - 拡張機能設定
 
 #### extensions.json
+
 推奨拡張機能リスト:
+
 - Python開発ツール
 - TypeScript/JavaScript開発ツール
 - Git統合ツール
@@ -58,7 +67,9 @@ AutoForgeNexusプロジェクトの開発環境を統一するための設定フ
 - AI補完（GitHub Copilot）
 
 #### launch.json
+
 デバッグ設定:
+
 - FastAPI サーバー起動
 - Next.js 開発サーバー
 - pytest デバッグ
@@ -87,10 +98,12 @@ code --install-extension esbenp.prettier-vscode
 ### 2. 自動フォーマット有効化
 
 **VS Code**:
+
 - 設定は自動適用（.vscode/settings.json）
 - 保存時に自動フォーマット実行
 
 **コマンドライン**:
+
 ```bash
 # Python
 black backend/
@@ -118,6 +131,7 @@ git config core.autocrlf false
 ### フォーマット競合
 
 問題: Prettier と ESLint の競合
+
 ```bash
 # 解決方法
 cd frontend
@@ -127,6 +141,7 @@ pnpm add -D eslint-config-prettier
 ### 改行コード問題
 
 問題: CRLF/LF混在警告
+
 ```bash
 # 全ファイルLF変換
 find . -type f -not -path "./.git/*" -exec dos2unix {} \;
@@ -138,6 +153,7 @@ git add --renormalize .
 ### Python環境問題
 
 問題: Black/Ruff が動作しない
+
 ```bash
 # 仮想環境確認
 which python
@@ -164,5 +180,4 @@ pip install --upgrade black ruff mypy
 
 ---
 
-**設定日**: 2025-09-26
-**最終更新**: 2025-09-26
+**設定日**: 2025-09-26 **最終更新**: 2025-09-26
