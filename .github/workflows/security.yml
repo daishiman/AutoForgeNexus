@@ -51,13 +51,8 @@ jobs:
           path: ./
           base: main
           head: HEAD
-          extra_args: >-
-            --debug
-            --only-verified
-            --exclude-paths=.trufflehog_regex_ignore
-            --fail
-            --no-update
-            --github-actions
+          extra_args: --only-verified --exclude-paths=.trufflehog_regex_ignore
+          # 注: --fail, --no-update, --github-actions は Action により自動付与されます
 
       - name: Upload scan results
         if: failure()
