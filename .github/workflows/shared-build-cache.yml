@@ -45,6 +45,38 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 📦 Setup pnpm (frontend builds only)
+        if: inputs.build-type == 'frontend'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: 🟢 Setup Node.js (frontend builds only)
+        if: inputs.build-type == 'frontend'
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: '${{ inputs.working-directory }}/pnpm-lock.yaml'
+
+      - name: 📦 Install dependencies (frontend builds only)
+        if: inputs.build-type == 'frontend'
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 5
+
+      - name: 🔍 Pre-flight environment validation (frontend builds only)
+        if: inputs.build-type == 'frontend'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "::notice::🔍 ビルド環境を検証中..."
+          for cmd in node npm pnpm; do
+            command -v $cmd &> /dev/null || { echo "::error::❌ $cmd が見つかりません"; exit 1; }
+            echo "::notice::✅ $cmd: $($cmd --version)"
+          done
+          echo "::notice::✅ ビルド環境の検証が完了しました"
+
       - name: 🔑 ビルドキャッシュキー生成
         id: cache-key
         run: |
