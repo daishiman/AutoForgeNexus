@@ -390,6 +390,12 @@ jobs:
         if: ${{ !(contains(needs.*.result, 'failure')) }}
         run: |
           echo "✅ All PR checks passed!"
+          echo ""
+          echo "## 📊 Test Coverage Information"
+          echo "Coverage is measured and reported by backend-ci.yml workflow:"
+          echo "  - View detailed coverage: https://codecov.io/gh/daishiman/AutoForgeNexus"
+          echo "  - Backend CI status: Check 'Backend CI/CD Pipeline' workflow"
+          echo ""
           echo "Ready for manual review and merge."
 
       - name: ❌ Some checks failed
