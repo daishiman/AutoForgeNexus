@@ -1,0 +1,241 @@
+name: DevOps Metrics Collection
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    types: [ opened, closed ]  # 'merged'はtypeとして存在しない
+  schedule:
+    # 毎日午前3時（JST）にメトリクス収集
+    - cron: '0 18 * * *'  # UTC 18:00 = JST 03:00
+  workflow_dispatch:
+    inputs:
+      period:
+        description: 'Metrics collection period'
+        required: true
+        default: '30 days'
+        type: choice
+        options:
+          - '7 days'
+          - '30 days'
+          - '90 days'
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  security-events: read
+  checks: read
+  id-token: write  # OIDC認証用
+
+jobs:
+  collect-dora-metrics:
+    name: Collect DORA Metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 全履歴を取得（メトリクス計算に必要）
+
+    - name: Setup jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq bc
+
+    - name: Calculate Deployment Frequency
+      id: deployment_frequency
+      run: |
+        # デプロイ頻度の計算（過去30日間のmainへのマージ数）
+        PERIOD="${{ inputs.period || '30 days' }}"
+        DEPLOY_COUNT=$(git log --since="$PERIOD ago" --grep='Merge pull request' --oneline origin/main | wc -l)
+
+        # 日次頻度に変換
+        DAYS=$(echo "$PERIOD" | cut -d' ' -f1)
+        DAILY_FREQ=$(echo "scale=2; $DEPLOY_COUNT / $DAYS" | bc)
+
+        echo "deploy_count=$DEPLOY_COUNT" >> $GITHUB_OUTPUT
+        echo "daily_frequency=$DAILY_FREQ" >> $GITHUB_OUTPUT
+        echo "📊 Deployment Frequency: $DEPLOY_COUNT deployments in $PERIOD ($DAILY_FREQ/day)"
+
+    - name: Calculate Lead Time for Changes
+      id: lead_time
+      run: |
+        # PRのマージまでの平均時間（時間単位）
+        PERIOD="${{ inputs.period || '30 days' }}"
+
+        # 最近のPRから平均リードタイムを計算
+        LEAD_TIMES=$(gh pr list --state merged --limit 20 --json createdAt,mergedAt --jq '.[] |
+          ((.mergedAt | fromdateiso8601) - (.createdAt | fromdateiso8601)) / 3600' 2>/dev/null || echo "0")
+
+        if [ -n "$LEAD_TIMES" ]; then
+          AVG_LEAD_TIME=$(echo "$LEAD_TIMES" | awk '{sum+=$1; count++} END {if (count>0) printf "%.1f", sum/count; else print "0"}')
+        else
+          AVG_LEAD_TIME=0
+        fi
+
+        echo "average_lead_time=$AVG_LEAD_TIME" >> $GITHUB_OUTPUT
+        echo "⏱️ Lead Time for Changes: $AVG_LEAD_TIME hours average"
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Calculate Change Failure Rate
+      id: change_failure_rate
+      run: |
+        # 変更失敗率の計算（ロールバック、ホットフィックスの割合）
+        PERIOD="${{ inputs.period || '30 days' }}"
+
+        # 総デプロイ数
+        TOTAL_DEPLOYS=$(git log --since="$PERIOD ago" --grep='Merge pull request' --oneline origin/main | wc -l)
+
+        # 失敗デプロイ数（revert, rollback, hotfix を含むコミット）
+        FAILED_DEPLOYS=$(git log --since="$PERIOD ago" --grep -E 'revert|rollback|hotfix' -i --oneline origin/main | wc -l)
+
+        if [ $TOTAL_DEPLOYS -gt 0 ]; then
+          FAILURE_RATE=$(echo "scale=2; ($FAILED_DEPLOYS / $TOTAL_DEPLOYS) * 100" | bc)
+        else
+          FAILURE_RATE=0
+        fi
+
+        echo "failure_rate=$FAILURE_RATE" >> $GITHUB_OUTPUT
+        echo "failed_count=$FAILED_DEPLOYS" >> $GITHUB_OUTPUT
+        echo "total_count=$TOTAL_DEPLOYS" >> $GITHUB_OUTPUT
+        echo "🔥 Change Failure Rate: $FAILURE_RATE% ($FAILED_DEPLOYS/$TOTAL_DEPLOYS)"
+
+    - name: Calculate Mean Time to Recovery
+      id: mttr
+      run: |
+        # 平均修復時間（インシデントから修復までの時間）
+        # ホットフィックスPRの平均マージ時間を代理指標として使用
+
+        MTTR_HOURS=$(gh pr list --state merged --limit 10 --search "label:hotfix OR label:urgent" --json createdAt,mergedAt --jq '.[] |
+          ((.mergedAt | fromdateiso8601) - (.createdAt | fromdateiso8601)) / 3600' 2>/dev/null |
+          awk '{sum+=$1; count++} END {if (count>0) printf "%.1f", sum/count; else print "0"}')
+
+        if [ -z "$MTTR_HOURS" ] || [ "$MTTR_HOURS" = "0" ]; then
+          MTTR_HOURS="N/A"
+          echo "mttr=0" >> $GITHUB_OUTPUT
+        else
+          echo "mttr=$MTTR_HOURS" >> $GITHUB_OUTPUT
+        fi
+
+        echo "🔧 Mean Time to Recovery: $MTTR_HOURS hours"
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Generate Metrics Report
+      run: |
+        cat << EOF > metrics-report.json
+        {
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "repository": "${{ github.repository }}",
+          "period": "${{ inputs.period || '30 days' }}",
+          "dora_metrics": {
+            "deployment_frequency": {
+              "total_deployments": ${{ steps.deployment_frequency.outputs.deploy_count }},
+              "daily_average": ${{ steps.deployment_frequency.outputs.daily_frequency }},
+              "unit": "deployments/day"
+            },
+            "lead_time_for_changes": {
+              "average_hours": ${{ steps.lead_time.outputs.average_lead_time || 0 }},
+              "unit": "hours"
+            },
+            "change_failure_rate": {
+              "rate": ${{ steps.change_failure_rate.outputs.failure_rate }},
+              "failed_deployments": ${{ steps.change_failure_rate.outputs.failed_count }},
+              "total_deployments": ${{ steps.change_failure_rate.outputs.total_count }},
+              "unit": "percentage"
+            },
+            "mean_time_to_recovery": {
+              "average_hours": ${{ steps.mttr.outputs.mttr || 0 }},
+              "unit": "hours"
+            }
+          },
+          "performance_level": "$(
+            if [ ${{ steps.deployment_frequency.outputs.daily_frequency }} -ge 1 ]; then
+              echo "elite"
+            elif [ ${{ steps.deployment_frequency.outputs.daily_frequency }} -ge 0.14 ]; then
+              echo "high"
+            elif [ ${{ steps.deployment_frequency.outputs.daily_frequency }} -ge 0.03 ]; then
+              echo "medium"
+            else
+              echo "low"
+            fi
+          )"
+        }
+        EOF
+
+        echo "📊 Metrics report generated"
+        cat metrics-report.json | jq '.'
+
+    - name: Add security metadata to metrics
+      run: |
+        # セキュリティメタデータを追加
+        jq '. + {
+          "security_metadata": {
+            "integrity_hash": (. | tostring | @base64),
+            "collection_source": "github-actions",
+            "security_level": "internal",
+            "data_classification": "business"
+          }
+        }' metrics-report.json > secure-metrics-report.json
+
+        # 元ファイルを置換
+        mv secure-metrics-report.json metrics-report.json
+
+    - name: Upload metrics artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dora-metrics-${{ github.run_id }}
+        path: metrics-report.json
+        retention-days: 365  # 監査要件に対応
+        if-no-files-found: error
+
+    - name: Send metrics to webhook (if configured)
+      if: env.METRICS_WEBHOOK_URL != ''
+      env:
+        METRICS_WEBHOOK_URL: ${{ secrets.METRICS_WEBHOOK_URL }}
+      run: |
+        if [ -n "$METRICS_WEBHOOK_URL" ]; then
+          # セキュリティ強化: SSL検証、タイムアウト、レート制限
+          curl -X POST "$METRICS_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: AutoForgeNexus-Metrics/1.0" \
+            -d @metrics-report.json \
+            --max-time 30 \
+            --cacert /etc/ssl/certs/ca-certificates.crt \
+            --fail-with-body \
+            --retry 3 \
+            --retry-delay 5 || echo "⚠️ Failed to send metrics to webhook"
+        fi
+
+    - name: Comment metrics on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const metrics = JSON.parse(fs.readFileSync('metrics-report.json', 'utf8'));
+
+          const comment = `## 📊 DORA Metrics Report
+
+          | Metric | Value | Performance |
+          |--------|-------|------------|
+          | 🚀 Deployment Frequency | ${metrics.dora_metrics.deployment_frequency.daily_average}/day | ${metrics.dora_metrics.deployment_frequency.daily_average >= 1 ? '✅ Elite' : metrics.dora_metrics.deployment_frequency.daily_average >= 0.14 ? '🟢 High' : '🟡 Medium'} |
+          | ⏱️ Lead Time for Changes | ${metrics.dora_metrics.lead_time_for_changes.average_hours} hours | ${metrics.dora_metrics.lead_time_for_changes.average_hours < 24 ? '✅ Elite' : metrics.dora_metrics.lead_time_for_changes.average_hours < 168 ? '🟢 High' : '🟡 Medium'} |
+          | 🔥 Change Failure Rate | ${metrics.dora_metrics.change_failure_rate.rate}% | ${metrics.dora_metrics.change_failure_rate.rate < 5 ? '✅ Elite' : metrics.dora_metrics.change_failure_rate.rate < 10 ? '🟢 High' : '🟡 Medium'} |
+          | 🔧 Mean Time to Recovery | ${metrics.dora_metrics.mean_time_to_recovery.average_hours} hours | ${metrics.dora_metrics.mean_time_to_recovery.average_hours < 1 ? '✅ Elite' : metrics.dora_metrics.mean_time_to_recovery.average_hours < 24 ? '🟢 High' : '🟡 Medium'} |
+
+          **Overall Performance Level**: ${metrics.performance_level.toUpperCase()}
+
+          > 💡 [DORA Metrics](https://dora.dev/) help measure software delivery performance
+          `;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

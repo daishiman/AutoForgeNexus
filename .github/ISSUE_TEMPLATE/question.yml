@@ -1,0 +1,136 @@
+name: ❓ Question
+description: 質問・サポートリクエスト
+title: "[QUESTION] "
+labels: ["question", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        質問やサポートリクエストはこちらから。回答までお時間をいただく場合があります。
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 質問カテゴリー
+      description: どの分野に関する質問ですか？
+      options:
+        - 使い方・操作方法
+        - インストール・セットアップ
+        - 設定・カスタマイズ
+        - API・統合
+        - トラブルシューティング
+        - ベストプラクティス
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: 質問内容
+      description: 質問を詳しく記載してください
+      placeholder: |
+        具体的な質問内容を記載してください。
+        背景情報も含めると、より適切な回答が得られます。
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景・状況
+      description: この質問に至った背景や現在の状況を説明してください
+      placeholder: |
+        - 何を達成しようとしていますか？
+        - どこで詰まっていますか？
+        - これまでに試したことは？
+    validations:
+      required: false
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: 試したこと
+      description: すでに試した解決方法があれば記載してください
+      placeholder: |
+        - ドキュメントの〇〇セクションを確認
+        - 〇〇の設定を変更
+        - 関連するIssueを検索
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected_answer
+    attributes:
+      label: 期待する回答
+      description: どのような回答を期待していますか？
+      placeholder: |
+        - 具体的な手順
+        - コード例
+        - 設定方法
+        - 概念の説明
+    validations:
+      required: false
+
+  - type: input
+    id: version_q
+    attributes:
+      label: バージョン
+      description: 使用しているバージョンを記載してください
+      placeholder: v1.0.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境情報
+      description: 関連する環境情報があれば記載してください
+      placeholder: |
+        - OS: macOS 14.0
+        - Node.js: v20.0.0
+        - Python: 3.13
+        - Browser: Chrome 120
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 参考資料
+      description: 参考にした資料やリンクがあれば記載してください
+      placeholder: |
+        - ドキュメントのURL
+        - 関連するIssue番号
+        - Stack Overflowの質問
+    validations:
+      required: false
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: 緊急度
+      description: この質問の緊急度はどの程度ですか？
+      options:
+        - 緊急 - ブロッカーになっている
+        - 高 - 早めの回答が必要
+        - 中 - 通常の回答で問題ない
+        - 低 - 時間があるときで構わない
+      default: 2
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist_q
+    attributes:
+      label: 確認事項
+      description: 提出前に以下を確認してください
+      options:
+        - label: ドキュメントを確認しました
+          required: true
+        - label: 既存のIssueを検索しました
+          required: true
+        - label: 質問は明確で具体的です
+          required: false
