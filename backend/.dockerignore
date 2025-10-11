@@ -1,0 +1,76 @@
+# AutoForgeNexus Backend .dockerignore
+# Optimize Docker build context
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.json
+coverage.xml
+*.cover
+.hypothesis/
+
+# Quality tools
+.mypy_cache/
+.ruff_cache/
+mypy_result.txt
+bandit-report.json
+
+# Development files
+*.md
+!README.md
+.env*
+.git/
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+claudedocs/
+
+# Database files (use external DB in production)
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Scripts (keep docker-entrypoint.sh for production)
+scripts/*
+!scripts/docker-entrypoint.sh

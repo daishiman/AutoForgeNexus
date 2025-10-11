@@ -1,0 +1,263 @@
+name: "Security Scanning"
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+  schedule:
+    # 毎週月曜日午前3時（JST）に定期スキャン
+    - cron: "0 18 * * 1" # UTC 18:00 = JST 03:00 (Monday)
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: "Scan type"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - full
+          - secrets
+          - dependencies
+          - infrastructure
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  # シークレットスキャン（TruffleHog）
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.scan_type == 'full' || github.event.inputs.scan_type == 'secrets' || github.event.inputs.scan_type == ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 全履歴を取得
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --only-verified --exclude-paths=.trufflehog_regex_ignore
+          # 注: --fail, --no-update, --github-actions は Action により自動付与されます
+
+      - name: Upload scan results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: secret-scan-results
+          path: trufflehog-results.json
+          retention-days: 365 # GDPR Article 30準拠（監査ログ365日保存）
+
+  # Python依存関係セキュリティスキャン
+  python-security:
+    name: Python Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.inputs.scan_type == 'full' || github.event.inputs.scan_type == 'dependencies' || github.event.inputs.scan_type == ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install safety bandit[toml] pip-audit
+          pip install -e .[dev]
+
+      # Safety - 既知の脆弱性チェック
+      - name: Run Safety scan
+        run: |
+          cd backend
+          safety check --json --output safety-report.json || true
+
+      # Bandit - セキュリティ問題検出
+      - name: Run Bandit scan
+        run: |
+          cd backend
+          bandit -r src/ -f json -o bandit-report.json || true
+
+      # pip-audit - PyPI脆弱性チェック
+      - name: Run pip-audit
+        run: |
+          cd backend
+          pip-audit --format=json --output=pip-audit-report.json || true
+
+      - name: Upload Python security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-security-reports
+          path: |
+            backend/safety-report.json
+            backend/bandit-report.json
+            backend/pip-audit-report.json
+          retention-days: 365 # GDPR Article 30準拠（監査ログ365日保存）
+
+  # JavaScript/TypeScript依存関係スキャン
+  js-security:
+    name: JavaScript Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.scan_type == 'full' || github.event.inputs.scan_type == 'dependencies' || github.event.inputs.scan_type == ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile
+
+      # pnpm audit
+      - name: Run pnpm audit
+        working-directory: ./frontend
+        run: |
+          pnpm audit --json > ../pnpm-audit-report.json || true
+
+      # audit-ci with pnpm
+      - name: Run audit-ci
+        working-directory: ./frontend
+        run: |
+          npx audit-ci --package-manager pnpm --report-type json --output-file ../audit-ci-report.json || true
+
+      - name: Upload JS security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: js-security-reports
+          path: |
+            pnpm-audit-report.json
+            audit-ci-report.json
+          retention-days: 365 # GDPR Article 30準拠（監査ログ365日保存）
+
+  # インフラストラクチャスキャン（Checkov）
+  infrastructure-scan:
+    name: Infrastructure Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.scan_type == 'full' || github.event.inputs.scan_type == 'infrastructure' || github.event.inputs.scan_type == ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python for Checkov
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      # Docker設定スキャン
+      - name: Run Checkov on Docker files
+        run: |
+          checkov -f docker-compose*.yml -o json --output-file checkov-docker-report.json || true
+
+      # GitHub Actions設定スキャン
+      - name: Run Checkov on GitHub Actions
+        run: |
+          checkov -d .github/workflows -o json --output-file checkov-github-actions-report.json || true
+
+      - name: Upload infrastructure scan reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-scan-reports
+          path: |
+            checkov-docker-report.json
+            checkov-github-actions-report.json
+          retention-days: 365 # GDPR Article 30準拠（監査ログ365日保存）
+
+  # セキュリティサマリー生成
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [secret-scan, python-security, js-security, infrastructure-scan]
+    if: always()
+
+    steps:
+      - name: Download all scan results
+        uses: actions/download-artifact@v4
+        with:
+          path: scan-results
+
+      - name: Generate security summary
+        run: |
+          echo "## 🛡️ セキュリティスキャン結果" > security-summary.md
+          echo "" >> security-summary.md
+          echo "実行日時: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> security-summary.md
+          echo "コミット: ${{ github.sha }}" >> security-summary.md
+          echo "" >> security-summary.md
+
+          # 各スキャン結果のサマリー
+          echo "### スキャン状況" >> security-summary.md
+          echo "- シークレットスキャン: ${{ needs.secret-scan.result }}" >> security-summary.md
+          echo "- Python依存関係: ${{ needs.python-security.result }}" >> security-summary.md
+          echo "- JavaScript依存関係: ${{ needs.js-security.result }}" >> security-summary.md
+          echo "- インフラストラクチャ: ${{ needs.infrastructure-scan.result }}" >> security-summary.md
+          echo "" >> security-summary.md
+
+          if [ "${{ needs.secret-scan.result }}" = "failure" ] ||
+             [ "${{ needs.python-security.result }}" = "failure" ] ||
+             [ "${{ needs.js-security.result }}" = "failure" ] ||
+             [ "${{ needs.infrastructure-scan.result }}" = "failure" ]; then
+            echo "⚠️ **セキュリティ問題が検出されました**" >> security-summary.md
+            echo "詳細は各スキャン結果を確認してください。" >> security-summary.md
+          else
+            echo "✅ **セキュリティ問題は検出されませんでした**" >> security-summary.md
+          fi
+
+      - name: Upload security summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-summary.md
+          retention-days: 365 # GDPR Article 30準拠（監査ログ365日保存）
+
+      # PR時にコメント追加（オプション）
+      - name: Comment security results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('security-summary.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });

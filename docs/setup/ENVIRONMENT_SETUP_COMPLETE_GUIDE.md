@@ -2,7 +2,8 @@
 
 ## 📋 **概要**
 
-AutoForgeNexus AI プロンプト最適化システムの環境構築を段階的に実行するための完全ガイドです。各コマンドの詳細な指示、AI への具体的なコメント、設定、仕様を含め、タスクを完了させるための包括的な手順書を提供します。
+AutoForgeNexus
+AI プロンプト最適化システムの環境構築を段階的に実行するための完全ガイドです。各コマンドの詳細な指示、AI への具体的なコメント、設定、仕様を含め、タスクを完了させるための包括的な手順書を提供します。
 
 ## 🎯 **目的**
 
@@ -15,6 +16,7 @@ AutoForgeNexus AI プロンプト最適化システムの環境構築を段階�
 ## 📚 **ドキュメント構成**
 
 ### **フェーズ別詳細ガイド**
+
 - [Phase 1: Git・基盤環境構築](#phase-1-git基盤環境構築)
 - [Phase 2: インフラ・DevOps環境構築](#phase-2-インフラdevops環境構築)
 - [Phase 3: バックエンド環境構築](#phase-3-バックエンド環境構築)
@@ -23,6 +25,7 @@ AutoForgeNexus AI プロンプト最適化システムの環境構築を段階�
 - [Phase 6: 統合・品質保証](#phase-6-統合品質保証)
 
 ### **補助資料**
+
 - [トラブルシューティング](#トラブルシューティング)
 - [FAQ](#faq)
 - [参考資料](#参考資料)
@@ -32,11 +35,13 @@ AutoForgeNexus AI プロンプト最適化システムの環境構築を段階�
 # Phase 1: Git・基盤環境構築
 
 ## 🚀 **目標**
+
 Git環境とプロジェクト基盤の確立により、全ての開発作業の基盤を構築する。
 
 ## 📋 **前提条件**
 
 ### **必須ツール確認**
+
 ```bash
 # Git バージョン確認（2.40+必須）
 git --version
@@ -53,15 +58,18 @@ docker --version
 ## 🔧 **Step 1.1: Git環境とブランチ戦略の確立**
 
 ### **コマンド**
+
 ```bash
 /ai:development:git init --strategy gitflow --hooks --semantic-version
 ```
 
 ### **AI への詳細指示**
+
 ```markdown
 # Git 環境構築指示
 
 ## 実行内容
+
 1. GitFlow ブランチ戦略の完全セットアップ
 2. pre-commit、commit-msg、pre-push フックの設定
 3. semantic versioning 対応の設定
@@ -70,34 +78,40 @@ docker --version
 ## 具体的な作業項目
 
 ### GitFlow ブランチ設定
+
 - main: 本番リリース用
 - develop: 開発統合用
-- feature/*: 機能開発用
-- release/*: リリース準備用
-- hotfix/*: 緊急修正用
+- feature/\*: 機能開発用
+- release/\*: リリース準備用
+- hotfix/\*: 緊急修正用
 
 ### Git フック設定
+
 - pre-commit: コード品質チェック（ruff, mypy, prettier）
 - commit-msg: Conventional Commits 強制
 - pre-push: テスト実行とビルド確認
 
 ### 設定ファイル作成
+
 - .gitignore: Python, Node.js, Docker対応
 - .gitmessage: コミットメッセージテンプレート
 - CODEOWNERS: コードオーナー設定
 
 ### ブランチ保護設定
+
 - main, develop ブランチの direct push 禁止
 - PR マージ前のレビュー必須
 - status check 必須（CI/CD パス）
 
 ## 期待される成果物
+
 - 完全に設定された Git リポジトリ
 - ブランチ戦略の文書化
 - 開発ワークフローガイド
 ```
 
 ### **検証方法**
+
 ```bash
 # ブランチ確認
 git branch -a
@@ -117,74 +131,44 @@ cat CODEOWNERS
 ## 🔧 **Step 1.2: プロジェクト基盤初期化**
 
 ### **コマンド**
+
 ```bash
 /ai:core:init AutoForgeNexus --phase 1 --agents core --env dev --ddd
 ```
 
 ### **AI への詳細指示**
+
 ```markdown
 # プロジェクト基盤初期化指示
 
 ## 実行内容
+
 DDD 原則に基づくプロジェクト構造の構築と Phase 1 エージェントチームの起動
 
 ## 具体的な作業項目
 
 ### プロジェクト構造作成
 ```
-/backend/              # Python/FastAPI バックエンド
-  /src/
-    /domain/          # ドメインエンティティとビジネスロジック
-      /entities/      # ドメインエンティティ
-      /value_objects/ # 値オブジェクト
-      /repositories/  # リポジトリインターフェース
-      /services/      # ドメインサービス
-    /application/     # ユースケースとアプリケーションサービス
-      /use_cases/     # ビジネスユースケース
-      /services/      # アプリケーションサービス
-      /dtos/          # データ転送オブジェクト
-    /infrastructure/  # 外部サービス実装
-      /repositories/  # リポジトリ実装
-      /external/      # 外部API統合
-      /database/      # データベース接続
-    /presentation/    # APIコントローラーとスキーマ
-      /api/           # FastAPI ルーター
-      /schemas/       # Pydantic スキーマ
-      /middleware/    # ミドルウェア
-  /tests/             # テスト
-    /unit/            # ユニットテスト
-    /integration/     # 統合テスト
-    /e2e/             # E2Eテスト
-  /migrations/        # データベースマイグレーション
-  /scripts/           # ユーティリティスクリプト
 
-/frontend/            # Next.js/React フロントエンド
-  /src/
-    /app/             # Next.js 15 App Router
-    /components/      # 再利用可能UIコンポーネント
-      /ui/            # 基本UIコンポーネント
-      /features/      # 機能固有コンポーネント
-      /layout/        # レイアウトコンポーネント
-    /hooks/           # カスタムReactフック
-    /stores/          # Zustand状態管理
-    /lib/             # ユーティリティ
-    /types/           # TypeScript型定義
-  /public/            # 静的ファイル
-  /tests/             # フロントエンドテスト
-    /__tests__/       # Jest テスト
-    /e2e/             # Playwright E2Eテスト
+/backend/ # Python/FastAPI バックエンド /src/
+/domain/ # ドメインエンティティとビジネスロジック /entities/ # ドメインエンティティ /value_objects/ # 値オブジェクト /repositories/ # リポジトリインターフェース /services/ # ドメインサービス /application/ # ユースケースとアプリケーションサービス /use_cases/ # ビジネスユースケース /services/ # アプリケーションサービス /dtos/ # データ転送オブジェクト /infrastructure/ # 外部サービス実装 /repositories/ # リポジトリ実装 /external/ # 外部API統合 /database/ # データベース接続 /presentation/ #
+APIコントローラーとスキーマ /api/ # FastAPI ルーター /schemas/ #
+Pydantic スキーマ /middleware/ # ミドルウェア /tests/ # テスト /unit/ # ユニットテスト /integration/ # 統合テスト /e2e/ #
+E2Eテスト /migrations/ # データベースマイグレーション /scripts/ # ユーティリティスクリプト
 
-/docs/                # ドキュメント
-  /architecture/      # アーキテクチャドキュメント
-  /api/               # API ドキュメント
-  /development/       # 開発ガイド
-  /deployment/        # デプロイガイド
+/frontend/ # Next.js/React フロントエンド /src/ /app/ # Next.js 15 App Router
+/components/ # 再利用可能UIコンポーネント /ui/ # 基本UIコンポーネント /features/ # 機能固有コンポーネント /layout/ # レイアウトコンポーネント /hooks/ # カスタムReactフック /stores/ #
+Zustand状態管理 /lib/ # ユーティリティ /types/ #
+TypeScript型定義 /public/ # 静的ファイル /tests/ # フロントエンドテスト /**tests**/ #
+Jest テスト /e2e/ # Playwright E2Eテスト
 
-/infrastructure/      # インフラ設定
-  /docker/            # Docker設定
-  /terraform/         # Terraform設定（必要に応じて）
-  /kubernetes/        # K8s設定（必要に応じて）
-```
+/docs/ # ドキュメント /architecture/ # アーキテクチャドキュメント /api/ #
+API ドキュメント /development/ # 開発ガイド /deployment/ # デプロイガイド
+
+/infrastructure/ # インフラ設定 /docker/ # Docker設定 /terraform/ #
+Terraform設定（必要に応じて）/kubernetes/ # K8s設定（必要に応じて）
+
+````
 
 ### 設定ファイル作成
 
@@ -224,9 +208,10 @@ target-version = "py313"
 [tool.mypy]
 python_version = "3.13"
 strict = true
-```
+````
 
 #### frontend/package.json
+
 ```json
 {
   "name": "autoforge-nexus-frontend",
@@ -261,6 +246,7 @@ strict = true
 ```
 
 #### docker-compose.dev.yml
+
 ```yaml
 version: '3.8'
 
@@ -268,7 +254,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - DATABASE_URL=sqlite:///./autoforge.db
       - REDIS_URL=redis://redis:6379
@@ -280,7 +266,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ./frontend:/app
     depends_on:
@@ -289,12 +275,12 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
   langfuse:
     image: langfuse/langfuse:latest
     ports:
-      - "3001:3000"
+      - '3001:3000'
     environment:
       - DATABASE_URL=postgresql://langfuse:password@langfuse-db:5432/langfuse
     depends_on:
@@ -314,7 +300,9 @@ volumes:
 ```
 
 ### エージェント起動確認
+
 Phase 1 で起動されるべきエージェント（7エージェント）:
+
 - system-architect (リーダー)
 - domain-modeller
 - backend-developer
@@ -324,11 +312,13 @@ Phase 1 で起動されるべきエージェント（7エージェント）:
 - version-control-specialist
 
 ## 期待される成果物
+
 - DDD準拠のプロジェクト構造
 - 必要な設定ファイル一式
 - Docker開発環境
 - Phase 1 エージェントチーム起動
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -343,38 +333,45 @@ cat docker-compose.dev.yml
 # Docker環境起動テスト
 docker-compose -f docker-compose.dev.yml up --build -d
 docker-compose -f docker-compose.dev.yml ps
-```
+````
 
 ---
 
 # Phase 2: インフラ・DevOps環境構築
 
 ## 🚀 **目標**
+
 Cloudflareエコシステムを活用したスケーラブルなインフラ基盤と、観測可能性を持つ監視システムの構築。
 
 ## 🔧 **Step 2.1: デプロイメント戦略とインフラ準備**
 
 ### **コマンド**
+
 ```bash
 /ai:operations:deploy dev --strategy rolling --edge
 ```
 
 ### **AI への詳細指示**
-```markdown
+
+````markdown
 # インフラ・デプロイメント構築指示
 
 ## 実行内容
+
 Cloudflare エコシステムを活用した開発環境デプロイメント基盤の構築
 
 ## 具体的な作業項目
 
 ### Cloudflare 設定
+
 1. **Cloudflare Workers 設定**
+
    - backend API 用 Worker 設定
    - エッジでの API 処理設定
    - KV ストレージ設定
 
 2. **Cloudflare Pages 設定**
+
    - frontend 静的サイト配信
    - プレビューデプロイ設定
    - カスタムドメイン設定
@@ -384,7 +381,9 @@ Cloudflare エコシステムを活用した開発環境デプロイメント基
    - CDN 配信設定
 
 ### Docker 設定最適化
+
 #### backend/Dockerfile
+
 ```dockerfile
 FROM python:3.13-slim
 
@@ -408,8 +407,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Run application
 CMD ["uvicorn", "src.presentation.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 ```
+````
 
 #### frontend/Dockerfile
+
 ```dockerfile
 FROM node:20-alpine AS base
 
@@ -445,7 +446,9 @@ CMD ["node", "server.js"]
 ```
 
 ### CI/CD パイプライン設定
+
 #### .github/workflows/deploy-dev.yml
+
 ```yaml
 name: Deploy Development
 
@@ -530,7 +533,9 @@ jobs:
 ```
 
 ### Rolling Deployment 戦略
+
 1. **段階的デプロイ**
+
    - 20% → 50% → 100% のトラフィック移行
    - 各段階でヘルスチェック実行
    - 異常検知時の自動ロールバック
@@ -541,11 +546,13 @@ jobs:
    - 外部サービス連携確認
 
 ## 期待される成果物
+
 - Cloudflare 環境の完全設定
 - Docker コンテナの最適化
 - CI/CD パイプライン
 - Rolling Deployment 設定
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -559,22 +566,25 @@ wrangler pages project list
 
 # CI/CD 動作確認
 git push origin develop
-```
+````
 
 ---
 
 ## 🔧 **Step 2.2: 監視・観測可能性の設定**
 
 ### **コマンド**
+
 ```bash
 /ai:operations:monitor system --metrics --traces --logs --alerts
 ```
 
 ### **AI への詳細指示**
-```markdown
+
+````markdown
 # 監視・観測可能性構築指示
 
 ## 実行内容
+
 3 つの柱（メトリクス、トレース、ログ）を統合した包括的監視体制の構築
 
 ## 具体的な作業項目
@@ -582,6 +592,7 @@ git push origin develop
 ### 1. メトリクス収集設定
 
 #### backend/src/presentation/middleware/metrics.py
+
 ```python
 from prometheus_client import Counter, Histogram, generate_latest
 import time
@@ -621,8 +632,10 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
         return response
 ```
+````
 
 #### frontend/src/lib/monitoring.ts
+
 ```typescript
 // Web Vitals 収集
 import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
@@ -664,6 +677,7 @@ export function initErrorMonitoring() {
 ### 2. 分散トレーシング設定
 
 #### backend/src/infrastructure/tracing.py
+
 ```python
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
@@ -699,6 +713,7 @@ def init_tracing(app):
 ### 3. 構造化ログ設定
 
 #### backend/src/infrastructure/logging.py
+
 ```python
 import structlog
 import logging
@@ -732,27 +747,32 @@ def log_context(**kwargs: Any) -> Dict[str, Any]:
 ### 4. アラート設定
 
 #### monitoring/alerts.yml
+
 ```yaml
 groups:
   - name: autoforge_alerts
     rules:
       - alert: HighErrorRate
-        expr: (rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])) > 0.1
+        expr:
+          (rate(http_requests_total{status=~"5.."}[5m]) /
+          rate(http_requests_total[5m])) > 0.1
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value }} for the last 5 minutes"
+          summary: 'High error rate detected'
+          description: 'Error rate is {{ $value }} for the last 5 minutes'
 
       - alert: HighResponseTime
-        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        expr:
+          histogram_quantile(0.95,
+          rate(http_request_duration_seconds_bucket[5m])) > 1
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "High response time detected"
-          description: "95th percentile response time is {{ $value }}s"
+          summary: 'High response time detected'
+          description: '95th percentile response time is {{ $value }}s'
 
       - alert: DatabaseConnectionFailure
         expr: up{job="database"} == 0
@@ -760,13 +780,14 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Database connection failure"
-          description: "Database is not responding"
+          summary: 'Database connection failure'
+          description: 'Database is not responding'
 ```
 
 ### 5. ダッシュボード設定
 
 #### monitoring/grafana-dashboard.json
+
 ```json
 {
   "dashboard": {
@@ -810,6 +831,7 @@ groups:
 ### 6. 監視スタック起動
 
 #### docker-compose.monitoring.yml
+
 ```yaml
 version: '3.8'
 
@@ -817,7 +839,7 @@ services:
   prometheus:
     image: prom/prometheus
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml
@@ -825,7 +847,7 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - "3001:3000"
+      - '3001:3000'
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -834,26 +856,28 @@ services:
   jaeger:
     image: jaegertracing/all-in-one
     ports:
-      - "16686:16686"
-      - "14268:14268"
+      - '16686:16686'
+      - '14268:14268'
     environment:
       - COLLECTOR_OTLP_ENABLED=true
 
   alertmanager:
     image: prom/alertmanager
     ports:
-      - "9093:9093"
+      - '9093:9093'
     volumes:
       - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
 ```
 
 ## 期待される成果物
+
 - 完全な監視スタック
 - メトリクス、トレース、ログの統合
 - アラート設定
 - ダッシュボード
 - 自動異常検知システム
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -867,54 +891,65 @@ curl http://localhost:16686 # Jaeger
 
 # メトリクス確認
 curl http://localhost:8000/metrics
-```
+````
 
 ---
 
 # Phase 3: バックエンド環境構築
 
 ## 🚀 **目標**
+
 DDD原則とイベント駆動アーキテクチャに基づく堅牢なバックエンドシステムの構築。
 
 ## 🔧 **Step 3.1: バックエンドアーキテクチャ設計**
 
 ### **コマンド**
+
 ```bash
 /ai:architecture:design microservices --ddd --event-driven --scale horizontal
 ```
 
 ### **AI への詳細指示**
+
 ```markdown
 # バックエンドアーキテクチャ設計指示
 
 ## 実行内容
+
 DDD + イベント駆動 + 水平スケーリング対応のマイクロサービス設計
 
 ## 具体的な作業項目
 
 ### 1. ドメイン境界の定義
 ```
+
 Bounded Contexts:
+
 1. Prompt Context (プロンプト管理)
+
    - エンティティ: Prompt, Template, Version
    - 値オブジェクト: PromptContent, Quality, Style
 
 2. Evaluation Context (評価システム)
+
    - エンティティ: Evaluation, Metric, Benchmark
    - 値オブジェクト: Score, Feedback, Criteria
 
 3. User Context (ユーザー管理)
+
    - エンティティ: User, Organization, Subscription
    - 値オブジェクト: UserProfile, Preferences
 
 4. LLM Context (LLM統合)
+
    - エンティティ: Provider, Model, APIKey
    - 値オブジェクト: Usage, Cost, Limits
 
 5. Workflow Context (ワークフロー)
    - エンティティ: Workflow, Step, Execution
    - 値オブジェクト: Configuration, Status
-```
+
+````
 
 ### 2. マイクロサービス構成
 ```python
@@ -991,9 +1026,10 @@ class Prompt(Entity):
     @property
     def user_id(self) -> UUID:
         return self._user_id
-```
+````
 
 ### 3. リポジトリパターン実装
+
 ```python
 # backend/src/domain/prompt/repositories/prompt_repository.py
 from abc import ABC, abstractmethod
@@ -1047,6 +1083,7 @@ class SQLAlchemyPromptRepository(PromptRepository):
 ```
 
 ### 4. ユースケース実装
+
 ```python
 # backend/src/application/use_cases/create_prompt.py
 from dataclasses import dataclass
@@ -1095,6 +1132,7 @@ class CreatePromptUseCase:
 ```
 
 ### 5. FastAPI コントローラー
+
 ```python
 # backend/src/presentation/api/prompt_controller.py
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -1129,6 +1167,7 @@ async def create_prompt(
 ```
 
 ### 6. イベント駆動統合
+
 ```python
 # backend/src/infrastructure/events/event_bus.py
 from typing import Dict, List, Callable
@@ -1169,6 +1208,7 @@ class EventBus:
 ```
 
 ### 7. 水平スケーリング対応
+
 ```python
 # backend/src/infrastructure/scaling/load_balancer.py
 from typing import List
@@ -1213,12 +1253,14 @@ class LoadBalancer:
 ```
 
 ## 期待される成果物
+
 - DDD準拠のドメイン設計
 - イベント駆動アーキテクチャ
 - 水平スケーリング対応の設計
 - マイクロサービス境界の明確化
 - 完全なコード例とドキュメント
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -1232,27 +1274,31 @@ pytest src/tests/integration/
 
 # アーキテクチャ検証
 python -m pytest src/tests/architecture/
-```
+````
 
 ---
 
 ## 🔧 **Step 3.2: ドメインモデリング**
 
 ### **コマンド**
+
 ```bash
 /ai:requirements:domain prompt-context --aggregate root --event-sourcing --cqrs
 ```
 
 ### **AI への詳細指示**
-```markdown
+
+````markdown
 # ドメインモデリング詳細指示
 
 ## 実行内容
+
 プロンプトコンテキストの完全なドメインモデル設計とイベントソーシング実装
 
 ## 具体的な作業項目
 
 ### 1. 集約ルート設計
+
 ```python
 # backend/src/domain/prompt/aggregates/prompt_aggregate.py
 from typing import List, Optional
@@ -1303,8 +1349,10 @@ class PromptAggregate(AggregateRoot):
             occurred_at=datetime.utcnow()
         ))
 ```
+````
 
 ### 2. イベントソーシング実装
+
 ```python
 # backend/src/infrastructure/event_store/event_store.py
 import json
@@ -1349,6 +1397,7 @@ class EventStore:
 ```
 
 ### 3. CQRS実装
+
 ```python
 # backend/src/application/queries/prompt_queries.py
 from typing import List, Optional
@@ -1397,12 +1446,14 @@ class PromptQueryService:
 ```
 
 ## 期待される成果物
+
 - 完全な集約ルート実装
 - イベントソーシング基盤
 - CQRS読み書き分離
 - イベント投影機能
 - 楽観的ロック機能
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -1419,28 +1470,33 @@ aggregate = PromptAggregate(uuid4())
 aggregate.create_prompt(uuid4(), PromptContent('test'), 'Test Prompt')
 print(f'Events: {len(aggregate.uncommitted_events)}')
 "
-```
+````
 
 ---
 
 ## 🔧 **Step 3.3: バックエンド実装基盤**
 
 ### **コマンド**
+
 ```bash
 /ai:development:implement backend-core --tdd --coverage 80 --parallel
 ```
 
 ### **AI への詳細指示**
-```markdown
+
+````markdown
 # バックエンド実装基盤構築指示
 
 ## 実行内容
+
 TDD手法により80%カバレッジを達成するバックエンドコア機能の実装
 
 ## 具体的な作業項目
 
 ### 1. TDDサイクル実行
+
 #### Red Phase (失敗テスト作成)
+
 ```python
 # backend/src/tests/unit/domain/test_prompt_aggregate.py
 import pytest
@@ -1472,8 +1528,10 @@ class TestPromptAggregate:
         assert event.content == content.value
         assert event.title == title
 ```
+````
 
 ### 2. 並列実装戦略
+
 ```python
 # backend/src/application/services/parallel_processor.py
 import asyncio
@@ -1521,12 +1579,14 @@ class ParallelProcessor:
 ```
 
 ## 期待される成果物
+
 - 80%以上のテストカバレッジ
 - TDD完全実践の実装
 - 並列処理対応の高性能API
 - 品質ゲート統合
 - 完全なCI/CD統合
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -1553,18 +1613,21 @@ async def test():
 
 asyncio.run(test())
 "
-```
+````
 
 ---
 
 # Phase 5: フロントエンド環境構築
 
 ## 🚀 **目標**
-Next.js 15.5 + React 19 による最先端フロントエンド環境の構築と、リアルタイム協調編集機能の実装基盤整備。
+
+Next.js 15.5 + React
+19 による最先端フロントエンド環境の構築と、リアルタイム協調編集機能の実装基盤整備。
 
 ## 📋 **前提条件**
 
 ### **必須ツール確認**
+
 ```bash
 # Node.js バージョン確認（20+必須）
 node --version
@@ -1582,137 +1645,71 @@ pnpm next --version
 ## 🔧 **Step 5.1: フロントエンドプロジェクト初期化**
 
 ### **コマンド**
+
 ```bash
 /ai:development:implement frontend-init --next 15.5 --react 19 --typescript --tailwind 4
 ```
 
 ### **AI への詳細指示**
+
 ```markdown
 # フロントエンド初期化指示
 
 ## 実行内容
+
 Next.js 15.5 + React 19 + TypeScript + Tailwind CSS 4.0 環境の構築
 
 ## 具体的な作業項目
 
 ### プロジェクト設定
+
 #### frontend/package.json
-{
-  "name": "autoforge-nexus-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit",
-    "test": "jest --watch",
-    "test:ci": "jest --ci",
-    "test:e2e": "playwright test"
-  },
-  "dependencies": {
-    "next": "15.5.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "typescript": "5.6.3",
-    "@clerk/nextjs": "^4.29.0",
-    "zustand": "^4.5.0",
-    "swr": "^2.2.5",
-    "@tanstack/react-query": "^5.20.0"
-  },
-  "devDependencies": {
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
-    "tailwindcss": "4.0.0",
-    "autoprefixer": "^10.4.17",
-    "postcss": "^8.4.35",
-    "eslint": "9.15.0",
-    "eslint-config-next": "15.5.0",
-    "prettier": "3.3.3",
-    "jest": "^29.7.0",
-    "@testing-library/react": "^14.2.0",
-    "@playwright/test": "^1.48.0"
-  }
-}
+
+{ "name": "autoforge-nexus-frontend", "version": "0.1.0", "private": true,
+"scripts": { "dev": "next dev", "build": "next build", "start": "next start",
+"lint": "next lint", "type-check": "tsc --noEmit", "test": "jest --watch",
+"test:ci": "jest --ci", "test:e2e": "playwright test" }, "dependencies": {
+"next": "15.5.0", "react": "19.0.0", "react-dom": "19.0.0", "typescript":
+"5.6.3", "@clerk/nextjs": "^4.29.0", "zustand": "^4.5.0", "swr": "^2.2.5",
+"@tanstack/react-query": "^5.20.0" }, "devDependencies": { "@types/react":
+"19.0.0", "@types/react-dom": "19.0.0", "tailwindcss": "4.0.0", "autoprefixer":
+"^10.4.17", "postcss": "^8.4.35", "eslint": "9.15.0", "eslint-config-next":
+"15.5.0", "prettier": "3.3.3", "jest": "^29.7.0", "@testing-library/react":
+"^14.2.0", "@playwright/test": "^1.48.0" } }
 
 ### TypeScript設定
+
 #### frontend/tsconfig.json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
+
+{ "compilerOptions": { "target": "ES2022", "lib": ["dom", "dom.iterable",
+"esnext"], "allowJs": true, "skipLibCheck": true, "strict": true,
+"forceConsistentCasingInFileNames": true, "noEmit": true, "esModuleInterop":
+true, "module": "esnext", "moduleResolution": "bundler", "resolveJsonModule":
+true, "isolatedModules": true, "jsx": "preserve", "incremental": true,
+"plugins": [ { "name": "next" } ], "paths": { "@/_": ["./src/_"] } }, "include":
+["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"], "exclude":
+["node_modules"] }
 
 ### Tailwind CSS 4.0設定
+
 #### frontend/tailwind.config.ts
+
 import type { Config } from 'tailwindcss'
 
-const config: Config = {
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          50: '#f0f9ff',
-          500: '#3b82f6',
-          900: '#1e3a8a',
-        },
-        secondary: {
-          50: '#faf5ff',
-          500: '#a855f7',
-          900: '#581c87',
-        },
-      },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'slide-up': 'slideUp 0.3s ease-out',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-      },
-    },
-  },
-  plugins: [],
-}
+const config: Config = { content: [ './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+'./src/components/**/*.{js,ts,jsx,tsx,mdx}',
+'./src/app/**/*.{js,ts,jsx,tsx,mdx}', ], theme: { extend: { colors: { primary: {
+50: '#f0f9ff', 500: '#3b82f6', 900: '#1e3a8a', }, secondary: { 50: '#faf5ff',
+500: '#a855f7', 900: '#581c87', }, }, animation: { 'fade-in': 'fadeIn 0.5s
+ease-in-out', 'slide-up': 'slideUp 0.3s ease-out', }, keyframes: { fadeIn: {
+'0%': { opacity: '0' }, '100%': { opacity: '1' }, }, slideUp: { '0%': {
+transform: 'translateY(10px)', opacity: '0' }, '100%': { transform:
+'translateY(0)', opacity: '1' }, }, }, }, }, plugins: [], }
 
 export default config
 
 ## 期待される成果物
+
 - Next.js 15.5プロジェクト構造
 - TypeScript厳密設定
 - Tailwind CSS 4.0設定
@@ -1720,6 +1717,7 @@ export default config
 ```
 
 ### **検証方法**
+
 ```bash
 # 依存関係インストール
 cd frontend
@@ -1740,122 +1738,82 @@ pnpm build
 ## 🔧 **Step 5.2: UIコンポーネントシステム構築**
 
 ### **コマンド**
+
 ```bash
 /ai:ui-ux-designer design-system --shadcn --accessible --responsive
 ```
 
 ### **AI への詳細指示**
+
 ```markdown
 # UIコンポーネントシステム構築指示
 
 ## 実行内容
+
 shadcn/ui ベースのアクセシブルでレスポンシブなデザインシステム構築
 
 ## 具体的な作業項目
 
 ### shadcn/ui設定
+
 # frontend/components.json
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "default",
-  "rsc": true,
-  "tsx": true,
-  "tailwind": {
-    "config": "tailwind.config.ts",
-    "css": "src/app/globals.css",
-    "baseColor": "slate",
-    "cssVariables": true,
-    "prefix": ""
-  },
-  "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils"
-  }
-}
+
+{ "$schema": "https://ui.shadcn.com/schema.json", "style": "default", "rsc":
+true, "tsx": true, "tailwind": { "config": "tailwind.config.ts", "css":
+"src/app/globals.css", "baseColor": "slate", "cssVariables": true, "prefix": ""
+}, "aliases": { "components": "@/components", "utils": "@/lib/utils" } }
 
 ### 基本スタイル設定
+
 # frontend/src/app/globals.css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
+@tailwind base; @tailwind components; @tailwind utilities;
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
-}
+@layer base { :root { --background: 0 0% 100%; --foreground: 222.2 84% 4.9%;
+--card: 0 0% 100%; --card-foreground: 222.2 84% 4.9%; --popover: 0 0% 100%;
+--popover-foreground: 222.2 84% 4.9%; --primary: 221.2 83.2% 53.3%;
+--primary-foreground: 210 40% 98%; --secondary: 210 40% 96.1%;
+--secondary-foreground: 222.2 47.4% 11.2%; --muted: 210 40% 96.1%;
+--muted-foreground: 215.4 16.3% 46.9%; --accent: 210 40% 96.1%;
+--accent-foreground: 222.2 47.4% 11.2%; --destructive: 0 84.2% 60.2%;
+--destructive-foreground: 210 40% 98%; --border: 214.3 31.8% 91.4%; --input:
+214.3 31.8% 91.4%; --ring: 221.2 83.2% 53.3%; --radius: 0.5rem; }
+
+.dark { --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2
+84% 4.9%; --card-foreground: 210 40% 98%; --popover: 222.2 84% 4.9%;
+--popover-foreground: 210 40% 98%; --primary: 217.2 91.2% 59.8%;
+--primary-foreground: 222.2 47.4% 11.2%; --secondary: 217.2 32.6% 17.5%;
+--secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%;
+--muted-foreground: 215 20.2% 65.1%; --accent: 217.2 32.6% 17.5%;
+--accent-foreground: 210 40% 98%; --destructive: 0 62.8% 30.6%;
+--destructive-foreground: 210 40% 98%; --border: 217.2 32.6% 17.5%; --input:
+217.2 32.6% 17.5%; --ring: 224.3 76.3% 48%; } }
 
 ### ユーティリティ関数
-# frontend/src/lib/utils.ts
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+# frontend/src/lib/utils.ts
+
+import { type ClassValue, clsx } from "clsx" import { twMerge } from
+"tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)) }
 
 ### Storybookセットアップ
+
 # frontend/.storybook/main.ts
+
 import type { StorybookConfig } from "@storybook/nextjs"
 
-const config: StorybookConfig = {
-  stories: ["../src/**/*.stories.@(js|jsx|ts|tsx|mdx)"],
-  addons: [
-    "@storybook/addon-links",
-    "@storybook/addon-essentials",
-    "@storybook/addon-interactions",
-    "@storybook/addon-a11y"
-  ],
-  framework: {
-    name: "@storybook/nextjs",
-    options: {},
-  },
-}
+const config: StorybookConfig = { stories:
+["../src/**/*.stories.@(js|jsx|ts|tsx|mdx)"], addons: [
+"@storybook/addon-links", "@storybook/addon-essentials",
+"@storybook/addon-interactions", "@storybook/addon-a11y" ], framework: { name:
+"@storybook/nextjs", options: {}, }, }
 
 export default config
 
 ## 期待される成果物
+
 - shadcn/ui統合
 - アクセシビリティ対応
 - レスポンシブデザイン
@@ -1864,6 +1822,7 @@ export default config
 ```
 
 ### **検証方法**
+
 ```bash
 # shadcn/ui CLIインストール
 pnpm dlx shadcn-ui@latest init
@@ -1885,11 +1844,13 @@ pnpm exec pa11y http://localhost:3000
 # Phase 6: 統合・品質保証
 
 ## 🚀 **目標**
+
 エンタープライズレベルの品質基準を満たす統合テスト、CI/CD、監視、セキュリティ、パフォーマンステスト環境の完全構築。
 
 ## 📋 **前提条件**
 
 ### **必須ツール確認**
+
 ```bash
 # Docker バージョン確認（24+必須）
 docker --version
@@ -1909,172 +1870,110 @@ trivy --version 2>/dev/null || echo "Trivy not installed"
 ## 🔧 **Step 6.1: 統合テスト環境のセットアップ**
 
 ### **コマンド**
+
 ```bash
 /ai:quality:tdd test-environment --e2e playwright --api pytest --frontend jest --coverage 80
 ```
 
 ### **AI への詳細指示**
+
 ```markdown
 # 統合テスト環境構築指示
 
 ## 実行内容
+
 E2E、API、フロントエンドの包括的テスト環境構築（80%カバレッジ目標）
 
 ## 具体的な作業項目
 
 ### E2Eテスト設定（Playwright）
+
 #### tests/e2e/playwright.config.ts
+
 import { defineConfig, devices } from '@playwright/test';
 
-export default defineConfig({
-  testDir: './e2e',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
-  use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
-  },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-  ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-  },
-});
+export default defineConfig({ testDir: './e2e', fullyParallel: true, forbidOnly:
+!!process.env.CI, retries: process.env.CI ? 2 : 0, workers: process.env.CI ? 1 :
+undefined, reporter: 'html', use: { baseURL: 'http://localhost:3000', trace:
+'on-first-retry', }, projects: [ { name: 'chromium', use: { ...devices['Desktop
+Chrome'] } }, { name: 'firefox', use: { ...devices['Desktop Firefox'] } }, {
+name: 'webkit', use: { ...devices['Desktop Safari'] } }, ], webServer: {
+command: 'npm run dev', url: 'http://localhost:3000', reuseExistingServer:
+!process.env.CI, }, });
 
 ### API統合テスト設定（pytest）
+
 #### backend/pytest.ini
-[tool:pytest]
-minversion = 6.0
-addopts =
-    -ra
-    -q
-    --strict-markers
-    --cov=src
-    --cov-report=html
-    --cov-report=term-missing:skip-covered
-    --cov-fail-under=80
-testpaths = tests
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
+
+[tool:pytest] minversion = 6.0 addopts = -ra -q --strict-markers --cov=src
+--cov-report=html --cov-report=term-missing:skip-covered --cov-fail-under=80
+testpaths = tests python*files = test*_.py python_classes = Test_
+python*functions = test*\*
 
 ### フロントエンドテスト設定（Jest）
+
 #### frontend/jest.config.js
+
 const nextJest = require('next/jest')
 
-const createJestConfig = nextJest({
-  dir: './',
-})
+const createJestConfig = nextJest({ dir: './', })
 
-const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  testEnvironment: 'jest-environment-jsdom',
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/*.stories.{js,jsx,ts,tsx}',
-  ],
-  coverageThreshold: {
-    global: {
-      branches: 75,
-      functions: 75,
-      lines: 75,
-      statements: 75
-    }
-  }
-}
+const customJestConfig = { setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+moduleNameMapper: { '^@/(._)$': '<rootDir>/src/$1', }, testEnvironment:
+'jest-environment-jsdom', collectCoverageFrom: [ 'src/\*\*/_.{js,jsx,ts,tsx}',
+'!src/**/\*.d.ts', '!src/**/\*.stories.{js,jsx,ts,tsx}', ], coverageThreshold: {
+global: { branches: 75, functions: 75, lines: 75, statements: 75 } } }
 
 module.exports = createJestConfig(customJestConfig)
 
 ### Docker Composeテスト環境
+
 #### docker-compose.test.yml
+
 version: '3.8'
 
-services:
-  test-db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: test_db
-      POSTGRES_USER: test_user
-      POSTGRES_PASSWORD: test_pass
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U test_user"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+services: test-db: image: postgres:16-alpine environment: POSTGRES_DB: test_db
+POSTGRES_USER: test_user POSTGRES_PASSWORD: test_pass healthcheck: test:
+["CMD-SHELL", "pg_isready -U test_user"] interval: 5s timeout: 5s retries: 5
 
-  test-redis:
-    image: redis:7-alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+test-redis: image: redis:7-alpine healthcheck: test: ["CMD", "redis-cli",
+"ping"] interval: 5s timeout: 5s retries: 5
 
-  test-backend:
-    build: ./backend
-    environment:
-      DATABASE_URL: postgresql://test_user:test_pass@test-db:5432/test_db
-      REDIS_URL: redis://test-redis:6379
-      TESTING: "true"
-    depends_on:
-      test-db:
-        condition: service_healthy
-      test-redis:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-    command: pytest
+test-backend: build: ./backend environment: DATABASE_URL:
+postgresql://test_user:test_pass@test-db:5432/test_db REDIS_URL:
+redis://test-redis:6379 TESTING: "true" depends_on: test-db: condition:
+service_healthy test-redis: condition: service_healthy volumes: - ./backend:/app
+command: pytest
 
-  test-frontend:
-    build: ./frontend
-    environment:
-      NEXT_PUBLIC_API_URL: http://test-backend:8000
-    volumes:
-      - ./frontend:/app
-    command: npm run test:ci
+test-frontend: build: ./frontend environment: NEXT_PUBLIC_API_URL:
+http://test-backend:8000 volumes: - ./frontend:/app command: npm run test:ci
 
 ### Makefile統合
+
 #### Makefile
+
 .PHONY: test test-unit test-integration test-e2e test-all
 
-test-env-up:
-	docker-compose -f docker-compose.test.yml up -d
+test-env-up: docker-compose -f docker-compose.test.yml up -d
 
-test-env-down:
-	docker-compose -f docker-compose.test.yml down -v
+test-env-down: docker-compose -f docker-compose.test.yml down -v
 
-test-unit:
-	cd backend && pytest tests/unit --cov=src
-	cd frontend && npm run test:unit
+test-unit: cd backend && pytest tests/unit --cov=src cd frontend && npm run
+test:unit
 
-test-integration:
-	docker-compose -f docker-compose.test.yml run --rm test-backend
-	docker-compose -f docker-compose.test.yml run --rm test-frontend
+test-integration: docker-compose -f docker-compose.test.yml run --rm
+test-backend docker-compose -f docker-compose.test.yml run --rm test-frontend
 
-test-e2e:
-	npx playwright test
+test-e2e: npx playwright test
 
 test-all: test-env-up test-unit test-integration test-e2e test-env-down
 
-test-coverage:
-	cd backend && pytest --cov=src --cov-report=html
-	cd frontend && npm run test:coverage
-	@echo "Backend coverage: htmlcov/index.html"
-	@echo "Frontend coverage: coverage/index.html"
+test-coverage: cd backend && pytest --cov=src --cov-report=html cd frontend &&
+npm run test:coverage @echo "Backend coverage: htmlcov/index.html" @echo
+"Frontend coverage: coverage/index.html"
 
 ## 期待される成果物
+
 - 完全なテスト環境
 - 80%+のコードカバレッジ
 - E2E/API/UI統合テスト
@@ -2083,6 +1982,7 @@ test-coverage:
 ```
 
 ### **検証方法**
+
 ```bash
 # テスト環境起動
 make test-env-up
@@ -2102,20 +2002,24 @@ npx playwright test --headed
 ## 🔧 **Step 6.2: CI/CDパイプライン構築**
 
 ### **コマンド**
+
 ```bash
 /ai:operations:deploy ci-cd --github-actions --cloudflare --multi-stage
 ```
 
 ### **AI への詳細指示**
-```markdown
+
+````markdown
 # ベクトルデータベース構築指示
 
 ## 実行内容
+
 libSQL Vector を使用した1536次元ベクトルデータベースとHNSWインデックスの構築
 
 ## 具体的な作業項目
 
 ### 1. libSQL Vector設定
+
 ```sql
 -- backend/migrations/001_create_vector_tables.sql
 -- libSQL Vector 拡張の有効化
@@ -2144,8 +2048,10 @@ WITH (
 CREATE INDEX prompt_embeddings_prompt_id_idx ON prompt_embeddings(prompt_id);
 CREATE INDEX prompt_embeddings_model_idx ON prompt_embeddings(model_name);
 ```
+````
 
 ### 2. 埋め込み生成サービス
+
 ```python
 # backend/src/infrastructure/embeddings/embedding_service.py
 from typing import List, Dict, Any
@@ -2233,6 +2139,7 @@ class EmbeddingService:
 ```
 
 ### 3. ベクトル検索実装
+
 ```python
 # backend/src/infrastructure/search/vector_search.py
 from typing import List, Tuple, Dict, Optional
@@ -2369,6 +2276,7 @@ class VectorSearchService:
 ```
 
 ### 4. インデックス最適化
+
 ```python
 # backend/src/infrastructure/search/index_optimizer.py
 from typing import Dict, Any
@@ -2428,12 +2336,14 @@ class IndexOptimizer:
 ```
 
 ## 期待される成果物
+
 - libSQL Vector 完全設定
 - 1536次元埋め込みシステム
 - HNSW高速検索インデックス
 - ハイブリッド検索機能
 - インデックス最適化機能
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -2473,27 +2383,31 @@ async def test():
 
 asyncio.run(test())
 "
-```
+````
 
 ---
 
 ## 🔧 **Step 4.2: データ管理基盤**
 
 ### **コマンド**
+
 ```bash
 /ai:development:implement data-layer --tdd --coverage 85
 ```
 
 ### **AI への詳細指示**
-```markdown
+
+````markdown
 # データ管理基盤構築指示
 
 ## 実行内容
+
 85%カバレッジを目標とするデータ管理層の完全実装
 
 ## 具体的な作業項目
 
 ### 1. データベースモデル定義
+
 ```python
 # backend/src/infrastructure/models/prompt_models.py
 from sqlalchemy import Column, String, Text, DateTime, Boolean, Float, ForeignKey
@@ -2561,8 +2475,10 @@ class PromptEmbeddingModel(Base):
 
     prompt = relationship("PromptModel", back_populates="embeddings")
 ```
+````
 
 ### 2. リポジトリ実装
+
 ```python
 # backend/src/infrastructure/repositories/prompt_repository.py
 from typing import List, Optional
@@ -2676,6 +2592,7 @@ class SQLAlchemyPromptRepository(PromptRepository):
 ```
 
 ### 3. データ整合性管理
+
 ```python
 # backend/src/infrastructure/data/consistency_manager.py
 from typing import List, Dict, Any
@@ -2776,6 +2693,7 @@ class DataConsistencyManager:
 ```
 
 ### 4. データマイグレーション
+
 ```python
 # backend/src/infrastructure/migrations/migration_manager.py
 from typing import List, Dict, Any
@@ -2903,12 +2821,14 @@ class MigrationManager:
 ```
 
 ## 期待される成果物
+
 - 完全なデータ管理基盤
 - 85%以上のテストカバレッジ
 - データ整合性管理システム
 - 自動マイグレーション機能
 - 高性能なリポジトリパターン実装
-```
+
+````
 
 ### **検証方法**
 ```bash
@@ -2941,10 +2861,24 @@ async def test():
 
 asyncio.run(test())
 "
-```
+````
 
 ---
 
-<function_calls>
-<invoke name="TodoWrite">
-<parameter name="todos">[{"content": "環境構築完全ガイドの構造設計と基本テンプレート作成", "status": "completed", "activeForm": "環境構築ガイド構造設計完了"}, {"content": "Phase 1: Git・基盤環境構築の詳細手順書作成", "status": "completed", "activeForm": "Git基盤環境手順書作成完了"}, {"content": "Phase 2: インフラ・DevOps環境構築の詳細手順書作成", "status": "completed", "activeForm": "インフラDevOps手順書作成完了"}, {"content": "Phase 3: バックエンド環境構築の詳細手順書作成", "status": "in_progress", "activeForm": "バックエンド環境手順書作成中"}, {"content": "Phase 4: データベース・ベクトル環境の詳細手順書作成", "status": "pending", "activeForm": "データベース環境手順書作成待ち"}, {"content": "Phase 5: フロントエンド環境構築の詳細手順書作成", "status": "pending", "activeForm": "フロントエンド環境手順書作成待ち"}, {"content": "Phase 6: 統合・品質保証の詳細手順書作成", "status": "pending", "activeForm": "統合品質保証手順書作成待ち"}, {"content": "トラブルシューティングガイドと FAQ作成", "status": "pending", "activeForm": "トラブルシューティングガイド作成待ち"}]
+<function_calls> <invoke name="TodoWrite"> <parameter name="todos">[{"content":
+"環境構築完全ガイドの構造設計と基本テンプレート作成", "status": "completed",
+"activeForm": "環境構築ガイド構造設計完了"}, {"content": "Phase 1:
+Git・基盤環境構築の詳細手順書作成", "status": "completed", "activeForm":
+"Git基盤環境手順書作成完了"}, {"content": "Phase 2:
+インフラ・DevOps環境構築の詳細手順書作成", "status": "completed", "activeForm":
+"インフラDevOps手順書作成完了"}, {"content": "Phase 3:
+バックエンド環境構築の詳細手順書作成", "status": "in_progress", "activeForm":
+"バックエンド環境手順書作成中"}, {"content": "Phase 4:
+データベース・ベクトル環境の詳細手順書作成", "status": "pending", "activeForm":
+"データベース環境手順書作成待ち"}, {"content": "Phase 5:
+フロントエンド環境構築の詳細手順書作成", "status": "pending", "activeForm":
+"フロントエンド環境手順書作成待ち"}, {"content": "Phase 6:
+統合・品質保証の詳細手順書作成", "status": "pending", "activeForm":
+"統合品質保証手順書作成待ち"}, {"content": "トラブルシューティングガイドと
+FAQ作成", "status": "pending", "activeForm":
+"トラブルシューティングガイド作成待ち"}]

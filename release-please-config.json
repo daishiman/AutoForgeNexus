@@ -1,0 +1,135 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "package-name": "autoforgenexus",
+      "release-type": "node",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "draft": false,
+      "prerelease": false,
+      "versioning": "default",
+      "changelog-sections": [
+        {
+          "type": "feat",
+          "section": "✨ Features",
+          "hidden": false
+        },
+        {
+          "type": "fix",
+          "section": "🐛 Bug Fixes",
+          "hidden": false
+        },
+        {
+          "type": "perf",
+          "section": "⚡ Performance Improvements",
+          "hidden": false
+        },
+        {
+          "type": "docs",
+          "section": "📚 Documentation",
+          "hidden": false
+        },
+        {
+          "type": "style",
+          "section": "💄 Style",
+          "hidden": true
+        },
+        {
+          "type": "refactor",
+          "section": "♻️ Code Refactoring",
+          "hidden": false
+        },
+        {
+          "type": "test",
+          "section": "✅ Tests",
+          "hidden": true
+        },
+        {
+          "type": "build",
+          "section": "📦 Build System",
+          "hidden": true
+        },
+        {
+          "type": "ci",
+          "section": "👷 CI/CD",
+          "hidden": true
+        },
+        {
+          "type": "chore",
+          "section": "🔧 Chores",
+          "hidden": true
+        },
+        {
+          "type": "revert",
+          "section": "⏪ Reverts",
+          "hidden": false
+        }
+      ],
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "VERSION",
+          "glob": false
+        },
+        {
+          "type": "generic",
+          "path": "backend/pyproject.toml",
+          "glob": false
+        },
+        {
+          "type": "generic",
+          "path": "frontend/package.json",
+          "glob": false
+        },
+        {
+          "type": "generic",
+          "path": "docs/VERSION.md",
+          "glob": false
+        }
+      ],
+      "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "tag-separator": "",
+      "separate-pull-requests": false,
+      "label": "autorelease: pending",
+      "release-label": "autorelease: tagged",
+      "exclude-paths": [
+        ".github/workflows/**",
+        "*.md",
+        "docs/**",
+        "tests/**",
+        "*.test.*",
+        "*.spec.*"
+      ]
+    },
+    "backend": {
+      "package-name": "autoforgenexus-backend",
+      "release-type": "python",
+      "component": "backend",
+      "include-component-in-tag": true
+    },
+    "frontend": {
+      "package-name": "autoforgenexus-frontend",
+      "release-type": "node",
+      "component": "frontend",
+      "include-component-in-tag": true
+    }
+  },
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "group-name": "autoforgenexus-monorepo",
+      "components": [".", "backend", "frontend"]
+    }
+  ],
+  "group-pull-request-title-pattern": "chore: release AutoForgeNexus ${version}",
+  "pull-request-title-pattern": "chore${scope}: release${component} ${version}",
+  "pull-request-header": "## AutoForgeNexus Release",
+  "separate-pull-requests": false,
+  "skip-github-release": false,
+  "sequential-calls": true,
+  "always-link-local": false,
+  "release-search-depth": 400,
+  "commit-search-depth": 500
+}

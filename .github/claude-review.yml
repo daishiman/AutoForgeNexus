@@ -1,0 +1,109 @@
+# Claude Code Review Configuration
+# Claude Codeによる自動コードレビュー設定
+
+name: Claude Code Review
+
+# レビュー対象
+review:
+  enabled: true
+  auto_review: true
+
+  # レビュー基準
+  criteria:
+    - code_quality:
+        - SOLID原則の遵守
+        - DRY原則の適用
+        - 適切な命名規則
+        - 関数の単一責任
+
+    - security:
+        - 秘密情報の漏洩チェック
+        - SQLインジェクション対策
+        - XSS対策
+        - 認証・認可の適切性
+
+    - performance:
+        - O(n²)以上のアルゴリズム検出
+        - 不要な再レンダリング
+        - N+1クエリ問題
+        - メモリリーク可能性
+
+    - testing:
+        - テストカバレッジ（Backend:80%+, Frontend:75%+）
+        - エッジケースのテスト
+        - モックの適切性
+        - E2Eテストの必要性
+
+    - documentation:
+        - 関数/クラスのドキュメント
+        - 複雑なロジックのコメント
+        - APIドキュメントの更新
+        - README更新の必要性
+
+# 自動修正
+auto_fix:
+  enabled: true
+  types:
+    - formatting: true
+    - imports: true
+    - simple_refactoring: true
+    - type_hints: true
+
+# レビューコメントテンプレート
+templates:
+  approval: |
+    ✅ **Claude Code Review: Approved**
+
+    コードレビューが完了しました。以下の観点で問題ありません：
+    - ✅ コード品質
+    - ✅ セキュリティ
+    - ✅ パフォーマンス
+    - ✅ テストカバレッジ
+
+  request_changes: |
+    ⚠️ **Claude Code Review: Changes Requested**
+
+    以下の改善点を確認してください：
+    {issues}
+
+  suggestions: |
+    💡 **改善提案**
+    {suggestions}
+
+# レビュー除外設定
+exclude:
+  paths:
+    - node_modules/
+    - venv/
+    - .venv/
+    - dist/
+    - build/
+    - coverage/
+    - "*.min.js"
+    - "*.min.css"
+    - vendor/
+
+  files:
+    - "*.lock"
+    - "*.log"
+    - "*.cache"
+
+# 個人開発モード設定
+solo_development:
+  enabled: true
+  features:
+    - self_review: true # 自分のコードも客観的にレビュー
+    - learning_mode: true # 改善点を学習機会として詳細説明
+    - best_practices: true # ベストプラクティス提案
+    - architecture_review: true # アーキテクチャレビュー
+
+# 統合設定
+integrations:
+  github:
+    comment_on_pr: true
+    status_checks: true
+    auto_merge_on_approval: false # 安全のため手動マージ
+
+  vscode:
+    inline_suggestions: true
+    problem_markers: true

@@ -1,6 +1,6 @@
 ---
 name: evaluate
-description: "プロンプト品質の多層評価と改善"
+description: 'プロンプト品質の多層評価と改善'
 category: prompt
 complexity: high
 agents:

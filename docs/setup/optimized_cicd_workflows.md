@@ -3,6 +3,7 @@
 ## 🎯 最適化方針
 
 ### DevOps原則
+
 - **自動化可能なものはすべて自動化**
 - **システム信頼性、監視性、迅速な復旧の観点で設計**
 - **すべてのプロセスは再現可能で、監査可能**
@@ -248,7 +249,8 @@ jobs:
         with:
           apiToken: ${{ env.CF_API_TOKEN }}
           accountId: ${{ env.CF_ACCOUNT_ID }}
-          command: deploy --env ${{ github.event.inputs.environment || 'production' }}
+          command:
+            deploy --env ${{ github.event.inputs.environment || 'production' }}
           workingDirectory: backend
 
       - name: Run smoke tests
@@ -311,7 +313,9 @@ jobs:
         if: always()
         with:
           status: ${{ job.status }}
-          text: "Deployment to ${{ github.event.inputs.environment || 'production' }} completed"
+          text:
+            "Deployment to ${{ github.event.inputs.environment || 'production'
+            }} completed"
 ```
 
 ### 3. 高度なセキュリティワークフロー
@@ -326,7 +330,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 2 * * 1'  # 毎週月曜日 AM 2:00
+    - cron: '0 2 * * 1' # 毎週月曜日 AM 2:00
 
 jobs:
   secrets-scan:
@@ -437,7 +441,7 @@ name: Automated Alerts
 
 on:
   workflow_run:
-    workflows: ["Optimized CI Pipeline", "Cloudflare Deployment"]
+    workflows: ['Optimized CI Pipeline', 'Cloudflare Deployment']
     types: [completed]
 
 jobs:
@@ -589,18 +593,21 @@ fi
 ## 📈 パフォーマンス最適化指標
 
 ### CI/CD効率化目標
+
 - **ビルド時間**: <5分 (現状予想: 10-15分)
 - **並列化率**: 80%以上のタスク並列実行
 - **キャッシュ効率**: 依存関係インストール時間70%削減
 - **デプロイ時間**: <2分 (Cloudflare Workers/Pages)
 
 ### 品質保証強化
+
 - **テストカバレッジ**: 80%以上強制
 - **セキュリティスキャン**: 100%自動化
 - **依存関係脆弱性**: ゼロ許容（高/重要レベル）
 - **パフォーマンス監視**: Core Web Vitals追跡
 
 ### 運用効率向上
+
 - **MTTR**: <30分（平均復旧時間）
 - **デプロイ頻度**: 日次以上
 - **失敗率**: <5%（CI/CDパイプライン）

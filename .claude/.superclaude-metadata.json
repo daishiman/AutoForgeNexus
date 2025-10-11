@@ -136,14 +136,7 @@
     }
   },
   "framework": {
-    "components": [
-      "core",
-      "agents",
-      "commands",
-      "mcp",
-      "modes",
-      "mcp_local"
-    ],
+    "components": ["core", "agents", "commands", "mcp", "modes", "mcp_local"],
     "description": "AutoForgeNexus専用AI開発フレームワーク - プロンプト最適化システム対応",
     "installation_type": "project",
     "name": "SuperClaude-AutoForgeNexus",

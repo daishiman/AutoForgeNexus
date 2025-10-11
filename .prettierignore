@@ -1,0 +1,81 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.turbo/
+*.egg-info/
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+.coverage
+.pytest_cache/
+
+# Generated files
+*.min.js
+*.min.css
+*.map
+generated/
+tmp/
+temp/
+
+# Documentation build
+docs/_build/
+site/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Package files
+*.tar.gz
+*.zip
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+
+# Misc
+*.lock
+package-lock.json
+pnpm-lock.yaml
+poetry.lock
+
+# Security: Certificates & Keys
+*.pem
+*.key
+*.p12
+*.pfx
+.auth/
+secrets/
+credentials/

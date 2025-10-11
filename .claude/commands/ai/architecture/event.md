@@ -1,6 +1,6 @@
 ---
 name: event
-description: "イベント駆動アーキテクチャとメッセージング設計"
+description: 'イベント駆動アーキテクチャとメッセージング設計'
 category: architecture
 complexity: high
 agents:
@@ -10,7 +10,7 @@ agents:
     domain-modellerr,
     backend-developer,
     real-time-features-specialist,
-    version-control-specialist
+    version-control-specialist,
   ]
 ---
 

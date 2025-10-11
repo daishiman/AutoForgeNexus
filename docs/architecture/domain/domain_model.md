@@ -2,37 +2,46 @@
 
 ## 🎯 ドメイン概要
 
-AutoForgeNexusは**プロンプトエンジニアリング**を中心とした複雑なドメインを扱います。
-DDDアプローチにより、ビジネス複雑性を適切に分離・管理します。
+AutoForgeNexusは**プロンプトエンジニアリング**を中心とした複雑なドメインを扱います。DDDアプローチにより、ビジネス複雑性を適切に分離・管理します。
 
 ## 🌐 境界付きコンテキスト (Bounded Context)
 
 ### 1. Prompt Context (プロンプトコンテキスト) - コアドメイン
+
 **責務**: プロンプトのライフサイクル管理
+
 - プロンプト作成・編集・削除
 - バージョン管理
 - テンプレート管理
 
 ### 2. Evaluation Context (評価コンテキスト) - コアドメイン
+
 **責務**: プロンプト品質評価
+
 - 多層評価メトリクス
 - A/Bテスト実行
 - パフォーマンス測定
 
 ### 3. LLM Integration Context (LLM統合コンテキスト) - サポートドメイン
+
 **責務**: 外部LLMプロバイダー統合
+
 - マルチプロバイダー管理
 - API統合
 - コスト管理
 
 ### 4. User Management Context (ユーザー管理コンテキスト) - 汎用ドメイン
+
 **責務**: ユーザー・認証・認可
+
 - ユーザー管理
 - 権限管理
 - 組織管理
 
 ### 5. Analytics Context (分析コンテキスト) - サポートドメイン
+
 **責務**: データ分析・インサイト
+
 - 使用統計
 - トレンド分析
 - 推奨エンジン
@@ -53,21 +62,26 @@ class Prompt {
   ) {}
 
   // ファクトリメソッド
-  static create(content: string, userId: UserId, templateId?: TemplateId): Prompt
-  static fromTemplate(templateId: TemplateId, userId: UserId): Prompt
+  static create(
+    content: string,
+    userId: UserId,
+    templateId?: TemplateId
+  ): Prompt;
+  static fromTemplate(templateId: TemplateId, userId: UserId): Prompt;
 
   // ビジネスロジック
-  updateContent(newContent: string, userId: UserId): void
-  createVersion(versionType: VersionType): PromptVersion
-  evaluate(metrics: EvaluationMetric[]): EvaluationResult
-  optimize(strategy: OptimizationStrategy): Prompt
+  updateContent(newContent: string, userId: UserId): void;
+  createVersion(versionType: VersionType): PromptVersion;
+  evaluate(metrics: EvaluationMetric[]): EvaluationResult;
+  optimize(strategy: OptimizationStrategy): Prompt;
 
   // イベント発行
-  private publishEvent(event: DomainEvent): void
+  private publishEvent(event: DomainEvent): void;
 }
 ```
 
 **不変条件**:
+
 - プロンプトIDは一意である
 - コンテンツは空文字列であってはならない
 - 作成者は必須である
@@ -85,13 +99,13 @@ class Evaluation {
     private executedAt: Date
   ) {}
 
-  static create(promptId: PromptId, metrics: EvaluationMetric[]): Evaluation
+  static create(promptId: PromptId, metrics: EvaluationMetric[]): Evaluation;
 
   // ビジネスロジック
-  executeEvaluation(): void
-  addMetricResult(metric: MetricType, result: MetricResult): void
-  calculateOverallScore(): Score
-  compareWith(other: Evaluation): ComparisonResult
+  executeEvaluation(): void;
+  addMetricResult(metric: MetricType, result: MetricResult): void;
+  calculateOverallScore(): Score;
+  compareWith(other: Evaluation): ComparisonResult;
 }
 ```
 
@@ -107,19 +121,20 @@ class LLMProvider {
     private capabilities: ProviderCapabilities
   ) {}
 
-  static register(name: string, config: ApiConfiguration): LLMProvider
+  static register(name: string, config: ApiConfiguration): LLMProvider;
 
   // ビジネスロジック
-  executePrompt(prompt: Prompt): PromptResponse
-  calculateCost(prompt: Prompt): Cost
-  isAvailable(): boolean
-  updateCapabilities(capabilities: ProviderCapabilities): void
+  executePrompt(prompt: Prompt): PromptResponse;
+  calculateCost(prompt: Prompt): Cost;
+  isAvailable(): boolean;
+  updateCapabilities(capabilities: ProviderCapabilities): void;
 }
 ```
 
 ## 🎯 エンティティ設計
 
 ### PromptVersion (プロンプトバージョン)
+
 ```typescript
 class PromptVersion {
   private constructor(
@@ -133,13 +148,14 @@ class PromptVersion {
   ) {}
 
   // ビジネスロジック
-  diff(other: PromptVersion): VersionDiff
-  rollback(): Prompt
-  createBranch(branchName: string): PromptBranch
+  diff(other: PromptVersion): VersionDiff;
+  rollback(): Prompt;
+  createBranch(branchName: string): PromptBranch;
 }
 ```
 
 ### Template (テンプレート)
+
 ```typescript
 class Template {
   private constructor(
@@ -151,60 +167,63 @@ class Template {
   ) {}
 
   // ビジネスロジック
-  instantiate(parameters: Map<string, any>): Prompt
-  validate(parameters: Map<string, any>): ValidationResult
-  customizeFor(userId: UserId): CustomTemplate
+  instantiate(parameters: Map<string, any>): Prompt;
+  validate(parameters: Map<string, any>): ValidationResult;
+  customizeFor(userId: UserId): CustomTemplate;
 }
 ```
 
 ## 💎 値オブジェクト設計
 
 ### PromptContent (プロンプトコンテンツ)
+
 ```typescript
 class PromptContent {
   private constructor(private readonly value: string) {
     this.validate(value);
   }
 
-  static of(value: string): PromptContent
+  static of(value: string): PromptContent;
 
   private validate(value: string): void {
     if (!value || value.trim().length === 0) {
-      throw new Error("プロンプトコンテンツは空であってはならない");
+      throw new Error('プロンプトコンテンツは空であってはならない');
     }
     if (value.length > 10000) {
-      throw new Error("プロンプトコンテンツは10000文字以下である必要がある");
+      throw new Error('プロンプトコンテンツは10000文字以下である必要がある');
     }
   }
 
   // ビジネスロジック
-  wordCount(): number
-  estimateTokens(): number
-  extractKeywords(): Keyword[]
-  sentiment(): SentimentScore
+  wordCount(): number;
+  estimateTokens(): number;
+  extractKeywords(): Keyword[];
+  sentiment(): SentimentScore;
 }
 ```
 
 ### Score (スコア)
+
 ```typescript
 class Score {
   private constructor(private readonly value: number) {
     if (value < 0 || value > 1) {
-      throw new Error("スコアは0-1の範囲である必要がある");
+      throw new Error('スコアは0-1の範囲である必要がある');
     }
   }
 
-  static of(value: number): Score
-  static fromPercentage(percentage: number): Score
+  static of(value: number): Score;
+  static fromPercentage(percentage: number): Score;
 
   // ビジネスロジック
-  isHighQuality(): boolean // 0.8以上
-  grade(): Grade // A, B, C, D, F
-  compareTo(other: Score): number
+  isHighQuality(): boolean; // 0.8以上
+  grade(): Grade; // A, B, C, D, F
+  compareTo(other: Score): number;
 }
 ```
 
 ### UsageQuota (使用クォータ)
+
 ```typescript
 class UsageQuota {
   private constructor(
@@ -214,16 +233,17 @@ class UsageQuota {
   ) {}
 
   // ビジネスロジック
-  canConsume(amount: number): boolean
-  consume(amount: number): void
-  remainingQuota(): number
-  resetIfNeeded(): void
+  canConsume(amount: number): boolean;
+  consume(amount: number): void;
+  remainingQuota(): number;
+  resetIfNeeded(): void;
 }
 ```
 
 ## 🔧 ドメインサービス
 
 ### PromptOptimizationService (プロンプト最適化サービス)
+
 ```typescript
 class PromptOptimizationService {
   constructor(
@@ -244,6 +264,7 @@ class PromptOptimizationService {
 ```
 
 ### IntentDifferenceAnalysisService (意図差分分析サービス)
+
 ```typescript
 class IntentDifferenceAnalysisService {
   async analyzeIntentDifference(
@@ -258,6 +279,7 @@ class IntentDifferenceAnalysisService {
 ```
 
 ### CostOptimizationService (コスト最適化サービス)
+
 ```typescript
 class CostOptimizationService {
   async findOptimalProvider(
@@ -274,6 +296,7 @@ class CostOptimizationService {
 ## ⚡ ドメインイベント
 
 ### PromptCreated (プロンプト作成イベント)
+
 ```typescript
 class PromptCreated implements DomainEvent {
   constructor(
@@ -284,11 +307,14 @@ class PromptCreated implements DomainEvent {
     public readonly occurredAt: Date
   ) {}
 
-  eventType(): string { return 'PromptCreated'; }
+  eventType(): string {
+    return 'PromptCreated';
+  }
 }
 ```
 
 ### EvaluationCompleted (評価完了イベント)
+
 ```typescript
 class EvaluationCompleted implements DomainEvent {
   constructor(
@@ -300,11 +326,14 @@ class EvaluationCompleted implements DomainEvent {
     public readonly occurredAt: Date
   ) {}
 
-  eventType(): string { return 'EvaluationCompleted'; }
+  eventType(): string {
+    return 'EvaluationCompleted';
+  }
 }
 ```
 
 ### PromptOptimized (プロンプト最適化イベント)
+
 ```typescript
 class PromptOptimized implements DomainEvent {
   constructor(
@@ -316,50 +345,55 @@ class PromptOptimized implements DomainEvent {
     public readonly occurredAt: Date
   ) {}
 
-  eventType(): string { return 'PromptOptimized'; }
+  eventType(): string {
+    return 'PromptOptimized';
+  }
 }
 ```
 
 ## 🗄️ リポジトリ設計
 
 ### PromptRepository (プロンプトリポジトリ)
+
 ```typescript
 interface PromptRepository {
   // 基本CRUD
-  save(prompt: Prompt): Promise<void>
-  findById(id: PromptId): Promise<Prompt | null>
-  delete(id: PromptId): Promise<void>
+  save(prompt: Prompt): Promise<void>;
+  findById(id: PromptId): Promise<Prompt | null>;
+  delete(id: PromptId): Promise<void>;
 
   // ビジネスクエリ
-  findByUserId(userId: UserId): Promise<Prompt[]>
-  findByTemplate(templateId: TemplateId): Promise<Prompt[]>
-  findHighPerforming(threshold: Score): Promise<Prompt[]>
-  findRecentlyUpdated(days: number): Promise<Prompt[]>
+  findByUserId(userId: UserId): Promise<Prompt[]>;
+  findByTemplate(templateId: TemplateId): Promise<Prompt[]>;
+  findHighPerforming(threshold: Score): Promise<Prompt[]>;
+  findRecentlyUpdated(days: number): Promise<Prompt[]>;
 
   // 複合クエリ
-  searchByKeywords(keywords: string[]): Promise<Prompt[]>
-  findSimilar(prompt: Prompt, similarity: number): Promise<Prompt[]>
+  searchByKeywords(keywords: string[]): Promise<Prompt[]>;
+  findSimilar(prompt: Prompt, similarity: number): Promise<Prompt[]>;
 }
 ```
 
 ### EvaluationRepository (評価リポジトリ)
+
 ```typescript
 interface EvaluationRepository {
-  save(evaluation: Evaluation): Promise<void>
-  findById(id: EvaluationId): Promise<Evaluation | null>
-  findByPromptId(promptId: PromptId): Promise<Evaluation[]>
-  findByMetricType(metricType: MetricType): Promise<Evaluation[]>
+  save(evaluation: Evaluation): Promise<void>;
+  findById(id: EvaluationId): Promise<Evaluation | null>;
+  findByPromptId(promptId: PromptId): Promise<Evaluation[]>;
+  findByMetricType(metricType: MetricType): Promise<Evaluation[]>;
 
   // 分析クエリ
-  findBestPerforming(limit: number): Promise<Evaluation[]>
-  findTrendData(period: DateRange): Promise<TrendData>
-  calculateAverageScore(criteria: EvaluationCriteria): Promise<Score>
+  findBestPerforming(limit: number): Promise<Evaluation[]>;
+  findTrendData(period: DateRange): Promise<TrendData>;
+  calculateAverageScore(criteria: EvaluationCriteria): Promise<Score>;
 }
 ```
 
 ## 🎯 CQRS実装
 
 ### Command Model (コマンドモデル)
+
 ```typescript
 // コマンド
 interface CreatePromptCommand {
@@ -390,6 +424,7 @@ class CreatePromptCommandHandler {
 ```
 
 ### Query Model (クエリモデル)
+
 ```typescript
 // 読み取り専用DTO
 interface PromptSummaryDto {
@@ -411,20 +446,24 @@ interface PromptDetailDto {
 
 // クエリサービス
 class PromptQueryService {
-  async getPromptSummaries(userId: UserId): Promise<PromptSummaryDto[]>
-  async getPromptDetail(promptId: PromptId): Promise<PromptDetailDto>
-  async searchPrompts(query: SearchQuery): Promise<PromptSummaryDto[]>
+  async getPromptSummaries(userId: UserId): Promise<PromptSummaryDto[]>;
+  async getPromptDetail(promptId: PromptId): Promise<PromptDetailDto>;
+  async searchPrompts(query: SearchQuery): Promise<PromptSummaryDto[]>;
 }
 ```
 
 ## 📋 イベントソーシング実装
 
 ### Event Store Design
+
 ```typescript
 interface EventStore {
-  saveEvents(streamId: string, events: DomainEvent[]): Promise<void>
-  getEvents(streamId: string): Promise<DomainEvent[]>
-  getEventsFromVersion(streamId: string, version: number): Promise<DomainEvent[]>
+  saveEvents(streamId: string, events: DomainEvent[]): Promise<void>;
+  getEvents(streamId: string): Promise<DomainEvent[]>;
+  getEventsFromVersion(
+    streamId: string,
+    version: number
+  ): Promise<DomainEvent[]>;
 }
 
 // 集約の再構築
@@ -467,20 +506,25 @@ class PromptImprovementWorkflow {
     const strategy = this.determineOptimizationStrategy(evaluation);
 
     // 4. 最適化実行
-    const optimizedPrompt = await this.optimizationService.optimize(prompt, strategy);
+    const optimizedPrompt = await this.optimizationService.optimize(
+      prompt,
+      strategy
+    );
 
     // 5. 改善結果保存
     await this.promptRepo.save(optimizedPrompt);
 
     // 6. イベント発行
-    this.eventBus.publish(new PromptOptimized(
-      EventId.generate(),
-      promptId,
-      optimizedPrompt.id,
-      strategy,
-      evaluation.overallScore,
-      new Date()
-    ));
+    this.eventBus.publish(
+      new PromptOptimized(
+        EventId.generate(),
+        promptId,
+        optimizedPrompt.id,
+        strategy,
+        evaluation.overallScore,
+        new Date()
+      )
+    );
 
     return new ImprovedPrompt(prompt, optimizedPrompt, evaluation);
   }
@@ -490,6 +534,7 @@ class PromptImprovementWorkflow {
 ---
 
 **ドキュメント情報**
+
 - 作成日: 2025-09-22
 - バージョン: 1.0
 - 対象コンテキスト: 全境界付きコンテキスト

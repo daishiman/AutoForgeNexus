@@ -1,0 +1,170 @@
+# Cloudflare Pages Security Headers Configuration
+# @description OWASP-compliant security headers for AutoForgeNexus
+# @author security-architect agent
+# @version 1.0.0
+
+# Apply to all routes
+/*
+  # Strict Transport Security - Force HTTPS
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+  # Content Security Policy - Prevent XSS and injection attacks
+  # Note: Nonce-based CSP will be injected dynamically by middleware for script-src
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{RUNTIME_NONCE}' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.clerk.com; style-src 'self' 'nonce-{RUNTIME_NONCE}' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: https://*.clerk.com https://*.clerk.accounts.dev; media-src 'self' blob:; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; child-src 'none'; connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev wss: https://challenges.cloudflare.com; form-action 'self' https://*.clerk.com https://*.clerk.accounts.dev; frame-ancestors 'none'; base-uri 'self'; upgrade-insecure-requests
+
+  # Prevent clickjacking
+  X-Frame-Options: DENY
+
+  # Prevent MIME type sniffing
+  X-Content-Type-Options: nosniff
+
+  # XSS Protection
+  X-XSS-Protection: 1; mode=block
+
+  # Referrer Policy
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Permissions Policy - Restrict dangerous features
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), magnetometer=(), gyroscope=(), payment=(), usb=(), accelerometer=(), ambient-light-sensor=(), autoplay=(), encrypted-media=(), fullscreen=(self), picture-in-picture=()
+
+  # Cross-Origin Resource Policy
+  Cross-Origin-Resource-Policy: cross-origin
+
+  # Cross-Origin Embedder Policy
+  Cross-Origin-Embedder-Policy: require-corp
+
+  # Cross-Origin Opener Policy
+  Cross-Origin-Opener-Policy: same-origin
+
+  # Cache Control for security
+  Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+
+  # Security headers for older browsers
+  Pragma: no-cache
+  Expires: 0
+
+  # Server information hiding
+  Server: AutoForgeNexus/1.0
+
+  # Additional security headers
+  X-Permitted-Cross-Domain-Policies: none
+  X-Download-Options: noopen
+  X-DNS-Prefetch-Control: off
+
+# API routes - Additional security for API endpoints
+/api/*
+  # API-specific CORS headers
+  Access-Control-Allow-Origin: https://autoforgenexus.com
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
+  Access-Control-Max-Age: 86400
+  Access-Control-Allow-Credentials: true
+
+  # API rate limiting headers
+  X-RateLimit-Limit: 1000
+  X-RateLimit-Window: 3600
+
+  # Stricter CSP for API routes
+  Content-Security-Policy: default-src 'none'; script-src 'none'; style-src 'none'; img-src 'none'; connect-src 'self'; frame-ancestors 'none'
+
+# Static assets - Optimized caching with security
+/assets/*
+  # Allow longer caching for static assets
+  Cache-Control: public, max-age=31536000, immutable
+
+  # Basic security headers for static content
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+
+/_next/static/*
+  # Next.js static assets caching
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# Authentication routes - Enhanced security
+/sign-in
+/sign-up
+/auth/*
+  # Stricter CSP for auth pages
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{RUNTIME_NONCE}' https://*.clerk.accounts.dev https://*.clerk.com; style-src 'self' 'nonce-{RUNTIME_NONCE}' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.clerk.com https://*.clerk.accounts.dev; connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev; form-action 'self' https://*.clerk.com https://*.clerk.accounts.dev; frame-ancestors 'none'
+
+  # Prevent caching of auth pages
+  Cache-Control: no-store, no-cache, must-revalidate, private
+
+  # Additional auth security
+  X-Robots-Tag: noindex, nofollow
+
+# Admin routes - Maximum security
+/admin/*
+  # Very strict CSP for admin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{RUNTIME_NONCE}'; style-src 'self' 'nonce-{RUNTIME_NONCE}'; img-src 'self' data:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'
+
+  # No caching for admin pages
+  Cache-Control: no-store, no-cache, must-revalidate, private, max-age=0
+
+  # Admin-specific headers
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+  X-Admin-Access: restricted
+
+# Dashboard and protected routes
+/dashboard/*
+/prompts/*
+/projects/*
+/analytics/*
+  # Standard security with clerk integration
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{RUNTIME_NONCE}' https://*.clerk.accounts.dev https://*.clerk.com; style-src 'self' 'nonce-{RUNTIME_NONCE}' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: https://*.clerk.com; connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev wss:; form-action 'self'; frame-ancestors 'none'
+
+  # Prevent caching of user data
+  Cache-Control: private, no-cache, no-store, must-revalidate
+
+# WebSocket connections
+/ws/*
+  # WebSocket specific headers
+  Upgrade: websocket
+  Connection: Upgrade
+
+# Health check endpoint
+/api/health
+  # Minimal headers for health checks
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Security-Policy: default-src 'none'
+
+# Robots and sitemap
+/robots.txt
+/sitemap.xml
+  # Allow caching for SEO files
+  Cache-Control: public, max-age=3600
+
+# Error pages
+/404.html
+/500.html
+  # Error page headers
+  Cache-Control: public, max-age=300
+  X-Robots-Tag: noindex
+
+# Development/staging specific headers (will be overridden in production)
+# These should be removed or modified for production deployment
+
+# Security.txt for responsible disclosure
+/.well-known/security.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600
+
+# Service worker
+/sw.js
+  # Service worker specific headers
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self'
+
+# Favicon and manifest
+/favicon.ico
+/manifest.json
+  Cache-Control: public, max-age=86400
+
+# GDPR and privacy compliance routes
+/privacy
+/terms
+/gdpr/*
+  # Legal pages headers
+  Cache-Control: public, max-age=3600
+  X-Robots-Tag: index, follow

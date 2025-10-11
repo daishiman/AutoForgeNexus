@@ -1,0 +1,18 @@
+{
+  "security": {
+    "ignore-cvss-severity-below": 0,
+    "ignore-cvss-unknown-severity": false,
+    "continue-on-vulnerability-error": false
+  },
+  "alert": {
+    "ignore-unpinned-requirements": false
+  },
+  "ignore": {
+    "vulnerabilities": [],
+    "packages": []
+  },
+  "report": {
+    "include-license": false,
+    "include-non-security": false
+  }
+}
