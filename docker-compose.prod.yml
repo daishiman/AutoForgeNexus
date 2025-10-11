@@ -67,47 +67,16 @@ services:
           memory: 1G
 
   # ===================
-  # Frontend Service
+  # Frontend Service - Removed
   # ===================
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-      args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
-        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-    container_name: autoforge-frontend-prod
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
-      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
-      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
-    depends_on:
-      backend:
-        condition: service_healthy
-    command: node server.js
-    networks:
-      - autoforge-network
-    restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 1G
-        reservations:
-          cpus: "0.5"
-          memory: 512M
+  # Note: Frontend is deployed to Cloudflare Pages (static CDN distribution)
+  # Production deployment: wrangler pages deploy frontend/out
+  # Docker container not used in production environment
+  #
+  # For local development, use:
+  #   pnpm dev
+  # Or for Docker-based development:
+  #   docker-compose -f docker-compose.dev.yml up frontend
 
   # ===================
   # Redis Cache Service (Production)

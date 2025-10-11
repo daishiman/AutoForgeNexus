@@ -286,9 +286,29 @@ dist/
 
 ---
 
-## 🎯 本番環境での実行
+## 🎯 本番環境での実行（注: Cloudflare環境ではDocker不使用）
 
-### 環境変数設定
+### 重要: 本番環境アーキテクチャ
+
+**AutoForgeNexusの本番環境はDockerを使用しません**:
+
+- **Backend**: Cloudflare Workers Python（サーバーレス実行）
+  ```bash
+  wrangler deploy --env production
+  ```
+
+- **Frontend**: Cloudflare Pages（静的CDN配信）
+  ```bash
+  pnpm build
+  wrangler pages deploy frontend/out
+  ```
+
+**Dockerの実際の用途**:
+1. ✅ ローカル開発環境（docker-compose.dev.yml）
+2. ✅ CI/CDビルド検証（backend/Dockerfile）
+3. ❌ 本番環境（Cloudflareのためサーバーレス）
+
+### 環境変数設定（参考: オンプレミスデプロイ時）
 
 ```bash
 # 必須環境変数

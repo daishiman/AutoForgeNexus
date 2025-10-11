@@ -79,7 +79,7 @@ AutoForgeNexus は、AI プロンプト最適化システム - 包括的なプ�
 - **認証**: Clerk 6.32.0（OAuth 2.0, MFA, 組織管理）
 - **AI/ML**: LangChain 0.3.27, LangGraph 0.2.60, LiteLLM 1.77.5
 - **LLM 観測**: LangFuse 2.56.2（分散トレーシング・評価・コスト監視）
-- **インフラ**: Cloudflare (Workers Python, Pages, R2), Docker 24.0+
+- **インフラ**: Cloudflare (Workers Python, Pages, R2), Docker 24.0+（開発環境のみ）
 - **Node.js**: 22 LTS "Jod" (ネイティブ TypeScript 対応, WebSocket 内蔵)
 - **パッケージ管理**: pnpm 9.x (Node.js 22 最適化)
 - **状態管理**: Zustand 5.0.8
@@ -121,10 +121,10 @@ git config commit.template .gitmessage  # コミットテンプレート設定
 gh workflow list                 # GitHub Actions確認
 ```
 
-### Phase 2: インフラ・Docker 環境
+### Phase 2: インフラ・Docker 環境（開発環境のみ）
 
 ```bash
-# Docker開発環境構築
+# Docker開発環境構築（ローカル開発用）
 docker-compose -f docker-compose.dev.yml build --no-cache
 docker-compose -f docker-compose.dev.yml up -d
 docker-compose logs -f          # ログ監視
@@ -132,6 +132,10 @@ docker-compose logs -f          # ログ監視
 # サービス状態確認
 docker-compose ps               # コンテナ状態確認
 docker-compose -f docker-compose.dev.yml exec backend /bin/bash
+
+# 注: 本番環境ではDockerを使用せず、Cloudflare Workers/Pagesにデプロイ
+# - Backend: wrangler deploy --env production
+# - Frontend: wrangler pages deploy frontend/out
 ```
 
 ### Phase 3: バックエンド (Python 3.13/FastAPI)
