@@ -3,16 +3,21 @@
 ## 📋 このフェーズの概要
 
 ### 目的
+
 AutoForgeNexusの永続化層とベクトル検索基盤を構築し、高性能なデータアクセスとAI機能のための埋め込み処理を実現します。
 
 ### 担当エージェント
 
 #### **主要担当エージェント**
-- **edge-database-administrator** (リーダー): Turso/libSQL設計・最適化、エッジデータベース管理
-- **vector-database-specialist**: libSQL Vector管理、埋め込み戦略、類似度検索最適化
+
+- **edge-database-administrator** (リーダー):
+  Turso/libSQL設計・最適化、エッジデータベース管理
+- **vector-database-specialist**: libSQL
+  Vector管理、埋め込み戦略、類似度検索最適化
 - **data-migration-specialist**: データ移行戦略、ETLパイプライン、ゼロダウンタイム移行
 
 #### **支援エージェント**
+
 - **backend-architect**: データ整合性設計、障害許容性、データアクセス層アーキテクチャ
 - **performance-optimizer**: データベースパフォーマンス最適化、クエリチューニング
 - **security-architect**: データベースセキュリティ、暗号化、アクセス制御
@@ -20,6 +25,7 @@ AutoForgeNexusの永続化層とベクトル検索基盤を構築し、高性能
 - **devops-coordinator**: Docker統合、CI/CD パイプライン、環境管理
 
 ### 関連AIコマンド
+
 - `/ai:data:vector` - libSQL Vectorによるベクトルデータベース管理
 - `/ai:data:analyze` - データ分析と洞察抽出
 - `/ai:data:migrate` - ゼロダウンタイムデータ移行
@@ -27,6 +33,7 @@ AutoForgeNexusの永続化層とベクトル検索基盤を構築し、高性能
 - `/ai:troubleshoot` - データベース問題診断
 
 ### 最終状態
+
 - ✅ Turso (libSQL)による分散型メインデータベース稼働
 - ✅ Redisによる高速キャッシュレイヤー構築
 - ✅ libSQL Vectorでベクトル検索環境整備
@@ -35,6 +42,7 @@ AutoForgeNexusの永続化層とベクトル検索基盤を構築し、高性能
 - ✅ 自動バックアップとレプリケーション体制構築
 
 ### 技術スタック
+
 ```yaml
 データベース:
   メイン: Turso (libSQL) - 分散SQLite
@@ -56,6 +64,7 @@ ORM/マイグレーション:
 ## 🚀 事前準備チェックリスト
 
 ### 必須確認項目
+
 ```bash
 # Phase 3完了確認
 cat backend/.env.local | grep DATABASE_URL  # 環境変数準備確認
@@ -83,6 +92,7 @@ curl -I https://api.turso.tech  # Turso API接続確認
 ```
 
 ### 環境変数テンプレート準備
+
 ```bash
 # backend/.env.localに追加（セキュアな設定）
 cat >> backend/.env.local << 'EOF'
@@ -120,6 +130,7 @@ EOF
 ```
 
 ### Claude Agentの活用準備
+
 ```bash
 # 関連エージェントの確認
 /ai:data:vector --help  # ベクトルDB管理
@@ -132,13 +143,17 @@ EOF
 ## 1️⃣ Turso (libSQL)セットアップ
 
 ### 担当エージェント
+
 - **主担当**: edge-database-administrator
 - **支援**: backend-architect, devops-coordinator
 
 ### 背景・目的
-Turso (libSQL)は分散SQLiteベースのデータベースで、エッジコンピューティングに最適化されています。グローバルなレプリケーション、低レイテンシアクセス、SQLiteの信頼性を組み合わせた次世代データベースです。
+
+Turso
+(libSQL)は分散SQLiteベースのデータベースで、エッジコンピューティングに最適化されています。グローバルなレプリケーション、低レイテンシアクセス、SQLiteの信頼性を組み合わせた次世代データベースです。
 
 ### 使用コマンド
+
 ```bash
 # データベース設計と構造確認
 /ai:architecture:design --database-structure
@@ -148,6 +163,7 @@ Turso (libSQL)は分散SQLiteベースのデータベースで、エッジコン
 ```
 
 ### 1.1 Turso CLIインストール（M1 Mac対応）
+
 ```bash
 # M1 Mac (Apple Silicon)
 # ARM64ネイティブビルドを優先
@@ -173,6 +189,7 @@ turso --version
 ```
 
 ### 1.2 Tursoアカウント設定
+
 ```bash
 # サインアップ/ログイン
 turso auth signup  # 新規の場合
@@ -187,6 +204,7 @@ turso account show
 ```
 
 ### 1.3 データベース作成
+
 ```bash
 # 本番データベース作成
 turso db create autoforgenexus-prod \
@@ -210,6 +228,7 @@ turso db list
 ```
 
 ### 1.4 接続情報取得
+
 ```bash
 # 本番DB接続情報
 turso db show autoforgenexus-prod --url
@@ -225,6 +244,7 @@ turso db shell autoforgenexus-dev "SELECT 1"
 ```
 
 ### 1.5 libSQL Vector Extension有効化（修正版）
+
 ```bash
 # Vector拡張インストール
 turso db shell autoforgenexus-dev << 'EOF'
@@ -260,6 +280,7 @@ EOF
 ```
 
 ### 1.6 初期スキーマ設定
+
 ```bash
 # backend/sql/001_initial_schema.sql作成
 cat > backend/sql/001_initial_schema.sql << 'EOF'
@@ -323,13 +344,16 @@ turso db shell autoforgenexus-dev < backend/sql/001_initial_schema.sql
 ## 2️⃣ Redis環境構築
 
 ### 担当エージェント
+
 - **主担当**: backend-architect
 - **支援**: performance-optimizer, sre-agent-agent
 
 ### 背景・目的
+
 Redisは高速インメモリデータストアで、キャッシング、セッション管理、リアルタイム機能のバックボーンとして機能します。Pub/Sub機能により、イベント駆動アーキテクチャの実装も可能です。
 
 ### 使用コマンド
+
 ```bash
 # キャッシュ戦略の設計
 /ai:architecture:design --cache-strategy
@@ -339,6 +363,7 @@ Redisは高速インメモリデータストアで、キャッシング、セッ
 ```
 
 ### 2.1 Redisインストール（M1 Mac最適化）
+
 ```bash
 # M1 Mac (ARM64ネイティブ)
 brew install redis
@@ -370,6 +395,7 @@ redis-benchmark -q -n 100000
 ```
 
 ### 2.2 Redis設定ファイル（セキュア版）
+
 ```bash
 # backend/config/redis.conf作成
 cat > backend/config/redis.conf << 'EOF'
@@ -424,6 +450,7 @@ redis-server backend/config/redis.conf
 ```
 
 ### 2.3 Redis接続テスト
+
 ```bash
 # Python接続テスト
 python << 'EOF'
@@ -450,6 +477,7 @@ EOF
 ```
 
 ### 2.4 Redisクラスター設定（本番用）
+
 ```bash
 # backend/config/redis-cluster.conf
 cat > backend/config/redis-cluster.conf << 'EOF'
@@ -473,13 +501,18 @@ EOF
 ## 3️⃣ libSQL Vector設定
 
 ### 担当エージェント
+
 - **主担当**: vector-database-specialist
 - **支援**: prompt-engineering-specialist, llm-integration
 
 ### 背景・目的
-libSQL VectorはSQLiteベースのベクトルデータベース拡張で、AI埋め込みの高速検索を実現します。OpenAI、Cohere、HuggingFaceなどの埋め込みモデルと統合し、セマンティック検索やRAG（Retrieval-Augmented Generation）の基盤となります。
+
+libSQL
+VectorはSQLiteベースのベクトルデータベース拡張で、AI埋め込みの高速検索を実現します。OpenAI、Cohere、HuggingFaceなどの埋め込みモデルと統合し、セマンティック検索やRAG（Retrieval-Augmented
+Generation）の基盤となります。
 
 ### 使用コマンド
+
 ```bash
 # ベクトルDB初期化
 /ai:data:vector --init --dimension 1536 --model "text-embedding-3-small"
@@ -492,6 +525,7 @@ libSQL VectorはSQLiteベースのベクトルデータベース拡張で、AI�
 ```
 
 ### 3.1 Vectorライブラリインストール（M1 Mac対応）
+
 ```bash
 # M1 Mac用の依存関係インストール
 # NumPyのARM64最適化版を確認
@@ -518,6 +552,7 @@ file $(python -c "import numpy; print(numpy.__file__)")
 ```
 
 ### 3.2 Vector初期化スクリプト（改良版）
+
 ```python
 # backend/database/vector_setup.py
 cat > backend/database/vector_setup.py << 'EOF'
@@ -644,6 +679,7 @@ python backend/database/vector_setup.py
 ```
 
 ### 3.3 埋め込みモデル設定
+
 ```bash
 # AIコマンドでベクトルDB管理
 /ai:data:vector --init --dimension 1536 --model "text-embedding-ada-002"
@@ -657,13 +693,17 @@ python backend/database/vector_setup.py
 ## 4️⃣ SQLAlchemy・Alembic設定
 
 ### 担当エージェント
+
 - **主担当**: backend-developer
 - **支援**: domain-modeller, database-administrator
 
 ### 背景・目的
-SQLAlchemy 2.0はPythonの最新ORM（Object-Relational Mapping）で、型安全性と非同期サポートを提供します。Alembicと組み合わせることで、データベーススキーマのバージョン管理と安全なマイグレーションを実現します。
+
+SQLAlchemy 2.0はPythonの最新ORM（Object-Relational
+Mapping）で、型安全性と非同期サポートを提供します。Alembicと組み合わせることで、データベーススキーマのバージョン管理と安全なマイグレーションを実現します。
 
 ### 使用コマンド
+
 ```bash
 # ドメインモデルの設計
 /ai:requirements:domain --entity-mapping
@@ -673,6 +713,7 @@ SQLAlchemy 2.0はPythonの最新ORM（Object-Relational Mapping）で、型安�
 ```
 
 ### 4.1 SQLAlchemy設定
+
 ```python
 # backend/database/base.py
 cat > backend/database/base.py << 'EOF'
@@ -753,6 +794,7 @@ python backend/database/base.py
 ```
 
 ### 4.2 Alembic初期化
+
 ```bash
 # Alembic初期化
 cd backend
@@ -809,6 +851,7 @@ EOF
 ```
 
 ### 4.3 Alembic環境設定
+
 ```python
 # backend/migrations/env.py
 cat > backend/migrations/env.py << 'EOF'
@@ -873,6 +916,7 @@ EOF
 ```
 
 ### 4.4 初期マイグレーション作成
+
 ```bash
 # 初期マイグレーション生成
 alembic revision --autogenerate -m "Initial schema"
@@ -889,13 +933,16 @@ alembic current
 ## 5️⃣ Docker統合
 
 ### 担当エージェント
+
 - **主担当**: devops-coordinator
 - **支援**: sre-agent-agent, edge-computing-specialist
 
 ### 背景・目的
+
 Dockerによるコンテナ化により、開発環境の一貫性と本番環境への移行可能性を保証します。docker-composeによるマルチコンテナ管理で、データベース、キャッシュ、プロキシを統合的に管理します。
 
 ### 使用コマンド
+
 ```bash
 # Docker環境の構築
 /ai:operations:deploy --docker-setup
@@ -905,6 +952,7 @@ Dockerによるコンテナ化により、開発環境の一貫性と本番環�
 ```
 
 ### 5.1 Docker Compose設定（M1 Mac対応）
+
 ```yaml
 # docker-compose.database.yml
 cat > docker-compose.database.yml << 'EOF'
@@ -999,6 +1047,7 @@ docker-compose -f docker-compose.database.yml logs -f
 ```
 
 ### 5.2 データベース初期化スクリプト
+
 ```bash
 # backend/scripts/init_db.sh
 cat > backend/scripts/init_db.sh << 'EOF'
@@ -1058,13 +1107,16 @@ chmod +x backend/scripts/init_db.sh
 ## 6️⃣ 動作確認とテスト
 
 ### 担当エージェント
+
 - **主担当**: test-automation-engineer
 - **支援**: qa-coordinator, performance-optimizer
 
 ### 背景・目的
+
 包括的な統合テストにより、データベース層の信頼性とパフォーマンスを検証します。自動化されたテストスイートは、継続的な品質保証の基盤となります。
 
 ### 使用コマンド
+
 ```bash
 # テスト実行と品質レポート
 /sc:test --integration --coverage
@@ -1077,6 +1129,7 @@ chmod +x backend/scripts/init_db.sh
 ```
 
 ### 6.1 統合テストスクリプト
+
 ```python
 # backend/tests/test_database_integration.py
 cat > backend/tests/test_database_integration.py << 'EOF'
@@ -1256,6 +1309,7 @@ python backend/tests/test_database_integration.py
 ```
 
 ### 6.2 ヘルスチェックエンドポイント
+
 ```python
 # backend/api/health.py
 cat > backend/api/health.py << 'EOF'
@@ -1327,10 +1381,12 @@ EOF
 ## 7️⃣ トラブルシューティング
 
 ### 担当エージェント
+
 - **主担当**: root-cause-analyst
 - **支援**: performance-engineer, sre-agent-agent
 
 ### 使用コマンド
+
 ```bash
 # 問題診断
 /ai:troubleshoot --database --deep-analysis
@@ -1345,6 +1401,7 @@ EOF
 ### M1 Mac固有の問題と解決策
 
 #### Docker パフォーマンス問題
+
 ```bash
 # エラー: Dockerが遅い、CPU使用率が高い
 # 解決策:
@@ -1374,6 +1431,7 @@ open -a Docker
 ```
 
 #### Python パッケージのARM64互換性
+
 ```bash
 # エラー: ImportError: dlopen failed
 # 解決策:
@@ -1390,6 +1448,7 @@ arch -x86_64 pip install numpy
 ### よくある問題と解決策
 
 #### Turso接続エラー
+
 ```bash
 # エラー: Connection refused
 # 解決策:
@@ -1402,6 +1461,7 @@ sudo /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
 ```
 
 #### Redis接続エラー
+
 ```bash
 # エラー: Could not connect to Redis
 # 解決策:
@@ -1415,6 +1475,7 @@ redis-cli CONFIG GET protected-mode
 ```
 
 #### ベクトル操作エラー
+
 ```bash
 # エラー: Vector extension not found
 # 解決策:
@@ -1431,6 +1492,7 @@ pip install libsql-experimental==0.0.30
 ```
 
 #### マイグレーションエラー
+
 ```bash
 # エラー: Alembic migration failed
 # 解決策:
@@ -1446,6 +1508,7 @@ alembic upgrade head
 ```
 
 #### パフォーマンス問題（M1 Mac最適化）
+
 ```bash
 # Turso最適化（M1向けチューニング）
 turso db shell autoforgenexus-dev << 'EOF'
@@ -1474,6 +1537,7 @@ sudo sysctl -w net.inet.tcp.msl=1000
 ```
 
 ### 診断コマンド集（M1 Mac対応）
+
 ```bash
 # システムリソース確認（macOS）
 sudo powermetrics --samplers cpu_power,gpu_power -i 1000 -n 1  # M1電力使用状況
@@ -1503,10 +1567,12 @@ docker-compose -f docker-compose.database.yml logs -f
 ## 8️⃣ ベストプラクティス
 
 ### 担当エージェント
+
 - **主担当**: security-architect
 - **支援**: compliance-officer, sre-agent-agent
 
 ### 使用コマンド
+
 ```bash
 # セキュリティ監査
 /ai:quality:security --audit --database
@@ -1516,6 +1582,7 @@ docker-compose -f docker-compose.database.yml logs -f
 ```
 
 ### セキュリティ（強化版）
+
 ```bash
 # 1. 環境変数暗号化（macOS Keychain統合）
 # backend/utils/secure_env.py
@@ -1602,6 +1669,7 @@ turso db audit autoforgenexus-prod --enable
 ```
 
 ### バックアップ戦略
+
 ```bash
 # backend/scripts/backup_db.sh
 cat > backend/scripts/backup_db.sh << 'EOF'
@@ -1626,6 +1694,7 @@ echo "0 2 * * * /path/to/backup_db.sh" | crontab -
 ```
 
 ### モニタリング設定（包括的）
+
 ```python
 # backend/monitoring/db_metrics.py
 cat > backend/monitoring/db_metrics.py << 'EOF'
@@ -1754,6 +1823,7 @@ EOF
 ```
 
 ### 開発のコツ
+
 ```yaml
 推奨事項:
   - ブランチ戦略: main/dev/feature-*でTursoDB分離
@@ -1775,6 +1845,7 @@ EOF
 ## ✅ 完了チェックリスト
 
 ### 必須項目
+
 - [ ] Turso DBの3環境構築完了（dev/staging/prod）
 - [ ] Redis起動とヘルスチェック成功
 - [ ] libSQL Vector拡張有効化
@@ -1786,6 +1857,7 @@ EOF
 - [ ] 環境変数すべて設定済み
 
 ### 確認コマンド
+
 ```bash
 # 最終確認
 /ai:data:analyze --health-check
@@ -1803,6 +1875,7 @@ curl http://localhost:8000/health/database
 データベース環境が構築できたら、次は[Phase 5: フロントエンド環境構築](./PHASE5_FRONTEND_ENVIRONMENT_SETUP.md)へ進んでください。
 
 ### Phase 5で使用する情報
+
 ```bash
 # 以下の情報をPhase 5で使用
 export NEXT_PUBLIC_DATABASE_URL=$TURSO_DATABASE_URL
@@ -1811,6 +1884,7 @@ export NEXT_PUBLIC_VECTOR_API_ENDPOINT="http://localhost:8000/api/v1/vectors"
 ```
 
 ### 統合ポイント
+
 - APIエンドポイント: `http://localhost:8000`
 - WebSocket: `ws://localhost:8000/ws`
 - Redis Pub/Sub: `redis://localhost:6379`
@@ -1828,6 +1902,7 @@ export NEXT_PUBLIC_VECTOR_API_ENDPOINT="http://localhost:8000/api/v1/vectors"
 ## 🆘 サポート
 
 問題が発生した場合：
+
 1. [トラブルシューティング](#7️⃣-トラブルシューティング)セクション確認
 2. `backend/logs/`のログファイル確認
 3. AIコマンド使用: `/ai:troubleshoot --database`
@@ -1835,5 +1910,4 @@ export NEXT_PUBLIC_VECTOR_API_ENDPOINT="http://localhost:8000/api/v1/vectors"
 
 ---
 
-*Last Updated: 2024-12-24*
-*Version: 1.0.0*
+_Last Updated: 2024-12-24_ _Version: 1.0.0_

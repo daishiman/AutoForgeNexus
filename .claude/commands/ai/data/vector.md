@@ -1,6 +1,6 @@
 ---
 name: vector
-description: "libSQL Vectorによるベクトルデータベース管理"
+description: 'libSQL Vectorによるベクトルデータベース管理'
 category: data
 complexity: high
 agents:

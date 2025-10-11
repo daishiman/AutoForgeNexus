@@ -2,7 +2,8 @@
 
 ## 📋 概要
 
-AutoForgeNexus プロジェクトの Phase 6 は、エンタープライズレベルの品質保証環境を構築する最終フェーズです。統合テスト、CI/CD、監視、セキュリティ、パフォーマンステストの完全な環境を整備します。
+AutoForgeNexus プロジェクトの Phase
+6 は、エンタープライズレベルの品質保証環境を構築する最終フェーズです。統合テスト、CI/CD、監視、セキュリティ、パフォーマンステストの完全な環境を整備します。
 
 ---
 
@@ -18,11 +19,14 @@ AutoForgeNexus プロジェクトの Phase 6 は、エンタープライズレ�
 
 Phase 6 Step 6.1 で起動されるべきエージェント：
 
-- **qa-coordinator Agent** (リーダー): 統合テスト環境全体の設計と品質保証戦略の統括
-- **test-automation-engineer Agent**: テストフレームワークのセットアップとテスト戦略の実装
+- **qa-coordinator Agent**
+  (リーダー): 統合テスト環境全体の設計と品質保証戦略の統括
+- **test-automation-engineer
+  Agent**: テストフレームワークのセットアップとテスト戦略の実装
 - **backend-developer Agent**: API テスト環境とモックサービスの構築
 - **frontend-architect Agent**: フロントエンド E2E テスト環境の構築
-- **edge-database-administrator Agent**: テストデータベース環境とデータ管理の設定
+- **edge-database-administrator
+  Agent**: テストデータベース環境とデータ管理の設定
 
 ### AI への詳細指示
 
@@ -40,49 +44,49 @@ Playwright, pytest, Jest を使用した包括的テスト環境の構築
 #### frontend/playwright.config.ts
 
 ```typescript
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [
-    ["html"],
-    ["json", { outputFile: "test-results/e2e-results.json" }],
-    ["junit", { outputFile: "test-results/e2e-junit.xml" }],
+    ['html'],
+    ['json', { outputFile: 'test-results/e2e-results.json' }],
+    ['junit', { outputFile: 'test-results/e2e-junit.xml' }],
   ],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
-    trace: "on-first-retry",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
     },
     {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
     },
     {
-      name: "Mobile Chrome",
-      use: { ...devices["Pixel 5"] },
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
     },
   ],
   webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:3000",
+    command: 'pnpm dev',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    stdout: "pipe",
-    stderr: "pipe",
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
 });
 ```
@@ -172,29 +176,29 @@ def docker_compose():
 #### frontend/jest.config.js
 
 ```javascript
-const nextJest = require("next/jest");
+const nextJest = require('next/jest');
 
 const createJestConfig = nextJest({
-  dir: "./",
+  dir: './',
 });
 
 const customJestConfig = {
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  testEnvironment: "jest-environment-jsdom",
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1",
-    "^@/components/(.*)$": "<rootDir>/src/components/$1",
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/components/(.*)$': '<rootDir>/src/components/$1',
   },
-  coverageDirectory: "coverage",
+  coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    "src/**/*.{js,jsx,ts,tsx}",
-    "!src/**/*.d.ts",
-    "!src/**/*.stories.{js,jsx,ts,tsx}",
-    "!src/**/_*.{js,jsx,ts,tsx}",
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{js,jsx,ts,tsx}',
+    '!src/**/_*.{js,jsx,ts,tsx}',
   ],
   testMatch: [
-    "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
-    "<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}",
+    '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+    '<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}',
   ],
   coverageThreshold: {
     global: {
@@ -230,7 +234,9 @@ module.exports = createJestConfig(customJestConfig);
 ````
 
 ### **起動エージェント**
+
 Phase 6 Step 6.2で起動されるべきエージェント：
+
 - **devops-coordinator Agent** (リーダー): CI/CDパイプライン全体の設計と統括
 - **test-automation-engineer Agent**: 自動テスト戦略とテストステップの設計
 - **security-architect Agent**: セキュリティスキャンとセキュリティゲートの設定
@@ -254,116 +260,53 @@ GitHub Actions + Cloudflare デプロイメントパイプラインの構築
 
 name: CI Pipeline
 
-on:
-push:
-branches: [main, develop]
-pull_request:
-branches: [main, develop]
+on: push: branches: [main, develop] pull_request: branches: [main, develop]
 
-env:
-PYTHON_VERSION: '3.13'
-NODE_VERSION: '20'
-PNPM_VERSION: '8'
+env: PYTHON_VERSION: '3.13' NODE_VERSION: '20' PNPM_VERSION: '8'
 
-jobs:
-lint-backend:
-runs-on: ubuntu-latest
-steps: - uses: actions/checkout@v4 - uses: actions/setup-python@v5
-with:
-python-version: ${{ env.PYTHON_VERSION }} - name: Install dependencies
-run: |
-cd backend
-pip install -e .[dev] - name: Run ruff
-run: |
-cd backend
-ruff check src/ - name: Run mypy
-run: |
-cd backend
-mypy src/ --strict
+jobs: lint-backend: runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 -
+uses: actions/setup-python@v5 with: python-version: ${{ env.PYTHON_VERSION }} -
+name: Install dependencies run: | cd backend pip install -e .[dev] - name: Run
+ruff run: | cd backend ruff check src/ - name: Run mypy run: | cd backend mypy
+src/ --strict
 
-lint-frontend:
-runs-on: ubuntu-latest
-steps: - uses: actions/checkout@v4 - uses: pnpm/action-setup@v2
-with:
-version: ${{ env.PNPM_VERSION }} - uses: actions/setup-node@v4
-with:
-node-version: ${{ env.NODE_VERSION }}
-cache: 'pnpm' - name: Install dependencies
-run: |
-cd frontend
-pnpm install - name: Run ESLint
-run: |
-cd frontend
-pnpm lint - name: Type check
-run: |
-cd frontend
-pnpm type-check
+lint-frontend: runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 - uses:
+pnpm/action-setup@v2 with: version: ${{ env.PNPM_VERSION }} - uses:
+actions/setup-node@v4 with: node-version: ${{ env.NODE_VERSION }} cache:
+'pnpm' - name: Install dependencies run: | cd frontend pnpm install - name: Run
+ESLint run: | cd frontend pnpm lint - name: Type check run: | cd frontend pnpm
+type-check
 
-test-backend:
-runs-on: ubuntu-latest
-needs: lint-backend
-steps: - uses: actions/checkout@v4 - uses: actions/setup-python@v5
-with:
-python-version: ${{ env.PYTHON_VERSION }} - name: Install dependencies
-run: |
-cd backend
-pip install -e .[dev] - name: Run tests with coverage
-run: |
-cd backend
-pytest --cov=src --cov-report=xml --cov-fail-under=80 - name: Upload coverage to Codecov
-uses: codecov/codecov-action@v3
-with:
-files: ./backend/coverage.xml
+test-backend: runs-on: ubuntu-latest needs: lint-backend steps: - uses:
+actions/checkout@v4 - uses: actions/setup-python@v5 with: python-version:
+${{ env.PYTHON_VERSION }} - name: Install dependencies run: | cd backend pip
+install -e .[dev] - name: Run tests with coverage run: | cd backend pytest
+--cov=src --cov-report=xml --cov-fail-under=80 - name: Upload coverage to
+Codecov uses: codecov/codecov-action@v3 with: files: ./backend/coverage.xml
 flags: backend
 
-test-frontend:
-runs-on: ubuntu-latest
-needs: lint-frontend
-steps: - uses: actions/checkout@v4 - uses: pnpm/action-setup@v2
-with:
-version: ${{ env.PNPM_VERSION }} - uses: actions/setup-node@v4
-with:
-node-version: ${{ env.NODE_VERSION }}
-cache: 'pnpm' - name: Install dependencies
-run: |
-cd frontend
-pnpm install - name: Run tests with coverage
-run: |
-cd frontend
-pnpm test:ci --coverage - name: Upload coverage to Codecov
-uses: codecov/codecov-action@v3
-with:
-files: ./frontend/coverage/lcov.info
-flags: frontend
+test-frontend: runs-on: ubuntu-latest needs: lint-frontend steps: - uses:
+actions/checkout@v4 - uses: pnpm/action-setup@v2 with: version:
+${{ env.PNPM_VERSION }} - uses: actions/setup-node@v4 with: node-version:
+${{ env.NODE_VERSION }} cache: 'pnpm' - name: Install dependencies run: | cd
+frontend pnpm install - name: Run tests with coverage run: | cd frontend pnpm
+test:ci --coverage - name: Upload coverage to Codecov uses:
+codecov/codecov-action@v3 with: files: ./frontend/coverage/lcov.info flags:
+frontend
 
-e2e-tests:
-runs-on: ubuntu-latest
-needs: [test-backend, test-frontend]
-steps: - uses: actions/checkout@v4 - uses: pnpm/action-setup@v2
-with:
-version: ${{ env.PNPM_VERSION }} - uses: actions/setup-node@v4
-with:
-node-version: ${{ env.NODE_VERSION }} - name: Install Playwright
-run: npx playwright install --with-deps - name: Run E2E tests
-run: npx playwright test - uses: actions/upload-artifact@v3
-if: always()
-with:
-name: playwright-report
-path: playwright-report/
-retention-days: 30
+e2e-tests: runs-on: ubuntu-latest needs: [test-backend, test-frontend] steps: -
+uses: actions/checkout@v4 - uses: pnpm/action-setup@v2 with: version:
+${{ env.PNPM_VERSION }} - uses: actions/setup-node@v4 with: node-version:
+${{ env.NODE_VERSION }} - name: Install Playwright run: npx playwright install
+--with-deps - name: Run E2E tests run: npx playwright test - uses:
+actions/upload-artifact@v3 if: always() with: name: playwright-report path:
+playwright-report/ retention-days: 30
 
-security-scan:
-runs-on: ubuntu-latest
-steps: - uses: actions/checkout@v4 - name: Run Trivy vulnerability scanner
-uses: aquasecurity/trivy-action@master
-with:
-scan-type: 'fs'
-scan-ref: '.'
-format: 'sarif'
-output: 'trivy-results.sarif' - name: Upload Trivy results to GitHub Security
-uses: github/codeql-action/upload-sarif@v2
-with:
-sarif_file: 'trivy-results.sarif'
+security-scan: runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 - name:
+Run Trivy vulnerability scanner uses: aquasecurity/trivy-action@master with:
+scan-type: 'fs' scan-ref: '.' format: 'sarif' output: 'trivy-results.sarif' -
+name: Upload Trivy results to GitHub Security uses:
+github/codeql-action/upload-sarif@v2 with: sarif_file: 'trivy-results.sarif'
 
 ### デプロイメントワークフロー
 
@@ -371,41 +314,21 @@ sarif_file: 'trivy-results.sarif'
 
 name: Deploy to Cloudflare
 
-on:
-push:
-branches: [main]
-workflow_dispatch:
+on: push: branches: [main] workflow_dispatch:
 
-jobs:
-deploy-backend:
-runs-on: ubuntu-latest
-if: github.ref == 'refs/heads/main'
-steps: - uses: actions/checkout@v4 - name: Deploy to Cloudflare Workers
-uses: cloudflare/wrangler-action@v3
-with:
-apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-workingDirectory: 'backend'
-command: deploy
+jobs: deploy-backend: runs-on: ubuntu-latest if: github.ref == 'refs/heads/main'
+steps: - uses: actions/checkout@v4 - name: Deploy to Cloudflare Workers uses:
+cloudflare/wrangler-action@v3 with: apiToken:
+${{ secrets.CLOUDFLARE_API_TOKEN }} workingDirectory: 'backend' command: deploy
 
-deploy-frontend:
-runs-on: ubuntu-latest
-if: github.ref == 'refs/heads/main'
-steps: - uses: actions/checkout@v4 - uses: pnpm/action-setup@v2
-with:
-version: 8 - uses: actions/setup-node@v4
-with:
-node-version: '20'
-cache: 'pnpm' - name: Build frontend
-run: |
-cd frontend
-pnpm install
-pnpm build - name: Deploy to Cloudflare Pages
-uses: cloudflare/pages-action@v1
-with:
-apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-projectName: 'autoforge-nexus'
-directory: 'frontend/out'
+deploy-frontend: runs-on: ubuntu-latest if: github.ref == 'refs/heads/main'
+steps: - uses: actions/checkout@v4 - uses: pnpm/action-setup@v2 with: version:
+8 - uses: actions/setup-node@v4 with: node-version: '20' cache: 'pnpm' - name:
+Build frontend run: | cd frontend pnpm install pnpm build - name: Deploy to
+Cloudflare Pages uses: cloudflare/pages-action@v1 with: apiToken:
+${{ secrets.CLOUDFLARE_API_TOKEN }} accountId:
+${{ secrets.CLOUDFLARE_ACCOUNT_ID }} projectName: 'autoforge-nexus' directory:
+'frontend/out'
 
 ## 期待される成果物
 
@@ -444,9 +367,11 @@ wrangler pages project list
 Phase 6 Step 6.3 で起動されるべきエージェント：
 
 - **quality-engineer Agent** (リーダー): 品質メトリクス戦略全体の設計と実装
-- **performance-optimizer Agent**: パフォーマンスメトリクスとプロファイリングの設定
+- **performance-optimizer
+  Agent**: パフォーマンスメトリクスとプロファイリングの設定
 - **security-engineer Agent**: セキュリティメトリクスと脆弱性分析の設定
-- **technical-documentation Agent**: メトリクスレポートとドキュメンテーションの自動生成
+- **technical-documentation
+  Agent**: メトリクスレポートとドキュメンテーションの自動生成
 - **data-analyst Agent**: メトリクスデータの分析と洞察の提供
 
 ### AI への詳細指示
@@ -464,10 +389,8 @@ Phase 6 Step 6.3 で起動されるべきエージェント：
 
 #### sonar-project.properties
 
-sonar.projectKey=autoforge-nexus
-sonar.organization=autoforge
-sonar.sources=backend/src,frontend/src
-sonar.tests=backend/tests,frontend/tests
+sonar.projectKey=autoforge-nexus sonar.organization=autoforge
+sonar.sources=backend/src,frontend/src sonar.tests=backend/tests,frontend/tests
 sonar.python.coverage.reportPaths=backend/coverage.xml
 sonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
 sonar.python.version=3.13
@@ -477,64 +400,29 @@ sonar.exclusions=**/\*.test.ts,**/\*.spec.py,**/migrations/**
 
 #### .github/quality-gates.yml
 
-quality_gates:
-coverage:
-backend: 80
-frontend: 75
-complexity:
-max_cyclomatic: 10
-max_cognitive: 15
-duplications:
-max_percentage: 3
-security_hotspots: 0
-code_smells:
-max_count: 10
-max_debt: 1d
+quality_gates: coverage: backend: 80 frontend: 75 complexity: max_cyclomatic: 10
+max_cognitive: 15 duplications: max_percentage: 3 security_hotspots: 0
+code_smells: max_count: 10 max_debt: 1d
 
 ### pytest カバレッジ設定
 
 #### backend/.coveragerc
 
-[run]
-source = src
-omit =
-_/tests/_
-_/migrations/_
-_/**init**.py
-_/conftest.py
+[run] source = src omit = _/tests/_ _/migrations/_ _/**init**.py _/conftest.py
 
-[report]
-precision = 2
-show_missing = True
-skip_covered = True
-fail_under = 80
+[report] precision = 2 show_missing = True skip_covered = True fail_under = 80
 
-[html]
-directory = htmlcov
+[html] directory = htmlcov
 
 ### Jest カバレッジ設定
 
 #### frontend/jest.coverage.config.js
 
-module.exports = {
-collectCoverage: true,
-collectCoverageFrom: [
-'src/**/*.{ts,tsx}',
-'!src/**/*.d.ts',
-'!src/**/*.stories.tsx',
-'!src/**/index.ts',
-],
-coverageDirectory: 'coverage',
-coverageReporters: ['text', 'lcov', 'html'],
-coverageThreshold: {
-global: {
-branches: 75,
-functions: 75,
-lines: 75,
-statements: 75,
-},
-},
-};
+module.exports = { collectCoverage: true, collectCoverageFrom: [
+'src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/*.stories.tsx',
+'!src/**/index.ts', ], coverageDirectory: 'coverage', coverageReporters:
+['text', 'lcov', 'html'], coverageThreshold: { global: { branches: 75,
+functions: 75, lines: 75, statements: 75, }, }, };
 
 ## 期待される成果物
 
@@ -599,106 +487,70 @@ LangFuse + Prometheus + Grafana + Loki による包括的監視体制の構築
 
 version: '3.8'
 
-services:
-prometheus:
-image: prom/prometheus:latest
-volumes: - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml - prometheus_data:/prometheus
-ports: - "9090:9090"
-command: - '--config.file=/etc/prometheus/prometheus.yml' - '--storage.tsdb.path=/prometheus'
+services: prometheus: image: prom/prometheus:latest volumes: -
+./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml -
+prometheus_data:/prometheus ports: - "9090:9090" command: -
+'--config.file=/etc/prometheus/prometheus.yml' -
+'--storage.tsdb.path=/prometheus'
 
-grafana:
-image: grafana/grafana:latest
-volumes: - grafana_data:/var/lib/grafana - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
-environment: - GF_SECURITY_ADMIN_PASSWORD=admin - GF_INSTALL_PLUGINS=grafana-piechart-panel
-ports: - "3001:3000"
+grafana: image: grafana/grafana:latest volumes: -
+grafana_data:/var/lib/grafana -
+./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards -
+./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+environment: - GF_SECURITY_ADMIN_PASSWORD=admin -
+GF_INSTALL_PLUGINS=grafana-piechart-panel ports: - "3001:3000"
 
-loki:
-image: grafana/loki:latest
-ports: - "3100:3100"
-volumes: - ./monitoring/loki-config.yaml:/etc/loki/local-config.yaml - loki_data:/loki
+loki: image: grafana/loki:latest ports: - "3100:3100" volumes: -
+./monitoring/loki-config.yaml:/etc/loki/local-config.yaml - loki_data:/loki
 
-promtail:
-image: grafana/promtail:latest
-volumes: - ./monitoring/promtail-config.yaml:/etc/promtail/config.yml - /var/log:/var/log
+promtail: image: grafana/promtail:latest volumes: -
+./monitoring/promtail-config.yaml:/etc/promtail/config.yml - /var/log:/var/log
 command: -config.file=/etc/promtail/config.yml
 
-langfuse:
-image: langfuse/langfuse:latest
-environment: - DATABASE_URL=postgresql://langfuse:password@postgres:5432/langfuse - NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-      - SALT=${{ secrets.SALT }}
-ports: - "3002:3000"
-depends_on: - postgres
+langfuse: image: langfuse/langfuse:latest environment: -
+DATABASE_URL=postgresql://langfuse:password@postgres:5432/langfuse -
+NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+      - SALT=${{ secrets.SALT }} ports: - "3002:3000" depends_on: - postgres
 
-postgres:
-image: postgres:16
-environment: - POSTGRES_DB=langfuse - POSTGRES_USER=langfuse - POSTGRES_PASSWORD=password
-volumes: - postgres_data:/var/lib/postgresql/data
+postgres: image: postgres:16 environment: - POSTGRES_DB=langfuse -
+POSTGRES_USER=langfuse - POSTGRES_PASSWORD=password volumes: -
+postgres_data:/var/lib/postgresql/data
 
-volumes:
-prometheus_data:
-grafana_data:
-loki_data:
-postgres_data:
+volumes: prometheus_data: grafana_data: loki_data: postgres_data:
 
 ### Prometheus 設定
 
 #### monitoring/prometheus.yml
 
-global:
-scrape_interval: 15s
-evaluation_interval: 15s
+global: scrape_interval: 15s evaluation_interval: 15s
 
 scrape_configs:
 
-- job_name: 'backend'
-  static_configs:
+- job_name: 'backend' static_configs:
 
-  - targets: ['backend:8000']
-    metrics_path: '/metrics'
+  - targets: ['backend:8000'] metrics_path: '/metrics'
 
-- job_name: 'frontend'
-  static_configs:
+- job_name: 'frontend' static_configs:
 
-  - targets: ['frontend:3000']
-    metrics_path: '/api/metrics'
+  - targets: ['frontend:3000'] metrics_path: '/api/metrics'
 
-- job_name: 'node-exporter'
-  static_configs:
+- job_name: 'node-exporter' static_configs:
   - targets: ['node-exporter:9100']
 
 ### LangFuse 統合
 
 #### backend/src/infrastructure/langfuse_config.py
 
-from langfuse import Langfuse
-from langfuse.decorators import observe
-import os
+from langfuse import Langfuse from langfuse.decorators import observe import os
 
-langfuse = Langfuse(
-public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-host=os.getenv("LANGFUSE_HOST", "http://localhost:3002")
-)
+langfuse = Langfuse( public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+secret_key=os.getenv("LANGFUSE_SECRET_KEY"), host=os.getenv("LANGFUSE_HOST",
+"http://localhost:3002") )
 
-@observe()
-async def track_llm_call(
-prompt: str,
-model: str,
-response: str,
-latency: float,
-cost: float
-):
-"""LLM 呼び出しのトラッキング"""
-langfuse.trace(
-name="llm_call",
-input=prompt,
-output=response,
-metadata={
-"model": model,
-"latency_ms": latency \* 1000,
-"cost_usd": cost
-}
-)
+@observe() async def track_llm_call( prompt: str, model: str, response: str,
+latency: float, cost: float ): """LLM 呼び出しのトラッキング""" langfuse.trace(
+name="llm_call", input=prompt, output=response, metadata={ "model": model,
+"latency_ms": latency \* 1000, "cost_usd": cost } )
 
 ## 期待される成果物
 
@@ -735,7 +587,8 @@ open http://localhost:3002  # LangFuse
 
 Phase 6 Step 6.5 で起動されるべきエージェント：
 
-- **security-architect Agent** (リーダー): セキュリティアーキテクチャ全体の設計と実装
+- **security-architect Agent**
+  (リーダー): セキュリティアーキテクチャ全体の設計と実装
 - **compliance-officer Agent**: GDPR/CCPA コンプライアンス要件の実装
 - **security-engineer Agent**: セキュリティスキャンツールと脆弱性管理の設定
 - **backend-architect Agent**: セキュアな API とデータ保護の実装
@@ -758,71 +611,40 @@ OWASP Top 10 対策、GDPR 準拠、脆弱性スキャンの完全実装
 
 name: Security Scan
 
-on:
-push:
-branches: [main, develop]
-schedule: - cron: '0 0 \* \* \*' # 毎日実行
+on: push: branches: [main, develop] schedule: - cron: '0 0 \* \* \*' # 毎日実行
 
-jobs:
-trivy-scan:
-runs-on: ubuntu-latest
-steps: - uses: actions/checkout@v4 - name: Run Trivy vulnerability scanner in repo mode
-uses: aquasecurity/trivy-action@master
-with:
-scan-type: 'fs'
-ignore-unfixed: true
-format: 'sarif'
-output: 'trivy-results.sarif'
-severity: 'CRITICAL,HIGH'
+jobs: trivy-scan: runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 -
+name: Run Trivy vulnerability scanner in repo mode uses:
+aquasecurity/trivy-action@master with: scan-type: 'fs' ignore-unfixed: true
+format: 'sarif' output: 'trivy-results.sarif' severity: 'CRITICAL,HIGH'
 
-snyk-scan:
-runs-on: ubuntu-latest
-steps: - uses: actions/checkout@v4 - name: Run Snyk to check for vulnerabilities
-uses: snyk/actions/python@master
-env:
-SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-with:
-args: --severity-threshold=high
+snyk-scan: runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 - name: Run
+Snyk to check for vulnerabilities uses: snyk/actions/python@master env:
+SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }} with: args: --severity-threshold=high
 
-owasp-zap:
-runs-on: ubuntu-latest
-steps: - name: OWASP ZAP Baseline Scan
-uses: zaproxy/action-baseline@v0.9.0
-with:
-target: 'http://localhost:3000'
-rules_file_name: '.zap/rules.tsv'
-cmd_options: '-a'
+owasp-zap: runs-on: ubuntu-latest steps: - name: OWASP ZAP Baseline Scan uses:
+zaproxy/action-baseline@v0.9.0 with: target: 'http://localhost:3000'
+rules_file_name: '.zap/rules.tsv' cmd_options: '-a'
 
 ### シークレット検出
 
 #### .gitleaks.toml
 
-[allowlist]
-paths = [
-'''\.env\.example''',
-'''\.env\.template''',
-]
+[allowlist] paths = [ '''\.env\.example''', '''\.env\.template''', ]
 
-[[rules]]
-id = "aws-access-key"
-description = "AWS Access Key"
-regex = '''(?i)aws*?access*?key\_?id["']?\s*[:=]\s*["']?[A-Z0-9]{20}["']?'''
+[[rules]] id = "aws-access-key" description = "AWS Access Key" regex =
+'''(?i)aws*?access*?key\_?id["']?\s*[:=]\s*["']?[A-Z0-9]{20}["']?'''
 
-[[rules]]
-id = "private-key"
-description = "Private Key"
-regex = '''-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
+[[rules]] id = "private-key" description = "Private Key" regex = '''-----BEGIN
+(?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
 
 ### GDPR コンプライアンス
 
 #### backend/src/infrastructure/gdpr/data_protection.py
 
-from typing import Dict, Any, List
-import hashlib
-from datetime import datetime
+from typing import Dict, Any, List import hashlib from datetime import datetime
 
-class DataProtectionService:
-"""GDPR 準拠のデータ保護サービス"""
+class DataProtectionService: """GDPR 準拠のデータ保護サービス"""
 
     async def anonymize_user_data(self, user_id: str) -> Dict[str, Any]:
         """ユーザーデータの匿名化"""
@@ -853,47 +675,16 @@ class DataProtectionService:
 
 #### frontend/next.config.js
 
-const securityHeaders = [
-{
-key: 'X-DNS-Prefetch-Control',
-value: 'on'
-},
-{
-key: 'Strict-Transport-Security',
-value: 'max-age=63072000; includeSubDomains; preload'
-},
-{
-key: 'X-Frame-Options',
-value: 'SAMEORIGIN'
-},
-{
-key: 'X-Content-Type-Options',
-value: 'nosniff'
-},
-{
-key: 'X-XSS-Protection',
-value: '1; mode=block'
-},
-{
-key: 'Referrer-Policy',
-value: 'origin-when-cross-origin'
-},
-{
-key: 'Content-Security-Policy',
-value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline';"
-}
-]
+const securityHeaders = [ { key: 'X-DNS-Prefetch-Control', value: 'on' }, { key:
+'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains;
+preload' }, { key: 'X-Frame-Options', value: 'SAMEORIGIN' }, { key:
+'X-Content-Type-Options', value: 'nosniff' }, { key: 'X-XSS-Protection', value:
+'1; mode=block' }, { key: 'Referrer-Policy', value: 'origin-when-cross-origin'
+}, { key: 'Content-Security-Policy', value: "default-src 'self'; script-src
+'self' 'unsafe-eval' 'unsafe-inline';" } ]
 
-module.exports = {
-async headers() {
-return [
-{
-source: '/:path*',
-headers: securityHeaders,
-},
-]
-},
-}
+module.exports = { async headers() { return [ { source: '/:path*', headers:
+securityHeaders, }, ] }, }
 
 ## 期待される成果物
 
@@ -930,9 +721,12 @@ docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000
 
 Phase 6 Step 6.6 で起動されるべきエージェント：
 
-- **performance-engineer Agent** (リーダー): パフォーマンステスト戦略全体の設計と実装
-- **real-time-features-specialist Agent**: WebSocket と リアルタイム機能の負荷テスト
-- **edge-database-administrator Agent**: データベースパフォーマンステストと最適化
+- **performance-engineer Agent**
+  (リーダー): パフォーマンステスト戦略全体の設計と実装
+- **real-time-features-specialist Agent**:
+  WebSocket と リアルタイム機能の負荷テスト
+- **edge-database-administrator
+  Agent**: データベースパフォーマンステストと最適化
 - **vector-database-specialist Agent**: ベクトル検索パフォーマンスの測定と最適化
 - **cost-optimization Agent**: パフォーマンス対コスト分析とリソース最適化
 
@@ -951,11 +745,9 @@ Phase 6 Step 6.6 で起動されるべきエージェント：
 
 #### tests/performance/locustfile.py
 
-from locust import HttpUser, task, between
-import random
+from locust import HttpUser, task, between import random
 
-class AutoForgeUser(HttpUser):
-wait_time = between(1, 3)
+class AutoForgeUser(HttpUser): wait_time = between(1, 3)
 
     def on_start(self):
         # ログイン処理
@@ -984,62 +776,37 @@ wait_time = between(1, 3)
 
 #### tests/performance/k6-scenario.js
 
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Rate } from 'k6/metrics';
+import http from 'k6/http'; import { check, sleep } from 'k6'; import { Rate }
+from 'k6/metrics';
 
 const errorRate = new Rate('errors');
 
-export const options = {
-stages: [
-{ duration: '2m', target: 100 }, // ランプアップ
-{ duration: '5m', target: 1000 }, // 維持
-{ duration: '2m', target: 10000 }, // スパイク
-{ duration: '5m', target: 10000 }, // 高負荷維持
-{ duration: '2m', target: 0 }, // ランプダウン
-],
-thresholds: {
-http_req_duration: ['p(95)<200'], // 95% < 200ms
-errors: ['rate<0.1'], // エラー率 < 10%
-},
-};
+export const options = { stages: [ { duration: '2m', target: 100 }, //
+ランプアップ { duration: '5m', target: 1000 }, // 維持 { duration: '2m', target:
+10000 }, // スパイク { duration: '5m', target: 10000 }, // 高負荷維持 {
+duration: '2m', target: 0 }, // ランプダウン ], thresholds: { http_req_duration:
+['p(95)<200'], // 95% < 200ms errors: ['rate<0.1'], // エラー率 < 10% }, };
 
-export default function () {
-const url = 'http://localhost:8000/api/v1/prompts';
-const params = {
-headers: {
-'Content-Type': 'application/json',
-},
-};
+export default function () { const url = 'http://localhost:8000/api/v1/prompts';
+const params = { headers: { 'Content-Type': 'application/json', }, };
 
 const res = http.get(url, params);
 
-const success = check(res, {
-'status is 200': (r) => r.status === 200,
-'response time < 200ms': (r) => r.timings.duration < 200,
-});
+const success = check(res, { 'status is 200': (r) => r.status === 200, 'response
+time < 200ms': (r) => r.timings.duration < 200, });
 
-errorRate.add(!success);
-sleep(1);
-}
+errorRate.add(!success); sleep(1); }
 
 ### WebSocket 負荷テスト
 
 #### tests/performance/websocket_test.py
 
-import asyncio
-import websockets
-import json
-from datetime import datetime
+import asyncio import websockets import json from datetime import datetime
 
-async def websocket_client(client_id: int):
-uri = "ws://localhost:8000/ws"
-async with websockets.connect(uri) as websocket: # 接続メッセージ
-await websocket.send(json.dumps({
-"type": "connect",
-"client_id": client_id,
-"timestamp": datetime.utcnow().isoformat()
-}))
+async def websocket_client(client_id: int): uri = "ws://localhost:8000/ws" async
+with websockets.connect(uri) as websocket: # 接続メッセージ await
+websocket.send(json.dumps({ "type": "connect", "client_id": client_id,
+"timestamp": datetime.utcnow().isoformat() }))
 
         # リアルタイム協調編集シミュレーション
         for i in range(100):
@@ -1050,17 +817,13 @@ await websocket.send(json.dumps({
             }))
             await asyncio.sleep(0.1)
 
-async def load_test(num_clients: int = 10000):
-tasks = []
-for i in range(num_clients):
-tasks.append(websocket_client(i))
-if i % 100 == 0:
-await asyncio.sleep(0.1) # 段階的接続
+async def load_test(num_clients: int = 10000): tasks = [] for i in
+range(num_clients): tasks.append(websocket_client(i)) if i % 100 == 0: await
+asyncio.sleep(0.1) # 段階的接続
 
     await asyncio.gather(*tasks)
 
-if **name** == "**main**":
-asyncio.run(load_test())
+if **name** == "**main**": asyncio.run(load_test())
 
 ### パフォーマンステスト実行スクリプト
 
@@ -1068,29 +831,25 @@ asyncio.run(load_test())
 
 .PHONY: perf-test perf-locust perf-k6 perf-websocket
 
-perf-locust:
-@echo "🔥 Starting Locust load test..."
-locust -f tests/performance/locustfile.py \
+perf-locust: @echo "🔥 Starting Locust load test..." locust -f
+tests/performance/locustfile.py \
  --host=http://localhost:8000 \
  --users=1000 \
  --spawn-rate=50 \
  --run-time=10m \
  --headless
 
-perf-k6:
-@echo "📊 Starting K6 performance test..."
-k6 run tests/performance/k6-scenario.js
+perf-k6: @echo "📊 Starting K6 performance test..." k6 run
+tests/performance/k6-scenario.js
 
-perf-websocket:
-@echo "🌐 Starting WebSocket load test..."
-python tests/performance/websocket_test.py
+perf-websocket: @echo "🌐 Starting WebSocket load test..." python
+tests/performance/websocket_test.py
 
-perf-test: perf-locust perf-k6 perf-websocket
-@echo "✅ All performance tests completed"
+perf-test: perf-locust perf-k6 perf-websocket @echo "✅ All performance tests
+completed"
 
-perf-report:
-@echo "📈 Generating performance report..."
-python scripts/generate_perf_report.py
+perf-report: @echo "📈 Generating performance report..." python
+scripts/generate_perf_report.py
 
 ## 期待される成果物
 

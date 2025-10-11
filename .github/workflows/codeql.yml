@@ -2,22 +2,28 @@ name: "CodeQL Security Analysis"
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
     paths:
-      - '**/*.py'
-      - '**/*.ts'
-      - '**/*.tsx'
-      - '**/*.js'
-      - '**/*.jsx'
+      - "**/*.py"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.jsx"
   schedule:
     # 毎週火曜日の午前2時（JST）に実行
-    - cron: '0 17 * * 2'  # UTC 17:00 = JST 02:00 (2=Tuesday)
+    - cron: "0 17 * * 2" # UTC 17:00 = JST 02:00 (2=Tuesday)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  issues: write
 
 jobs:
   analyze:
@@ -32,56 +38,64 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'python', 'typescript' ]
+        language: ["python", "typescript"]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        # カスタムクエリ（セキュリティ重視）
-        queries: security-extended,security-and-quality
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # カスタムクエリ（セキュリティ重視）
+          queries: security-extended,security-and-quality
 
-    # Python環境セットアップ
-    - name: Setup Python
-      if: matrix.language == 'python'
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
-        cache: 'pip'
+      # Python環境セットアップ
+      - name: Setup Python
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+          cache: "pip"
 
-    - name: Install Python dependencies
-      if: matrix.language == 'python'
-      run: |
-        cd backend
-        pip install --upgrade pip
-        pip install -e .[dev]
+      - name: Install Python dependencies
+        if: matrix.language == 'python'
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install -e .[dev]
 
-    # Node.js環境セットアップ
-    - name: Setup Node.js
-      if: matrix.language == 'typescript'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
+      # Node.js & pnpm環境セットアップ
+      - name: Setup pnpm
+        if: matrix.language == 'typescript'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
-    - name: Install Node.js dependencies
-      if: matrix.language == 'typescript'
-      run: npm ci
+      - name: Setup Node.js
+        if: matrix.language == 'typescript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
-        # 結果をSARIF形式で出力
-        upload: true
+      - name: Install Node.js dependencies
+        if: matrix.language == 'typescript'
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile
 
-    # セキュリティアラートをSlackに通知（オプション）
-    - name: Notify security issues
-      if: failure()
-      run: |
-        echo "🚨 CodeQL detected security issues in ${{ matrix.language }}"
-        echo "Please check the Security tab for details."
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+          # 結果をSARIF形式で出力
+          upload: true
+
+      # セキュリティアラートをSlackに通知（オプション）
+      - name: Notify security issues
+        if: failure()
+        run: |
+          echo "🚨 CodeQL detected security issues in ${{ matrix.language }}"
+          echo "Please check the Security tab for details."

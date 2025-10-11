@@ -3,7 +3,7 @@
 ```markdown
 ---
 name: realtime
-description: "リアルタイム機能と協調編集の実装"
+description: 'リアルタイム機能と協調編集の実装'
 category: development
 complexity: extreme
 agents:
@@ -29,7 +29,8 @@ agents:
 ## Context Trigger Pattern
 ```
 
-/ai:development:realtime [feature] [--websocket] [--crdt|ot] [--scale] [--presence]
+/ai:development:realtime [feature] [--websocket] [--crdt|ot] [--scale]
+[--presence]
 
 ```
 

@@ -44,12 +44,28 @@ TS_JS_FILES=$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx|js|jsx)$' || true)
 if [ -n "$TS_JS_FILES" ]; then
     echo "📘 Checking TypeScript/JavaScript files..."
 
-    # ESLintチェック（存在する場合）
-    if [ -f "frontend/package.json" ] && [ -f "frontend/node_modules/.bin/eslint" ]; then
+    # lint-stagedを使用（設定されている場合）
+    if [ -f "frontend/.lintstagedrc.json" ] && [ -f "frontend/node_modules/.bin/lint-staged" ]; then
+        echo "  Running lint-staged..."
+        (cd frontend && npx lint-staged) || {
+            echo "❌ lint-staged check failed"
+            exit 1
+        }
+    # フォールバック: ESLintチェック
+    elif [ -f "frontend/package.json" ] && [ -f "frontend/node_modules/.bin/eslint" ]; then
         echo "  Running ESLint..."
         (cd frontend && npx eslint $TS_JS_FILES) || {
             echo "❌ ESLint check failed"
             echo "💡 Run 'pnpm lint:fix' to auto-fix"
+            exit 1
+        }
+    fi
+
+    # 型チェック（frontendディレクトリでTypeScriptファイルが変更された場合）
+    if [ -f "frontend/tsconfig.json" ] && echo "$TS_JS_FILES" | grep -q "frontend/"; then
+        echo "  Running TypeScript type check..."
+        (cd frontend && pnpm type-check) || {
+            echo "❌ TypeScript type check failed"
             exit 1
         }
     fi

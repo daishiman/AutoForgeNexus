@@ -1,6 +1,6 @@
 ---
 name: style-genome
-description: "ユーザースタイル・ゲノムの抽出と適用"
+description: 'ユーザースタイル・ゲノムの抽出と適用'
 category: prompt
 complexity: extreme
 agents:

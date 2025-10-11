@@ -1,0 +1,13 @@
+# pnpm Workspace Configuration
+# AutoForgeNexus - モノレポ構成定義
+
+packages:
+  # フロントエンド（Next.js 15.5.4 + React 19.0.0）
+  - 'frontend'
+
+  # バックエンド（Python 3.13 + FastAPI）
+  # 注: バックエンドはPythonプロジェクトのため、pnpmワークスペース管理外
+  # ドキュメント目的で記載（実際の管理はpoetry/pip）
+
+  # 将来の共有パッケージ対応
+  - 'packages/*'

@@ -1,6 +1,6 @@
 ---
 name: migrate
-description: "ゼロダウンタイムデータ移行"
+description: 'ゼロダウンタイムデータ移行'
 category: data
 complexity: extreme
 agents:

@@ -1,6 +1,6 @@
 ---
 name: security
-description: "包括的セキュリティ監査と脆弱性対策"
+description: '包括的セキュリティ監査と脆弱性対策'
 category: quality
 complexity: extreme
 agents:

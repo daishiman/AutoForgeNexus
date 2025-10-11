@@ -1,0 +1,368 @@
+{
+  "version": "1.0.0",
+  "name": "AutoForgeNexus Monitoring Configuration",
+  "description": "包括的監視設定と観測可能性戦略",
+  "last_updated": "2025-09-27",
+
+  "environment_config": {
+    "development": {
+      "log_level": "DEBUG",
+      "metrics_enabled": true,
+      "tracing_enabled": true,
+      "error_reporting": false,
+      "sampling_rate": 1.0,
+      "flush_interval": 60000
+    },
+    "staging": {
+      "log_level": "INFO",
+      "metrics_enabled": true,
+      "tracing_enabled": true,
+      "error_reporting": true,
+      "sampling_rate": 0.1,
+      "flush_interval": 30000
+    },
+    "production": {
+      "log_level": "WARN",
+      "metrics_enabled": true,
+      "tracing_enabled": true,
+      "error_reporting": true,
+      "sampling_rate": 0.05,
+      "flush_interval": 15000
+    }
+  },
+
+  "cloudflare_monitoring": {
+    "analytics": {
+      "workers_enabled": true,
+      "pages_enabled": true,
+      "web_analytics_enabled": true,
+      "sampling_rate": 0.1
+    },
+    "alerts": {
+      "error_rate_threshold": 5.0,
+      "response_time_p95_threshold": 2000,
+      "availability_threshold": 99.9,
+      "notification_channels": ["discord", "email"]
+    },
+    "health_checks": {
+      "enabled": true,
+      "interval": 60,
+      "timeout": 5,
+      "regions": ["WNAM", "ENAM", "WEU", "EEU", "APAC"]
+    }
+  },
+
+  "backend_monitoring": {
+    "health_endpoints": {
+      "/health": {
+        "enabled": true,
+        "cache_control": "no-store",
+        "timeout": 30000,
+        "checks": ["database", "redis", "langfuse", "external_apis"]
+      },
+      "/health/ready": {
+        "enabled": true,
+        "critical_only": true,
+        "timeout": 10000,
+        "checks": ["database"]
+      },
+      "/health/live": {
+        "enabled": true,
+        "basic_check": true,
+        "timeout": 5000
+      }
+    },
+    "metrics": {
+      "system_metrics": true,
+      "application_metrics": true,
+      "custom_metrics": true,
+      "prometheus_endpoint": "/metrics"
+    },
+    "logging": {
+      "structured": true,
+      "format": "json",
+      "level": "INFO",
+      "correlation_ids": true,
+      "request_logging": true,
+      "error_logging": true,
+      "audit_logging": true
+    },
+    "tracing": {
+      "enabled": true,
+      "sample_rate": 0.1,
+      "llm_tracing": true,
+      "database_tracing": true,
+      "request_tracing": true
+    }
+  },
+
+  "frontend_monitoring": {
+    "web_vitals": {
+      "enabled": true,
+      "report_all": false,
+      "thresholds": {
+        "LCP": 2500,
+        "FID": 100,
+        "CLS": 0.1,
+        "FCP": 1800,
+        "TTFB": 800,
+        "INP": 200
+      }
+    },
+    "error_tracking": {
+      "enabled": true,
+      "capture_unhandled": true,
+      "capture_rejections": true,
+      "capture_console_errors": true,
+      "max_breadcrumbs": 50
+    },
+    "performance_tracking": {
+      "enabled": true,
+      "resource_timing": true,
+      "user_interactions": true,
+      "navigation_timing": true,
+      "custom_timings": true
+    },
+    "user_tracking": {
+      "enabled": true,
+      "session_tracking": true,
+      "click_tracking": true,
+      "form_tracking": true,
+      "page_views": true
+    }
+  },
+
+  "slo_sli_definitions": {
+    "availability": {
+      "sli": "sum(rate(http_requests_total{status!~'5..'}[5m])) / sum(rate(http_requests_total[5m]))",
+      "slo": 99.9,
+      "time_window": "30d",
+      "error_budget": 0.1
+    },
+    "latency": {
+      "sli": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+      "slo": 2.0,
+      "time_window": "30d",
+      "unit": "seconds"
+    },
+    "error_rate": {
+      "sli": "sum(rate(http_requests_total{status=~'5..'}[5m])) / sum(rate(http_requests_total[5m]))",
+      "slo": 0.01,
+      "time_window": "30d",
+      "error_budget": 1.0
+    },
+    "llm_response_quality": {
+      "sli": "avg(llm_response_quality_score)",
+      "slo": 0.8,
+      "time_window": "7d",
+      "custom": true
+    }
+  },
+
+  "alert_routing": {
+    "severity_levels": {
+      "critical": {
+        "response_time": "5m",
+        "escalation_time": "15m",
+        "channels": ["discord", "email", "pagerduty"]
+      },
+      "high": {
+        "response_time": "15m",
+        "escalation_time": "30m",
+        "channels": ["discord", "email"]
+      },
+      "medium": {
+        "response_time": "1h",
+        "escalation_time": "4h",
+        "channels": ["discord"]
+      },
+      "low": {
+        "response_time": "24h",
+        "escalation_time": null,
+        "channels": ["discord"]
+      }
+    },
+    "escalation_policies": {
+      "infrastructure": {
+        "level_1": "devops-coordinator",
+        "level_2": "observability-engineer",
+        "level_3": "on-call-admin"
+      },
+      "application": {
+        "level_1": "backend-developer",
+        "level_2": "frontend-architect",
+        "level_3": "tech-lead"
+      },
+      "security": {
+        "level_1": "security-architect",
+        "level_2": "devops-coordinator",
+        "level_3": "security-team"
+      }
+    }
+  },
+
+  "data_retention": {
+    "metrics": {
+      "high_resolution": "7d",
+      "medium_resolution": "30d",
+      "low_resolution": "1y"
+    },
+    "logs": {
+      "debug": "1d",
+      "info": "7d",
+      "warn": "30d",
+      "error": "90d",
+      "audit": "2y"
+    },
+    "traces": {
+      "detailed": "3d",
+      "sampled": "30d",
+      "errors_only": "90d"
+    }
+  },
+
+  "compliance": {
+    "gdpr": {
+      "enabled": true,
+      "data_anonymization": true,
+      "retention_limits": true,
+      "access_logging": true
+    },
+    "security": {
+      "log_encryption": true,
+      "access_control": true,
+      "audit_trail": true,
+      "data_sanitization": true
+    }
+  },
+
+  "integration_endpoints": {
+    "prometheus": {
+      "enabled": true,
+      "endpoint": "http://localhost:9090",
+      "scrape_interval": "15s"
+    },
+    "grafana": {
+      "enabled": true,
+      "endpoint": "http://localhost:3001",
+      "dashboards_path": "/infrastructure/monitoring/grafana/"
+    },
+    "langfuse": {
+      "enabled": true,
+      "endpoint": "${LANGFUSE_HOST}",
+      "public_key": "${LANGFUSE_PUBLIC_KEY}",
+      "secret_key": "${LANGFUSE_SECRET_KEY}"
+    },
+    "discord": {
+      "enabled": true,
+      "webhook_url": "${DISCORD_WEBHOOK_URL}",
+      "error_channel": "autoforgenexus-alerts",
+      "info_channel": "autoforgenexus-logs"
+    }
+  },
+
+  "custom_metrics": {
+    "prompt_processing": {
+      "name": "prompt_processing_duration",
+      "type": "histogram",
+      "description": "プロンプト処理時間の分布",
+      "labels": ["provider", "model", "template_id"],
+      "buckets": [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0]
+    },
+    "llm_api_calls": {
+      "name": "llm_api_calls_total",
+      "type": "counter",
+      "description": "LLM API呼び出し総数",
+      "labels": ["provider", "model", "status"]
+    },
+    "token_usage": {
+      "name": "llm_tokens_used_total",
+      "type": "counter",
+      "description": "使用トークン総数",
+      "labels": ["provider", "model", "type"]
+    },
+    "cost_tracking": {
+      "name": "llm_cost_usd_total",
+      "type": "counter",
+      "description": "LLM使用コスト（USD）",
+      "labels": ["provider", "model"]
+    },
+    "user_interactions": {
+      "name": "user_interactions_total",
+      "type": "counter",
+      "description": "ユーザーインタラクション総数",
+      "labels": ["interaction_type", "page", "component"]
+    },
+    "quality_scores": {
+      "name": "prompt_quality_score",
+      "type": "gauge",
+      "description": "プロンプト品質スコア",
+      "labels": ["prompt_id", "evaluation_type"]
+    }
+  },
+
+  "dashboard_config": {
+    "overview": {
+      "refresh_interval": "30s",
+      "panels": [
+        "system_health",
+        "request_rate",
+        "error_rate",
+        "response_time",
+        "active_users"
+      ]
+    },
+    "llm_analytics": {
+      "refresh_interval": "1m",
+      "panels": [
+        "llm_requests",
+        "token_usage",
+        "cost_breakdown",
+        "quality_metrics",
+        "provider_comparison"
+      ]
+    },
+    "performance": {
+      "refresh_interval": "15s",
+      "panels": [
+        "web_vitals",
+        "api_latency",
+        "database_performance",
+        "cache_hit_rate",
+        "resource_usage"
+      ]
+    },
+    "security": {
+      "refresh_interval": "30s",
+      "panels": [
+        "auth_failures",
+        "suspicious_activity",
+        "security_events",
+        "access_patterns"
+      ]
+    }
+  },
+
+  "automation": {
+    "auto_scaling": {
+      "enabled": false,
+      "metrics": ["cpu_usage", "memory_usage", "request_rate"],
+      "thresholds": {
+        "scale_up": 80,
+        "scale_down": 30
+      }
+    },
+    "incident_response": {
+      "enabled": true,
+      "auto_ticket_creation": true,
+      "runbook_execution": false,
+      "notification_delay": "5m"
+    },
+    "cost_optimization": {
+      "enabled": true,
+      "budget_alerts": true,
+      "usage_recommendations": true,
+      "provider_optimization": true
+    }
+  }
+}

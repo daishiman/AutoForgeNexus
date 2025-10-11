@@ -1,6 +1,6 @@
 ---
 name: intent-diff
-description: "意図差分ビューワーによる自動改善"
+description: '意図差分ビューワーによる自動改善'
 category: prompt
 complexity: extreme
 agents:

@@ -20,15 +20,10 @@
   "advisories": {
     "exclude": []
   },
-  "path-whitelist": [
-    "node_modules"
-  ],
+  "path-whitelist": ["node_modules"],
   "registry": "https://registry.npmjs.org/",
   "timeout": 30000,
-  "output-format": [
-    "text",
-    "json"
-  ],
+  "output-format": ["text", "json"],
   "pass-enoaudit": true,
   "show-found": true,
   "show-not-found": false,

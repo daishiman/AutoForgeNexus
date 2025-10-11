@@ -9,6 +9,7 @@
 ### 📋 開発方法の選択肢
 
 #### 1. **ローカル開発（非Docker）**
+
 ```bash
 # 前提条件
 node -v    # v18.19.0+ 必要
@@ -20,15 +21,18 @@ pnpm dev              # http://localhost:3000
 ```
 
 **メリット**:
+
 - ✅ 高速起動・HMR（Hot Module Replacement）
 - ✅ IDEとの統合が容易
 - ✅ デバッグツールの直接利用
 
 **デメリット**:
+
 - ❌ 環境差異の可能性
 - ❌ バックエンド統合で複雑性
 
 #### 2. **Docker統合開発（推奨）**
+
 ```bash
 # 統合環境起動
 docker-compose -f docker-compose.dev.yml up
@@ -38,12 +42,14 @@ docker-compose -f docker-compose.dev.yml up frontend
 ```
 
 **メリット**:
+
 - ✅ 環境統一（Node 18.19.0固定）
 - ✅ バックエンド(Python 3.13)と同時起動
 - ✅ Redis、LangFuse等の依存サービス自動起動
 - ✅ チーム開発での一貫性
 
 **デメリット**:
+
 - ❌ 初回ビルド時間
 - ❌ Docker知識が必要
 
@@ -59,7 +65,7 @@ frontend:
     args:
       NODE_VERSION: 18
   ports:
-    - "3000:3000"
+    - '3000:3000'
   volumes:
     - ./frontend:/app
     - /app/node_modules
@@ -69,6 +75,7 @@ frontend:
 ### 🎯 推奨開発フロー
 
 #### 開発開始時
+
 ```bash
 # 1. 依存関係インストール
 pnpm install
@@ -82,6 +89,7 @@ docker-compose -f docker-compose.dev.yml up
 ```
 
 #### 本格開発時
+
 ```bash
 # フル統合環境（推奨）
 docker-compose -f docker-compose.dev.yml up
@@ -98,6 +106,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ```
 
 **理由**:
+
 - Cloudflare Pages/Workers統合
 - 環境一貫性
 - スケーラビリティ
@@ -105,6 +114,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ### 🛠️ 開発ツール統合
 
 #### VSCode設定
+
 ```json
 {
   "remote.containers.workspaceFolder": "/app",
@@ -113,6 +123,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ```
 
 #### デバッグ設定
+
 - **ローカル**: Chrome DevTools直接利用
 - **Docker**: VSCode Remote Container利用
 

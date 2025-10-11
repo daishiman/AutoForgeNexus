@@ -2,24 +2,24 @@ name: Security Incident Detection
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    types: [ opened, synchronize ]
+    types: [opened, synchronize]
   schedule:
-    # セキュリティチェックを毎時実行
-    - cron: '0 * * * *'
+    # セキュリティチェックを毎日実行（コスト最適化のため頻度削減）
+    - cron: "0 3 * * *" # UTC 03:00 = JST 12:00
   workflow_dispatch:
     inputs:
       check_type:
-        description: 'Security check type'
+        description: "Security check type"
         required: true
-        default: 'full'
+        default: "full"
         type: choice
         options:
-        - full
-        - secrets
-        - dependencies
-        - access_patterns
+          - full
+          - secrets
+          - dependencies
+          - access_patterns
 
 permissions:
   contents: read
@@ -36,239 +36,239 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install TruffleHog
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sudo sh -s -- -b /usr/local/bin
+      - name: Install TruffleHog
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sudo sh -s -- -b /usr/local/bin
 
-    - name: Scan for secrets
-      id: secret_scan
-      run: |
-        echo "🔍 Scanning for exposed secrets..."
+      - name: Scan for secrets
+        id: secret_scan
+        run: |
+          echo "🔍 Scanning for exposed secrets..."
 
-        # TruffleHogでシークレット検索
-        trufflehog git file://. --only-verified --json > secret_findings.json || true
+          # TruffleHogでシークレット検索（ドキュメント除外）
+          trufflehog git file://. --only-verified --exclude-paths=.trufflehog_regex_ignore --json > secret_findings.json || true
 
-        FINDINGS_COUNT=$(jq length secret_findings.json)
-        echo "findings_count=$FINDINGS_COUNT" >> $GITHUB_OUTPUT
+          FINDINGS_COUNT=$(jq length secret_findings.json)
+          echo "findings_count=$FINDINGS_COUNT" >> $GITHUB_OUTPUT
 
-        if [ $FINDINGS_COUNT -gt 0 ]; then
-          echo "🚨 Found $FINDINGS_COUNT potential secret exposures"
-          echo "has_secrets=true" >> $GITHUB_OUTPUT
+          if [ $FINDINGS_COUNT -gt 0 ]; then
+            echo "🚨 Found $FINDINGS_COUNT potential secret exposures"
+            echo "has_secrets=true" >> $GITHUB_OUTPUT
 
-          # セキュリティアラート用データ準備
-          jq -r '.[] | "⚠️ \(.DetectorName): \(.SourceMetadata.Data.Filesystem.file):\(.SourceMetadata.Data.Filesystem.line)"' secret_findings.json > secret_summary.txt
-        else
-          echo "✅ No secrets detected"
-          echo "has_secrets=false" >> $GITHUB_OUTPUT
-        fi
+            # セキュリティアラート用データ準備
+            jq -r '.[] | "⚠️ \(.DetectorName): \(.SourceMetadata.Data.Filesystem.file):\(.SourceMetadata.Data.Filesystem.line)"' secret_findings.json > secret_summary.txt
+          else
+            echo "✅ No secrets detected"
+            echo "has_secrets=false" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Dependency vulnerability scan
-      id: vuln_scan
-      run: |
-        echo "🔍 Scanning dependencies for vulnerabilities..."
+      - name: Dependency vulnerability scan
+        id: vuln_scan
+        run: |
+          echo "🔍 Scanning dependencies for vulnerabilities..."
 
-        # npm audit (フロントエンド)
-        if [ -f "frontend/package.json" ]; then
-          cd frontend
-          npm audit --audit-level=moderate --json > ../npm_audit.json || true
-          cd ..
+          # npm audit (フロントエンド)
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm audit --audit-level=moderate --json > ../npm_audit.json || true
+            cd ..
 
-          NPM_VULNS=$(jq '.metadata.vulnerabilities.total // 0' npm_audit.json)
-          echo "npm_vulnerabilities=$NPM_VULNS" >> $GITHUB_OUTPUT
-        fi
+            NPM_VULNS=$(jq '.metadata.vulnerabilities.total // 0' npm_audit.json)
+            echo "npm_vulnerabilities=$NPM_VULNS" >> $GITHUB_OUTPUT
+          fi
 
-        # pip-audit (バックエンド)
-        if [ -f "backend/requirements.txt" ]; then
-          pip install pip-audit
-          pip-audit -f json -o pip_audit.json backend/requirements.txt || true
+          # pip-audit (バックエンド)
+          if [ -f "backend/requirements.txt" ]; then
+            pip install pip-audit
+            pip-audit -f json -o pip_audit.json backend/requirements.txt || true
 
-          PIP_VULNS=$(jq '. | length' pip_audit.json 2>/dev/null || echo "0")
-          echo "pip_vulnerabilities=$PIP_VULNS" >> $GITHUB_OUTPUT
-        fi
+            PIP_VULNS=$(jq '. | length' pip_audit.json 2>/dev/null || echo "0")
+            echo "pip_vulnerabilities=$PIP_VULNS" >> $GITHUB_OUTPUT
+          fi
 
-        TOTAL_VULNS=$((${NPM_VULNS:-0} + ${PIP_VULNS:-0}))
-        echo "total_vulnerabilities=$TOTAL_VULNS" >> $GITHUB_OUTPUT
+          TOTAL_VULNS=$((${NPM_VULNS:-0} + ${PIP_VULNS:-0}))
+          echo "total_vulnerabilities=$TOTAL_VULNS" >> $GITHUB_OUTPUT
 
-        if [ $TOTAL_VULNS -gt 0 ]; then
-          echo "🚨 Found $TOTAL_VULNS vulnerabilities"
-          echo "has_vulnerabilities=true" >> $GITHUB_OUTPUT
-        else
-          echo "✅ No vulnerabilities detected"
-          echo "has_vulnerabilities=false" >> $GITHUB_OUTPUT
-        fi
+          if [ $TOTAL_VULNS -gt 0 ]; then
+            echo "🚨 Found $TOTAL_VULNS vulnerabilities"
+            echo "has_vulnerabilities=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No vulnerabilities detected"
+            echo "has_vulnerabilities=false" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Anomalous access pattern detection
-      id: access_scan
-      run: |
-        echo "🔍 Checking for anomalous access patterns..."
+      - name: Anomalous access pattern detection
+        id: access_scan
+        run: |
+          echo "🔍 Checking for anomalous access patterns..."
 
-        # 異常なGitアクセスパターン検出
-        RECENT_COMMITS=$(git log --since="24 hours ago" --format="%an|%ae|%s" | wc -l)
-        UNIQUE_AUTHORS=$(git log --since="24 hours ago" --format="%an" | sort | uniq | wc -l)
+          # 異常なGitアクセスパターン検出
+          RECENT_COMMITS=$(git log --since="24 hours ago" --format="%an|%ae|%s" | wc -l)
+          UNIQUE_AUTHORS=$(git log --since="24 hours ago" --format="%an" | sort | uniq | wc -l)
 
-        echo "recent_commits=$RECENT_COMMITS" >> $GITHUB_OUTPUT
-        echo "unique_authors=$UNIQUE_AUTHORS" >> $GITHUB_OUTPUT
+          echo "recent_commits=$RECENT_COMMITS" >> $GITHUB_OUTPUT
+          echo "unique_authors=$UNIQUE_AUTHORS" >> $GITHUB_OUTPUT
 
-        # 異常パターンの検出（1日で10コミット以上 または 5人以上の新規コミッター）
-        if [ $RECENT_COMMITS -gt 10 ] || [ $UNIQUE_AUTHORS -gt 5 ]; then
-          echo "⚠️ Anomalous access pattern detected"
-          echo "anomalous_access=true" >> $GITHUB_OUTPUT
-        else
-          echo "✅ Normal access patterns"
-          echo "anomalous_access=false" >> $GITHUB_OUTPUT
-        fi
+          # 異常パターンの検出（1日で10コミット以上 または 5人以上の新規コミッター）
+          if [ $RECENT_COMMITS -gt 10 ] || [ $UNIQUE_AUTHORS -gt 5 ]; then
+            echo "⚠️ Anomalous access pattern detected"
+            echo "anomalous_access=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Normal access patterns"
+            echo "anomalous_access=false" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Create security incident report
-      if: steps.secret_scan.outputs.has_secrets == 'true' || steps.vuln_scan.outputs.has_vulnerabilities == 'true' || steps.access_scan.outputs.anomalous_access == 'true'
-      run: |
-        cat << EOF > security_incident.json
-        {
-          "incident_id": "SEC-$(date +%Y%m%d-%H%M%S)",
-          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-          "severity": "$(
-            if [ '${{ steps.secret_scan.outputs.has_secrets }}' = 'true' ]; then
-              echo 'critical'
-            elif [ '${{ steps.vuln_scan.outputs.total_vulnerabilities }}' -gt 5 ]; then
-              echo 'high'
-            else
-              echo 'medium'
-            fi
-          )",
-          "repository": "${{ github.repository }}",
-          "branch": "${{ github.ref_name }}",
-          "commit": "${{ github.sha }}",
-          "findings": {
-            "secrets": {
-              "detected": ${{ steps.secret_scan.outputs.has_secrets }},
-              "count": ${{ steps.secret_scan.outputs.findings_count || 0 }}
-            },
-            "vulnerabilities": {
-              "detected": ${{ steps.vuln_scan.outputs.has_vulnerabilities }},
-              "npm_count": ${{ steps.vuln_scan.outputs.npm_vulnerabilities || 0 }},
-              "pip_count": ${{ steps.vuln_scan.outputs.pip_vulnerabilities || 0 }},
-              "total_count": ${{ steps.vuln_scan.outputs.total_vulnerabilities || 0 }}
-            },
-            "access_anomalies": {
-              "detected": ${{ steps.access_scan.outputs.anomalous_access }},
-              "recent_commits": ${{ steps.access_scan.outputs.recent_commits }},
-              "unique_authors": ${{ steps.access_scan.outputs.unique_authors }}
+      - name: Create security incident report
+        if: steps.secret_scan.outputs.has_secrets == 'true' || steps.vuln_scan.outputs.has_vulnerabilities == 'true' || steps.access_scan.outputs.anomalous_access == 'true'
+        run: |
+          cat << EOF > security_incident.json
+          {
+            "incident_id": "SEC-$(date +%Y%m%d-%H%M%S)",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "severity": "$(
+              if [ '${{ steps.secret_scan.outputs.has_secrets }}' = 'true' ]; then
+                echo 'critical'
+              elif [ '${{ steps.vuln_scan.outputs.total_vulnerabilities }}' -gt 5 ]; then
+                echo 'high'
+              else
+                echo 'medium'
+              fi
+            )",
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "commit": "${{ github.sha }}",
+            "findings": {
+              "secrets": {
+                "detected": ${{ steps.secret_scan.outputs.has_secrets }},
+                "count": ${{ steps.secret_scan.outputs.findings_count || 0 }}
+              },
+              "vulnerabilities": {
+                "detected": ${{ steps.vuln_scan.outputs.has_vulnerabilities }},
+                "npm_count": ${{ steps.vuln_scan.outputs.npm_vulnerabilities || 0 }},
+                "pip_count": ${{ steps.vuln_scan.outputs.pip_vulnerabilities || 0 }},
+                "total_count": ${{ steps.vuln_scan.outputs.total_vulnerabilities || 0 }}
+              },
+              "access_anomalies": {
+                "detected": ${{ steps.access_scan.outputs.anomalous_access }},
+                "recent_commits": ${{ steps.access_scan.outputs.recent_commits }},
+                "unique_authors": ${{ steps.access_scan.outputs.unique_authors }}
+              }
             }
           }
-        }
-        EOF
+          EOF
 
-        echo "🚨 Security incident detected and documented"
+          echo "🚨 Security incident detected and documented"
 
-    - name: Send critical security alert
-      if: steps.secret_scan.outputs.has_secrets == 'true'
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      run: |
-        INCIDENT_ID="SEC-$(date +%Y%m%d-%H%M%S)"
+      - name: Send critical security alert
+        if: steps.secret_scan.outputs.has_secrets == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          INCIDENT_ID="SEC-$(date +%Y%m%d-%H%M%S)"
 
-        # Slack通知（最高優先度）
-        if [ -n "$SLACK_WEBHOOK_URL" ]; then
-          curl -X POST "$SLACK_WEBHOOK_URL" \
-            -H 'Content-type: application/json' \
-            -H 'User-Agent: AutoForgeNexus-Security/1.0' \
-            --max-time 30 \
-            --data "{
-              \"text\": \"🔴 CRITICAL SECURITY INCIDENT: $INCIDENT_ID\",
-              \"blocks\": [{
-                \"type\": \"header\",
-                \"text\": {
-                  \"type\": \"plain_text\",
-                  \"text\": \"🔴 CRITICAL: Secrets Exposed\"
-                }
-              }, {
-                \"type\": \"section\",
-                \"text\": {
-                  \"type\": \"mrkdwn\",
-                  \"text\": \"*Repository:* \`${{ github.repository }}\`\\n*Branch:* \`${{ github.ref_name }}\`\\n*Findings:* ${{ steps.secret_scan.outputs.findings_count }} exposed secrets\\n*Action Required:* IMMEDIATE\"
-                }
-              }]
-            }" \
-            --fail-with-body || echo "⚠️ Failed to send critical alert"
-        fi
+          # Slack通知（最高優先度）
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -X POST "$SLACK_WEBHOOK_URL" \
+              -H 'Content-type: application/json' \
+              -H 'User-Agent: AutoForgeNexus-Security/1.0' \
+              --max-time 30 \
+              --data "{
+                \"text\": \"🔴 CRITICAL SECURITY INCIDENT: $INCIDENT_ID\",
+                \"blocks\": [{
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"🔴 CRITICAL: Secrets Exposed\"
+                  }
+                }, {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Repository:* \`${{ github.repository }}\`\\n*Branch:* \`${{ github.ref_name }}\`\\n*Findings:* ${{ steps.secret_scan.outputs.findings_count }} exposed secrets\\n*Action Required:* IMMEDIATE\"
+                  }
+                }]
+              }" \
+              --fail-with-body || echo "⚠️ Failed to send critical alert"
+          fi
 
-    - name: Create security incident issue
-      if: steps.secret_scan.outputs.has_secrets == 'true' || steps.vuln_scan.outputs.total_vulnerabilities > 5
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const incident_id = `SEC-${new Date().toISOString().slice(0,19).replace(/[-:]/g,'').replace('T','-')}`;
-          const severity = '${{ steps.secret_scan.outputs.has_secrets }}' === 'true' ? 'CRITICAL' : 'HIGH';
+      - name: Create security incident issue
+        if: steps.secret_scan.outputs.has_secrets == 'true' || steps.vuln_scan.outputs.total_vulnerabilities > 5
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const incident_id = `SEC-${new Date().toISOString().slice(0,19).replace(/[-:]/g,'').replace('T','-')}`;
+            const severity = '${{ steps.secret_scan.outputs.has_secrets }}' === 'true' ? 'CRITICAL' : 'HIGH';
 
-          let body = `## 🚨 Security Incident Report
+            let body = `## 🚨 Security Incident Report
 
-          **Incident ID**: ${incident_id}
-          **Severity**: ${severity}
-          **Detection Time**: ${new Date().toISOString()}
-          **Repository**: ${{ github.repository }}
-          **Branch**: ${{ github.ref_name }}
-          **Commit**: ${{ github.sha }}
+            **Incident ID**: ${incident_id}
+            **Severity**: ${severity}
+            **Detection Time**: ${new Date().toISOString()}
+            **Repository**: ${{ github.repository }}
+            **Branch**: ${{ github.ref_name }}
+            **Commit**: ${{ github.sha }}
 
-          ### Findings Summary
-          `;
+            ### Findings Summary
+            `;
 
-          if ('${{ steps.secret_scan.outputs.has_secrets }}' === 'true') {
+            if ('${{ steps.secret_scan.outputs.has_secrets }}' === 'true') {
+              body += `
+            #### 🔴 Exposed Secrets
+            - **Count**: ${{ steps.secret_scan.outputs.findings_count }}
+            - **Action**: Remove secrets immediately and rotate credentials
+            `;
+            }
+
+            if ('${{ steps.vuln_scan.outputs.has_vulnerabilities }}' === 'true') {
+              body += `
+            #### ⚠️ Vulnerabilities
+            - **NPM**: ${{ steps.vuln_scan.outputs.npm_vulnerabilities || 0 }}
+            - **Python**: ${{ steps.vuln_scan.outputs.pip_vulnerabilities || 0 }}
+            - **Total**: ${{ steps.vuln_scan.outputs.total_vulnerabilities }}
+            `;
+            }
+
             body += `
-          #### 🔴 Exposed Secrets
-          - **Count**: ${{ steps.secret_scan.outputs.findings_count }}
-          - **Action**: Remove secrets immediately and rotate credentials
-          `;
-          }
+            ### Required Actions
+            1. **Immediate**: Review and address all findings
+            2. **Within 4 hours**: Implement fixes for critical issues
+            3. **Within 24 hours**: Complete security review and testing
+            4. **Follow-up**: Update security policies if needed
 
-          if ('${{ steps.vuln_scan.outputs.has_vulnerabilities }}' === 'true') {
-            body += `
-          #### ⚠️ Vulnerabilities
-          - **NPM**: ${{ steps.vuln_scan.outputs.npm_vulnerabilities || 0 }}
-          - **Python**: ${{ steps.vuln_scan.outputs.pip_vulnerabilities || 0 }}
-          - **Total**: ${{ steps.vuln_scan.outputs.total_vulnerabilities }}
-          `;
-          }
+            ### Investigation Checklist
+            - [ ] Verify all findings
+            - [ ] Assess impact and exposure
+            - [ ] Implement immediate mitigations
+            - [ ] Plan and execute fixes
+            - [ ] Conduct post-incident review
+            `;
 
-          body += `
-          ### Required Actions
-          1. **Immediate**: Review and address all findings
-          2. **Within 4 hours**: Implement fixes for critical issues
-          3. **Within 24 hours**: Complete security review and testing
-          4. **Follow-up**: Update security policies if needed
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 ${severity} Security Incident: ${incident_id}`,
+              body: body,
+              labels: ['security', 'critical', 'incident'],
+              assignees: ['${{ github.repository_owner }}']
+            });
 
-          ### Investigation Checklist
-          - [ ] Verify all findings
-          - [ ] Assess impact and exposure
-          - [ ] Implement immediate mitigations
-          - [ ] Plan and execute fixes
-          - [ ] Conduct post-incident review
-          `;
+            console.log(`Created security incident issue #${issue.data.number}`);
 
-          const issue = await github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: `🚨 ${severity} Security Incident: ${incident_id}`,
-            body: body,
-            labels: ['security', 'critical', 'incident'],
-            assignees: ['${{ github.repository_owner }}']
-          });
-
-          console.log(`Created security incident issue #${issue.data.number}`);
-
-    - name: Upload security artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-scan-results-${{ github.run_id }}
-        path: |
-          secret_findings.json
-          npm_audit.json
-          pip_audit.json
-          security_incident.json
-        retention-days: 365
-        if-no-files-found: ignore
+      - name: Upload security artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results-${{ github.run_id }}
+          path: |
+            secret_findings.json
+            npm_audit.json
+            pip_audit.json
+            security_incident.json
+          retention-days: 365
+          if-no-files-found: ignore

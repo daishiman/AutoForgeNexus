@@ -3,15 +3,18 @@
 ## 📍 設定場所への詳細な行き方
 
 ### ステップ1: リポジトリページを開く
+
 ```
 https://github.com/daishiman/AutoForgeNexus
 ```
 
 ### ステップ2: Settings（設定）へ移動
+
 - リポジトリ名の下にある **⚙️ Settings** タブをクリック
 - もし見えない場合は、右端の「...」メニューから選択
 
 ### ステップ3: セキュリティ設定を開く
+
 ```
 左サイドバー構成：
 ├── General
@@ -27,6 +30,7 @@ https://github.com/daishiman/AutoForgeNexus
 ## 🔐 有効化する機能（無料で利用可能）
 
 ### 1. Dependabot alerts（依存関係の脆弱性検出）
+
 ```
 設定画面での表示：
 ┌─────────────────────────────────────┐
@@ -39,10 +43,12 @@ https://github.com/daishiman/AutoForgeNexus
 ```
 
 **有効化方法**:
+
 - 「Enable」ボタンをクリック
 - 緑色のチェックマークが表示されたら完了
 
 ### 2. Dependabot security updates（自動セキュリティ更新）
+
 ```
 設定画面での表示：
 ┌─────────────────────────────────────┐
@@ -57,6 +63,7 @@ https://github.com/daishiman/AutoForgeNexus
 **前提条件**: Dependabot alerts が有効になっていること
 
 ### 3. Code scanning（コードの脆弱性スキャン）
+
 ```
 設定画面での表示：
 ┌─────────────────────────────────────┐
@@ -69,10 +76,12 @@ https://github.com/daishiman/AutoForgeNexus
 ```
 
 **設定オプション**:
+
 - **Default**: GitHub推奨の設定（簡単）
 - **Advanced**: カスタマイズ可能（上級者向け）
 
 ### 4. Secret scanning（秘密情報の検出）
+
 ```
 設定画面での表示：
 ┌─────────────────────────────────────┐
@@ -88,6 +97,7 @@ https://github.com/daishiman/AutoForgeNexus
 **プライベートリポジトリ**: 手動で有効化が必要
 
 ### 5. Push protection（プッシュ保護）
+
 ```
 設定画面での表示：
 ┌─────────────────────────────────────┐
@@ -112,6 +122,7 @@ https://github.com/daishiman/AutoForgeNexus
 ## 📊 有効化後の確認方法
 
 ### 1. Security タブで確認
+
 ```
 リポジトリページ → Security タブ
 ├── 🛡️ Security overview
@@ -121,6 +132,7 @@ https://github.com/daishiman/AutoForgeNexus
 ```
 
 ### 2. 通知設定の確認
+
 ```
 Settings → Notifications
 ├── Email notifications
@@ -131,19 +143,25 @@ Settings → Notifications
 ## 🚨 よくある質問
 
 ### Q: プライベートリポジトリでも無料？
+
 **A**: 基本的なセキュリティ機能は無料です：
+
 - Dependabot alerts: ✅ 無料
 - Secret scanning: ✅ 無料
 - Code scanning: ⚠️ 制限あり（月500分まで無料）
 
 ### Q: 有効化したらすぐに動く？
+
 **A**: はい、以下のタイミングで自動実行：
+
 - 即座: 既存コードのスキャン開始
 - プッシュ時: 新しいコードをチェック
 - 定期: 週1回の定期スキャン
 
 ### Q: 誤検出が多い場合は？
+
 **A**: 以下の方法で調整可能：
+
 1. `.github/dependabot.yml` で除外設定
 2. Security タブで個別に「Dismiss」
 3. 重要度でフィルタリング
@@ -151,12 +169,14 @@ Settings → Notifications
 ## 💡 Tips
 
 ### 初回設定後にやること
+
 1. **Security タブ**を開いて既存の警告を確認
 2. **Critical/High** の警告から優先対応
 3. **Dependabot PR** を確認してマージ
 4. **通知設定**を調整（メール通知の頻度など）
 
 ### 個人開発での運用コツ
+
 - 週1回は Security タブをチェック
 - Dependabot PR は信頼してすぐマージ
 - Critical 警告は24時間以内に対応

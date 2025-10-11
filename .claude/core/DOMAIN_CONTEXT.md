@@ -4,8 +4,7 @@
 
 ### Prompt Domain
 
-**Owner**: prompt-engineering-specialist Agent
-**Aggregates**:
+**Owner**: prompt-engineering-specialist Agent **Aggregates**:
 
 - PromptAggregate (root)
 - TemplateAggregate
@@ -26,8 +25,7 @@
 
 ### Evaluation Domain
 
-**Owner**: evaluation-engine Agent
-**Aggregates**:
+**Owner**: evaluation-engine Agent **Aggregates**:
 
 - EvaluationAggregate (root)
 - MetricsAggregate
@@ -48,8 +46,7 @@
 
 ### Workflow Domain
 
-**Owner**: workflow-orchestrator Agent
-**Aggregates**:
+**Owner**: workflow-orchestrator Agent **Aggregates**:
 
 - WorkflowAggregate (root)
 - StepAggregate
@@ -70,8 +67,7 @@
 
 ### llm-integration Domain
 
-**Owner**: llm-integration Agent
-**Aggregates**:
+**Owner**: llm-integration Agent **Aggregates**:
 
 - ProviderAggregate
 - ModelAggregate
@@ -92,8 +88,7 @@
 
 ### User Domain
 
-**Owner**: product-manager Agent
-**Aggregates**:
+**Owner**: product-manager Agent **Aggregates**:
 
 - UserAggregate (root)
 - PreferenceAggregate

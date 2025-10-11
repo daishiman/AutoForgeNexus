@@ -1,6 +1,6 @@
 ---
 name: domain
-description: "DDD準拠のドメインモデリングとユビキタス言語確立"
+description: 'DDD準拠のドメインモデリングとユビキタス言語確立'
 category: requirements
 complexity: extreme
 agents:

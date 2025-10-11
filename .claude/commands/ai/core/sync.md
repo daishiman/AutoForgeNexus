@@ -1,6 +1,6 @@
 ---
 name: sync
-description: "エージェント間の状態同期とコンテキスト共有"
+description: 'エージェント間の状態同期とコンテキスト共有'
 category: core
 complexity: medium
 agents:

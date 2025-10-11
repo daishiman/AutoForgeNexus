@@ -1,6 +1,6 @@
 ---
 name: incident
-description: "インシデント対応と根本原因分析"
+description: 'インシデント対応と根本原因分析'
 category: operations
 complexity: extreme
 agents:

@@ -2,8 +2,9 @@
 
 ## 概要
 
-このプロジェクトでは、コード品質と一貫性を保つためにGit Hooksを活用しています。
-すべてのフックは `.githooks/` ディレクトリに配置されています。
+このプロジェクトでは、コード品質と一貫性を保つためにGit
+Hooksを活用しています。すべてのフックは `.githooks/`
+ディレクトリに配置されています。
 
 ## セットアップ
 
@@ -20,9 +21,11 @@ chmod +x .githooks/*
 ## 実装されているフック
 
 ### 1. pre-commit
+
 **目的**: コミット前の品質チェック
 
 **チェック項目**:
+
 - ✅ Pythonコード: Ruff linting、Black formatting
 - ✅ TypeScript/JavaScript: ESLint
 - ✅ 大容量ファイル警告 (>1MB)
@@ -31,15 +34,18 @@ chmod +x .githooks/*
 - ✅ TODO/FIXME コメントの通知
 
 ### 2. commit-msg
+
 **目的**: コミットメッセージの検証
 
 **検証内容**:
+
 - ✅ Conventional Commits形式の遵守
 - ✅ メッセージ長の制限 (100文字以下推奨)
 - ✅ Breaking Change の検出
 - ✅ GitFlow/Merge コミットの許可
 
 **有効なフォーマット**:
+
 ```
 <type>(<scope>): <subject>
 
@@ -49,9 +55,11 @@ chmod +x .githooks/*
 ```
 
 ### 3. pre-push
+
 **目的**: プッシュ前の最終検証
 
 **チェック項目**:
+
 - ✅ mainブランチへの直接プッシュ防止
 - ✅ developブランチへのプッシュ警告
 - ✅ テストの実行 (pytest, npm test)
@@ -60,9 +68,11 @@ chmod +x .githooks/*
 - ✅ コミット数の確認
 
 ### 4. prepare-commit-msg
+
 **目的**: コミットメッセージテンプレートの自動生成
 
 **機能**:
+
 - ブランチ名からtype/scopeを自動推定
 - Conventional Commitsヘルパーテキスト表示
 - コミットテンプレートの適用
@@ -101,18 +111,18 @@ git push --no-verify
 
 ### エラーメッセージ
 
-| エラー | 解決方法 |
-|-------|---------|
-| `Ruff check failed` | `ruff check --fix` で自動修正 |
-| `Black formatting failed` | `black <files>` でフォーマット |
-| `ESLint check failed` | `pnpm lint:fix` で自動修正 |
-| `Tests failed` | テストを修正してから再度コミット |
-| `Commit message invalid` | Conventional Commits形式に修正 |
+| エラー                    | 解決方法                         |
+| ------------------------- | -------------------------------- |
+| `Ruff check failed`       | `ruff check --fix` で自動修正    |
+| `Black formatting failed` | `black <files>` でフォーマット   |
+| `ESLint check failed`     | `pnpm lint:fix` で自動修正       |
+| `Tests failed`            | テストを修正してから再度コミット |
+| `Commit message invalid`  | Conventional Commits形式に修正   |
 
 ## カスタマイズ
 
-プロジェクト固有の要件に応じて、`.githooks/` 内のスクリプトを編集できます。
-変更後は必ず実行権限を付与してください：
+プロジェクト固有の要件に応じて、`.githooks/`
+内のスクリプトを編集できます。変更後は必ず実行権限を付与してください：
 
 ```bash
 chmod +x .githooks/<hook-name>
@@ -132,5 +142,4 @@ git config core.hooksPath .githooks
 
 ---
 
-**設定日**: 2025-09-26
-**最終更新**: 2025-09-26
+**設定日**: 2025-09-26 **最終更新**: 2025-09-26

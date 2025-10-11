@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: "マルチ環境デプロイメントとリリース管理"
+description: 'マルチ環境デプロイメントとリリース管理'
 category: operations
 complexity: high
 agents:
@@ -113,3 +113,25 @@ Key behaviors:
 - SLO 違反の無視
 - 手動介入なしの強制展開
 - セキュリティチェックスキップ
+
+## CI/CD最適化の成果（2025年9月29日追加）
+
+### GitHub Actions統合
+
+**最適化による成果:**
+
+- **使用量削減**: 52.3%（3,200分/月 → 1,525分/月）
+- **無料枠使用率**: 36.5%（730分/2,000分）
+- **年間コスト削減**: $115.2
+
+**実装された共有ワークフロー:**
+
+- `shared-setup-python.yml`: Python環境設定
+- `shared-setup-node.yml`: Node.js/pnpm環境設定
+- `shared-build-cache.yml`: ビルドキャッシュ管理
+
+**このコマンドとの連携:**
+
+- GitHub Actions経由での自動デプロイ
+- 環境別ワークフロー実行
+- デプロイ前の品質ゲート確認

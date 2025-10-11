@@ -1,0 +1,360 @@
+# AutoForgeNexus - Alert Configuration
+# observability-engineer による包括的アラート設定
+
+metadata:
+  name: autoforgenexus-alerts
+  version: '1.0.0'
+  description: '包括的アラート設定とエスカレーション戦略'
+  maintainer: 'observability-engineer'
+  last_updated: '2024-09-27'
+
+# アラートチャネル設定
+channels:
+  discord:
+    type: webhook
+    url: '${DISCORD_WEBHOOK_URL}'
+    enabled: true
+    format: discord_embed
+    timeout: 30s
+    retry_count: 3
+    severity_filter: ['critical', 'high', 'medium']
+
+  email:
+    type: smtp
+    enabled: false # 本番環境で有効化
+    smtp_host: '${SMTP_HOST}'
+    smtp_port: 587
+    smtp_user: '${SMTP_USER}'
+    smtp_password: '${SMTP_PASSWORD}'
+    from: 'alerts@autoforgenexus.com'
+    to: ['admin@autoforgenexus.com']
+    severity_filter: ['critical', 'high']
+
+  pagerduty:
+    type: pagerduty
+    enabled: false # 本番環境で有効化
+    integration_key: '${PAGERDUTY_INTEGRATION_KEY}'
+    severity_filter: ['critical']
+
+# 重要度レベル定義
+severity_levels:
+  critical:
+    description: 'システムダウン、データ損失、セキュリティ侵害'
+    response_time: '5分以内'
+    escalation_time: '15分'
+    channels: ['discord', 'email', 'pagerduty']
+
+  high:
+    description: '主要機能の障害、大幅なパフォーマンス低下'
+    response_time: '15分以内'
+    escalation_time: '30分'
+    channels: ['discord', 'email']
+
+  medium:
+    description: '部分的な機能障害、警告レベルのメトリクス'
+    response_time: '1時間以内'
+    escalation_time: '4時間'
+    channels: ['discord']
+
+  low:
+    description: '情報提供、将来的な問題の予兆'
+    response_time: '24時間以内'
+    escalation_time: 'なし'
+    channels: ['discord']
+
+# インフラストラクチャアラート
+infrastructure_alerts:
+  # サービス可用性
+  service_availability:
+    name: 'サービス可用性低下'
+    description: 'サービスの可用性が閾値を下回りました'
+    severity: critical
+    enabled: true
+    conditions:
+      - metric: 'availability_percentage'
+        operator: 'less_than'
+        threshold: 99.9
+        duration: '5m'
+    query: "sum(rate(http_requests_total{job='autoforgenexus'}[5m])) / sum(rate(http_requests_total{job='autoforgenexus'}[5m]))"
+
+  # エラー率
+  error_rate:
+    name: '高エラー率'
+    description: 'HTTP エラー率が異常に高くなっています'
+    severity: high
+    enabled: true
+    conditions:
+      - metric: 'error_rate_percentage'
+        operator: 'greater_than'
+        threshold: 5.0
+        duration: '5m'
+    query: "sum(rate(http_requests_total{job='autoforgenexus',status=~'5..'}[5m])) / sum(rate(http_requests_total{job='autoforgenexus'}[5m])) * 100"
+
+  # レスポンス時間
+  response_time:
+    name: '高レスポンス時間'
+    description: 'P95 レスポンス時間が閾値を超えています'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'response_time_p95'
+        operator: 'greater_than'
+        threshold: 2000 # ms
+        duration: '10m'
+    query: "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job='autoforgenexus'}[5m])) by (le)) * 1000"
+
+  # CPU 使用率
+  cpu_usage:
+    name: '高CPU使用率'
+    description: 'CPU 使用率が継続的に高い状態です'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'cpu_usage_percentage'
+        operator: 'greater_than'
+        threshold: 80.0
+        duration: '15m'
+    query: "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)"
+
+  # メモリ使用率
+  memory_usage:
+    name: '高メモリ使用率'
+    description: 'メモリ使用率が危険レベルに達しています'
+    severity: high
+    enabled: true
+    conditions:
+      - metric: 'memory_usage_percentage'
+        operator: 'greater_than'
+        threshold: 90.0
+        duration: '10m'
+    query: '(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100'
+
+  # ディスク使用率
+  disk_usage:
+    name: '高ディスク使用率'
+    description: 'ディスク使用率が警告レベルです'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'disk_usage_percentage'
+        operator: 'greater_than'
+        threshold: 85.0
+        duration: '5m'
+    query: "100 - ((node_filesystem_avail_bytes{mountpoint='/'} * 100) / node_filesystem_size_bytes{mountpoint='/'})"
+
+# アプリケーションアラート
+application_alerts:
+  # データベース接続
+  database_connection:
+    name: 'データベース接続障害'
+    description: 'データベース接続に問題が発生しています'
+    severity: critical
+    enabled: true
+    conditions:
+      - metric: 'database_connection_failures'
+        operator: 'greater_than'
+        threshold: 5
+        duration: '2m'
+    query: 'sum(rate(database_connection_errors_total[5m]))'
+
+  # Redis接続
+  redis_connection:
+    name: 'Redis接続障害'
+    description: 'Redis 接続に問題が発生しています'
+    severity: high
+    enabled: true
+    conditions:
+      - metric: 'redis_connection_failures'
+        operator: 'greater_than'
+        threshold: 3
+        duration: '5m'
+    query: 'sum(rate(redis_connection_errors_total[5m]))'
+
+  # LLM API エラー
+  llm_api_errors:
+    name: 'LLM API エラー'
+    description: 'LLM API 呼び出しエラーが増加しています'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'llm_api_error_rate'
+        operator: 'greater_than'
+        threshold: 10.0 # %
+        duration: '10m'
+    query: 'sum(rate(llm_api_errors_total[5m])) / sum(rate(llm_api_requests_total[5m])) * 100'
+
+  # プロンプト処理時間
+  prompt_processing_time:
+    name: 'プロンプト処理時間異常'
+    description: 'プロンプト処理時間が異常に長くなっています'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'prompt_processing_time_p95'
+        operator: 'greater_than'
+        threshold: 30000 # ms
+        duration: '10m'
+    query: 'histogram_quantile(0.95, sum(rate(prompt_processing_duration_seconds_bucket[5m])) by (le)) * 1000'
+
+# セキュリティアラート
+security_alerts:
+  # 認証失敗
+  authentication_failures:
+    name: '認証失敗急増'
+    description: '認証失敗の試行が急激に増加しています'
+    severity: high
+    enabled: true
+    conditions:
+      - metric: 'auth_failure_rate'
+        operator: 'greater_than'
+        threshold: 50
+        duration: '5m'
+    query: 'sum(rate(auth_failures_total[5m]))'
+
+  # 異常なリクエストパターン
+  abnormal_request_pattern:
+    name: '異常なリクエストパターン'
+    description: '通常とは異なるリクエストパターンが検出されました'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'request_rate_anomaly'
+        operator: 'greater_than'
+        threshold: 3 # 標準偏差
+        duration: '10m'
+    query: 'abs(rate(http_requests_total[5m]) - avg_over_time(rate(http_requests_total[5m])[1h])) / stddev_over_time(rate(http_requests_total[5m])[1h])'
+
+  # 大量ファイルアップロード
+  large_file_uploads:
+    name: '大容量ファイルアップロード'
+    description: '異常に大きなファイルのアップロードが検出されました'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'upload_size_mb'
+        operator: 'greater_than'
+        threshold: 100 # MB
+        duration: '1m'
+    query: 'max(upload_size_bytes) / 1024 / 1024'
+
+# ビジネスメトリクスアラート
+business_alerts:
+  # ユーザー登録率低下
+  user_registration_drop:
+    name: 'ユーザー登録率低下'
+    description: 'ユーザー登録率が通常より大幅に低下しています'
+    severity: medium
+    enabled: true
+    conditions:
+      - metric: 'registration_rate_drop'
+        operator: 'less_than'
+        threshold: -50 # % 減少
+        duration: '1h'
+    query: '(rate(user_registrations_total[1h]) - rate(user_registrations_total[1h] offset 24h)) / rate(user_registrations_total[1h] offset 24h) * 100'
+
+  # API使用量急増
+  api_usage_spike:
+    name: 'API使用量急増'
+    description: 'API 使用量が通常の3倍を超えています'
+    severity: low
+    enabled: true
+    conditions:
+      - metric: 'api_usage_spike'
+        operator: 'greater_than'
+        threshold: 3.0 # 倍率
+        duration: '15m'
+    query: 'rate(api_requests_total[15m]) / avg_over_time(rate(api_requests_total[15m])[7d])'
+
+# エスカレーション設定
+escalation:
+  level_1:
+    duration: '15m'
+    action: 'repeat_notification'
+    channels: ['discord']
+
+  level_2:
+    duration: '30m'
+    action: 'escalate_severity'
+    channels: ['discord', 'email']
+
+  level_3:
+    duration: '1h'
+    action: 'page_oncall'
+    channels: ['discord', 'email', 'pagerduty']
+
+# 抑制ルール
+suppression:
+  maintenance_window:
+    enabled: false
+    schedule: '0 2 * * 0' # 毎週日曜日 2:00 AM
+    duration: '2h'
+    alerts: ['infrastructure_alerts']
+
+  false_positive_reduction:
+    enabled: true
+    rules:
+      - name: '短時間のスパイク無視'
+        condition: 'duration < 1m'
+        action: 'suppress'
+      - name: '開発環境のアラート抑制'
+        condition: "environment == 'development'"
+        action: 'suppress'
+
+# テンプレート設定
+templates:
+  discord_embed:
+    title: '🚨 AutoForgeNexus Alert - {alert_name}'
+    description: '{description}'
+    color:
+      critical: 16711680 # 赤
+      high: 16776960 # 黄
+      medium: 65535 # 青
+      low: 8421504 # 灰
+    fields:
+      - name: '重要度'
+        value: '{severity}'
+        inline: true
+      - name: '環境'
+        value: '{environment}'
+        inline: true
+      - name: '発生時刻'
+        value: '{timestamp}'
+        inline: true
+      - name: 'メトリクス値'
+        value: '{metric_value}'
+        inline: false
+    footer:
+      text: 'AutoForgeNexus Monitoring'
+      icon_url: 'https://autoforgenexus.com/icon.png'
+
+  email:
+    subject: '[{severity}] AutoForgeNexus Alert: {alert_name}'
+    body: |
+      アラート詳細:
+
+      名前: {alert_name}
+      重要度: {severity}
+      環境: {environment}
+      発生時刻: {timestamp}
+      説明: {description}
+
+      メトリクス値: {metric_value}
+      クエリ: {query}
+
+      ダッシュボード: https://grafana.autoforgenexus.com/d/overview
+      ランブック: https://docs.autoforgenexus.com/runbooks/{alert_name}
+
+      このアラートは自動生成されました。
+
+# 健全性チェック
+health_checks:
+  alert_manager:
+    enabled: true
+    endpoint: '/health'
+    interval: '30s'
+    timeout: '10s'
+
+  notification_channels:
+    enabled: true
+    test_interval: '1h'
+    test_message: 'AutoForgeNexus monitoring health check'

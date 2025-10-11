@@ -1,6 +1,6 @@
 ---
 name: monitor
-description: "包括的なシステム監視とオブザーバビリティ"
+description: '包括的なシステム監視とオブザーバビリティ'
 category: operations
 complexity: high
 agents:

@@ -4,10 +4,8 @@
 
 ### Unit Tests
 
-**Coverage Target**: 80%
-**Scope**: Individual functions, methods, classes
-**Tools**: pytest, Jest
-**Requirements**:
+**Coverage Target**: 80% **Scope**: Individual functions, methods, classes
+**Tools**: pytest, Jest **Requirements**:
 
 - Fast execution (< 100ms per test)
 - No external dependencies
@@ -16,10 +14,8 @@
 
 ### Integration Tests
 
-**Coverage Target**: 70%
-**Scope**: Agent interactions, API contracts
-**Tools**: pytest-asyncio, supertest
-**Requirements**:
+**Coverage Target**: 70% **Scope**: Agent interactions, API contracts **Tools**:
+pytest-asyncio, supertest **Requirements**:
 
 - Database transactions rollback
 - Mock external services
@@ -28,10 +24,8 @@
 
 ### E2E Tests
 
-**Coverage Target**: Critical paths 100%
-**Scope**: Complete user scenarios
-**Tools**: Playwright, Cypress
-**Requirements**:
+**Coverage Target**: Critical paths 100% **Scope**: Complete user scenarios
+**Tools**: Playwright, Cypress **Requirements**:
 
 - Production-like environment
 - Real data scenarios

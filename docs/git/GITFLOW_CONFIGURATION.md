@@ -6,14 +6,14 @@
 
 ### ブランチ構成
 
-| ブランチタイプ | ブランチ名 | 説明 | マージ先 |
-|------------|---------|------|----------|
-| Production | `main` | 本番環境リリース用ブランチ | - |
-| Development | `develop` | 開発統合ブランチ | `main` |
-| Feature | `feature/*` | 機能開発ブランチ | `develop` |
-| Release | `release/*` | リリース準備ブランチ | `main`, `develop` |
-| Hotfix | `hotfix/*` | 緊急修正ブランチ | `main`, `develop` |
-| Support | `support/*` | 長期サポートブランチ | - |
+| ブランチタイプ | ブランチ名  | 説明                       | マージ先          |
+| -------------- | ----------- | -------------------------- | ----------------- |
+| Production     | `main`      | 本番環境リリース用ブランチ | -                 |
+| Development    | `develop`   | 開発統合ブランチ           | `main`            |
+| Feature        | `feature/*` | 機能開発ブランチ           | `develop`         |
+| Release        | `release/*` | リリース準備ブランチ       | `main`, `develop` |
+| Hotfix         | `hotfix/*`  | 緊急修正ブランチ           | `main`, `develop` |
+| Support        | `support/*` | 長期サポートブランチ       | -                 |
 
 ### GitFlow設定値
 

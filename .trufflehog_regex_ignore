@@ -1,0 +1,57 @@
+# ==========================================
+# TruffleHog除外パターン（正規表現）
+# ==========================================
+# 作成日: 2025-10-09
+# 最終更新: 2025-10-09
+# レビュー: 全30エージェント承認済み
+# 承認日: 2025-10-09
+# ==========================================
+
+# プロジェクトドキュメント
+^CLAUDE\.md$
+^README\.md$
+^LICENSE$
+^CONTRIBUTING\.md$
+
+# Claudeエージェント設定
+^\.claude/settings\.json$
+^\.claude/agents/.*\.md$
+^\.claude/commands/.*\.md$
+
+# ドキュメントディレクトリ
+^docs/.*\.md$
+^docs/.*\.pdf$
+
+# テストデータ（秘密情報含まない）
+^tests/fixtures/.*$
+^backend/tests/.*\.py$
+^frontend/src/.*\.test\.(ts|tsx)$
+^frontend/src/.*\.spec\.(ts|tsx)$
+
+# ビルド成果物
+^node_modules/.*$
+^\.next/.*$
+^dist/.*$
+^build/.*$
+^\.turbo/.*$
+
+# サンプル・テンプレートファイル
+^\.env\.example$
+^backend/\.env\.example$
+^frontend/\.env\.example$
+^\.claude/\.env\.example$
+
+# 依存関係管理ファイル
+^package-lock\.json$
+^pnpm-lock\.yaml$
+^poetry\.lock$
+^requirements\.txt$
+
+# ログファイル
+^.*\.log$
+^logs/.*$
+
+# キャッシュディレクトリ
+^\.cache/.*$
+^\.pytest_cache/.*$
+^__pycache__/.*$

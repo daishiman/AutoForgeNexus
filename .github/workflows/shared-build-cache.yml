@@ -1,0 +1,143 @@
+name: "共有ビルドキャッシュ"
+# ビルド成果物のキャッシングと管理用の再利用可能なワークフロー
+
+on:
+  workflow_call:
+    inputs:
+      build-type:
+        description: "ビルドタイプ (frontend|backend|docker)"
+        required: true
+        type: string
+      working-directory:
+        description: "ビルド操作用の作業ディレクトリ"
+        required: true
+        type: string
+      build-command:
+        description: "ビルド実行コマンド"
+        required: true
+        type: string
+      artifact-paths:
+        description: "キャッシュ/アップロードする成果物のパス（改行区切り）"
+        required: true
+        type: string
+      cache-key-inputs:
+        description: "キャッシュキー計算に含めるファイル"
+        required: false
+        default: ""
+        type: string
+      environment-vars:
+        description: "ビルド用の環境変数（JSON形式）"
+        required: false
+        default: "{}"
+        type: string
+
+jobs:
+  setup-build-environment:
+    name: 環境セットアップ
+    runs-on: ubuntu-latest
+    if: inputs.build-type == 'frontend'
+
+    steps:
+      - name: 📥 コードのチェックアウト
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: '${{ inputs.working-directory }}/pnpm-lock.yaml'
+
+      - name: 📦 Install dependencies
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 5
+
+      - name: 🔍 Pre-flight environment validation
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "::notice::🔍 ビルド環境を検証中..."
+          for cmd in node npm pnpm; do
+            command -v $cmd &> /dev/null || { echo "::error::❌ $cmd が見つかりません"; exit 1; }
+            echo "::notice::✅ $cmd: $($cmd --version)"
+          done
+          echo "::notice::✅ ビルド環境の検証が完了しました"
+
+  build-with-cache:
+    name: キャッシュ付きビルド
+    runs-on: ubuntu-latest
+    needs: setup-build-environment
+    if: always() && (needs.setup-build-environment.result == 'success' || inputs.build-type != 'frontend')
+    outputs:
+      cache-hit: ${{ steps.cache-build.outputs.cache-hit }}
+      build-cache-key: ${{ steps.cache-key.outputs.key }}
+
+    steps:
+      - name: 📥 コードのチェックアウト
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: 📦 Restore Node.js & pnpm (frontend builds only)
+        if: inputs.build-type == 'frontend'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: 🟢 Restore Node.js environment (frontend builds only)
+        if: inputs.build-type == 'frontend'
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: '${{ inputs.working-directory }}/pnpm-lock.yaml'
+
+      - name: 📦 Restore dependencies from cache (frontend builds only)
+        if: inputs.build-type == 'frontend'
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm install --frozen-lockfile --prefer-offline
+        timeout-minutes: 2
+
+      - name: 🔑 ビルドキャッシュキー生成
+        id: cache-key
+        run: |
+          # ソースファイル、依存関係、設定をキャッシュキーに含める
+          if [ -n "${{ inputs.cache-key-inputs }}" ]; then
+            SOURCES_HASH=$(find ${{ inputs.working-directory }} -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.json" -o -name "*.toml" -o -name "*.lock" | sort | xargs sha256sum | sha256sum | cut -d' ' -f1)
+          else
+            SOURCES_HASH=$(find ${{ inputs.working-directory }} -type f -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" | head -100 | sort | xargs sha256sum | sha256sum | cut -d' ' -f1)
+          fi
+
+          CACHE_KEY="${{ inputs.build-type }}-build-${{ runner.os }}-${SOURCES_HASH}-${{ github.sha }}"
+          echo "key=${CACHE_KEY}" >> $GITHUB_OUTPUT
+          echo "生成されたビルドキャッシュキー: ${CACHE_KEY}"
+
+      - name: 📦 ビルド成果物のキャッシュ
+        id: cache-build
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ inputs.artifact-paths }}
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            ${{ inputs.build-type }}-build-${{ runner.os }}-
+
+      - name: 🏗️ ビルド実行
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: ${{ inputs.build-command }}
+
+      - name: 📤 ビルド成果物のアップロード
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        with:
+          name: ${{ inputs.build-type }}-build-${{ github.run_id }}
+          path: ${{ inputs.artifact-paths }}
+          retention-days: 7

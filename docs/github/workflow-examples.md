@@ -83,6 +83,7 @@ git checkout -b feature/llm-switcher-20
 ## 🔄 GitHubとClaude Codeの連携フロー
 
 ### 1. **Issue作成 → Claude Code分析**
+
 ```
 あなた: GitHubでIssue作成
 ↓
@@ -92,6 +93,7 @@ Claude Code: "Issue #25を確認しました。実装方針を提案します...
 ```
 
 ### 2. **PR作成 → Claude Codeレビュー**
+
 ```
 あなた: PR作成（テンプレート記入）
 ↓
@@ -104,6 +106,7 @@ Claude Code: PRレビュー
 ```
 
 ### 3. **継続的な改善サイクル**
+
 ```
 Issue（問題・アイデア）
   ↓
@@ -121,12 +124,15 @@ Claude Codeレビュー
 ## 📋 テンプレート活用のベストプラクティス
 
 ### Issue管理
+
 1. **すべてのタスクをIssue化**
+
    - 思いついたアイデア → Feature Request
    - 見つけたバグ → Bug Report
    - わからないこと → Question
 
 2. **Issue番号の活用**
+
    ```bash
    # ブランチ名に含める
    git checkout -b feature/search-42
@@ -143,11 +149,14 @@ Claude Codeレビュー
    - 追加可能: `priority:high`, `in-progress`, `blocked`
 
 ### PR管理
+
 1. **小さく頻繁にPR**
+
    - 大きな変更を避ける
    - レビューしやすいサイズに分割
 
 2. **テンプレートは必ず埋める**
+
    - 空欄を残さない
    - 特にテスト手順は詳細に
 
@@ -158,6 +167,7 @@ Claude Codeレビュー
 ## 🚀 GitHub Projects との連携
 
 ### かんばんボード設定
+
 ```
 1. GitHub → Projects → New project
 2. テンプレート選択: "Basic kanban"
@@ -176,6 +186,7 @@ Claude Codeレビュー
 ```
 
 ### マイルストーン活用
+
 ```
 1. Milestones → New milestone
 2. 例: "v1.0.0 - MVP Release"
@@ -187,14 +198,16 @@ Claude Codeレビュー
 ## 💡 Tips & Tricks
 
 ### 1. テンプレートのカスタマイズ
+
 ```yaml
 # .github/ISSUE_TEMPLATE/custom.yml
 name: 🔧 技術的負債
 description: リファクタリングや改善が必要な箇所
-labels: ["technical-debt", "refactoring"]
+labels: ['technical-debt', 'refactoring']
 ```
 
 ### 2. 自動化の活用
+
 ```yaml
 # .github/workflows/auto-assign.yml
 name: Auto Assign
@@ -220,6 +233,7 @@ jobs:
 ```
 
 ### 3. Claude Codeとの効率的な連携
+
 ```bash
 # セッション開始時
 "以下のIssueを確認してください: #15, #20, #25"
@@ -234,12 +248,14 @@ jobs:
 ## 📊 効果測定
 
 ### メトリクス
+
 - Issue解決時間の短縮
 - PRレビュー時間の短縮
 - バグ報告の品質向上
 - 実装の手戻り削減
 
 ### 改善サイクル
+
 1. 週次でIssue/PRを振り返り
 2. テンプレートの改善点を特定
 3. 必要に応じてテンプレート更新

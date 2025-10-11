@@ -1,0 +1,18 @@
+# Bandit セキュリティスキャン設定
+# https://bandit.readthedocs.io/en/latest/config.html
+
+[bandit]
+# スキップするテストID
+skips = 
+
+# 除外するディレクトリ
+exclude_dirs = /tests/,/venv/,/.venv/,/__pycache__/
+
+# 信頼度レベル（LOW/MEDIUM/HIGH）
+confidence = MEDIUM
+
+# 重要度レベル（LOW/MEDIUM/HIGH）
+severity = MEDIUM
+
+# B104 (hardcoded_bind_all_interfaces) の nosec コメントを尊重
+# デフォルト値の行にコメントがあるため、警告はスキップされる
