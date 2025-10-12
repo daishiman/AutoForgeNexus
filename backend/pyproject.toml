@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "autoforge-nexus-backend"
 version = "0.1.0"
 description = "AutoForgeNexus Backend API - AI Prompt Optimization Platform"
-requires-python = ">=3.13.0"
+requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [

@@ -1,7 +1,7 @@
 name = "autoforgenexus-api"
 main = "src/main.py"
-compatibility_date = "2025-01-15"
-compatibility_flags = ["python_workers"]
+compatibility_date = "2025-10-09"
+compatibility_flags = ["python_workers", "python_dedicated_snapshot"]
 
 # ==========================================
 # Development Environment (local)
