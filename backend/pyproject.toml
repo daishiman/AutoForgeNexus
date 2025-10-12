@@ -27,7 +27,6 @@ dependencies = [
     "langsmith>=0.3.45",
     "langgraph>=0.2.0,<1.0",
     "langfuse>=2.56.0,<3.0",
-    "litellm>=1.77.0,<2.0",
 
     # Data Validation (Pyodide互換 - 範囲指定)
     "pydantic>=2.10.0,<3.0",
