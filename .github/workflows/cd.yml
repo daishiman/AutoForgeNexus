@@ -112,13 +112,17 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: 📦 Install dependencies
+      - name: 📦 Install uv (Python package manager)
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: 📦 Install pywrangler
         working-directory: ./backend
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install workers-py
 
-      - name: 🚀 Deploy to Cloudflare Workers
+      - name: 🚀 Deploy to Cloudflare Workers (pywrangler)
         id: deploy
         working-directory: ./backend
         env:
@@ -134,13 +138,13 @@ jobs:
           REDIS_PASSWORD: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_REDIS_PASSWORD || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_REDIS_PASSWORD || secrets.STAGING_REDIS_PASSWORD) }}
         run: |
           if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
-            npx wrangler deploy --env production
+            uv run pywrangler deploy --env production
             echo "url=https://api.autoforgenexus.com" >> $GITHUB_OUTPUT
           elif [[ "${{ needs.deployment-decision.outputs.environment }}" == "develop" ]]; then
-            npx wrangler deploy --env develop
+            uv run pywrangler deploy --env develop
             echo "url=https://api-dev.autoforgenexus.com" >> $GITHUB_OUTPUT
           else
-            npx wrangler deploy --env staging
+            uv run pywrangler deploy --env staging
             echo "url=https://api-staging.autoforgenexus.com" >> $GITHUB_OUTPUT
           fi
 
