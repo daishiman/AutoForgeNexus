@@ -3,13 +3,20 @@ FastAPI Main Application
 TDD実装: テストを満たす最小限の実装
 """
 
+import sys
+from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+# Cloudflare Workers Pyodide環境用のパス調整
+parent = Path(__file__).parent.parent
+if str(parent) not in sys.path:
+    sys.path.insert(0, str(parent))
 
-from src.core.config.settings import Settings
-from src.presentation.api.shared import health
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from src.core.config.settings import Settings  # noqa: E402
+from src.presentation.api.shared import health  # noqa: E402
 
 # 設定読み込み
 settings = Settings()
