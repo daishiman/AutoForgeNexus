@@ -1,6 +1,4 @@
-"""
-Configuration management package
-"""
+"""Configuration management package."""
 
 from .settings import Settings
 

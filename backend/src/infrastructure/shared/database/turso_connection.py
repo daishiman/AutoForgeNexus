@@ -16,9 +16,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from src.core.config.settings import Settings
-from src.domain.shared.events.event_bus import InMemoryEventBus
-from src.domain.shared.events.infrastructure_events import (
+from core.config.settings import Settings
+from domain.shared.events.event_bus import InMemoryEventBus
+from domain.shared.events.infrastructure_events import (
     DatabaseConnectionEstablished,
     DatabaseConnectionFailed,
     DatabaseType,

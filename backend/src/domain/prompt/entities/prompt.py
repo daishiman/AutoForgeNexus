@@ -9,9 +9,9 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from src.domain.prompt.value_objects.prompt_content import PromptContent
-from src.domain.prompt.value_objects.prompt_metadata import PromptMetadata
-from src.domain.prompt.value_objects.user_input import UserInput
+from domain.prompt.value_objects.prompt_content import PromptContent
+from domain.prompt.value_objects.prompt_metadata import PromptMetadata
+from domain.prompt.value_objects.user_input import UserInput
 
 
 class Prompt:

@@ -8,8 +8,8 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.core.config.settings import Settings
-from src.presentation.api.shared import health
+from core.config.settings import Settings
+from presentation.api.shared import health
 
 # 設定読み込み
 settings = Settings()

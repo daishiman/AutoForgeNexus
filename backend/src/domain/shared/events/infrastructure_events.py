@@ -7,7 +7,7 @@ Infrastructure層のドメインイベント
 from datetime import UTC, datetime
 from enum import Enum
 
-from src.domain.shared.events.domain_event import DomainEvent
+from domain.shared.events.domain_event import DomainEvent
 
 
 class HealthStatus(str, Enum):

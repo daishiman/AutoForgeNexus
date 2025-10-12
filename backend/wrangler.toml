@@ -4,14 +4,6 @@ compatibility_date = "2025-10-09"
 compatibility_flags = ["python_workers", "python_dedicated_snapshot"]
 
 # ==========================================
-# Build Configuration (src名前空間維持)
-# ==========================================
-[build.upload]
-format = "modules"
-include = ["src/**/*.py"]
-exclude = ["src/**/*_test.py", "tests/**", "**/__pycache__/**"]
-
-# ==========================================
 # Development Environment (local)
 # ==========================================
 [env.development]

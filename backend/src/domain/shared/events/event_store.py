@@ -6,7 +6,7 @@
 
 from abc import ABC, abstractmethod
 
-from src.domain.shared.events.domain_event import DomainEvent
+from domain.shared.events.domain_event import DomainEvent
 
 
 class EventStore(ABC):
