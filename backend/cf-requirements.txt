@@ -1,0 +1,35 @@
+# Cloudflare Workers Python Requirements
+# Generated from pyproject.toml dependencies
+
+# FastAPI & Server
+fastapi==0.116.1
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+
+# Database
+sqlalchemy==2.0.32
+alembic==1.13.3
+libsql-client==0.3.1
+
+# Cache & Queue
+redis==5.2.0
+
+# AI/LLM Integration
+langchain==0.3.27
+langsmith>=0.3.45
+langgraph==0.2.60
+langfuse==2.56.2
+litellm==1.77.5
+
+# Data Validation
+pydantic==2.10.1
+pydantic-settings==2.6.1
+
+# Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.1
+
+# Utilities
+httpx==0.28.1
+tenacity==9.0.0
