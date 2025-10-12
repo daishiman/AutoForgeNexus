@@ -3,13 +3,21 @@ FastAPI Main Application
 TDD実装: テストを満たす最小限の実装
 """
 
+import sys
+from pathlib import Path
 from typing import Any
+
+# Pyodide環境でsys.path初期化（タスク3: Pyodide sys.path初期化）
+if "__pyodide__" in sys.modules or "pyodide" in sys.modules:
+    current_dir = Path(__file__).parent
+    if str(current_dir) not in sys.path:
+        sys.path.insert(0, str(current_dir))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.core.config.settings import Settings
-from src.presentation.api.shared import health
+from core.config.settings import Settings
+from presentation.api.shared import health
 
 # 設定読み込み
 settings = Settings()
