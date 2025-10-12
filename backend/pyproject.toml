@@ -14,40 +14,40 @@ authors = [
 ]
 
 dependencies = [
-    # FastAPI & Server
-    "fastapi==0.116.1",
-    "uvicorn[standard]==0.32.1",
-    "gunicorn==23.0.0",  # Production WSGI server for process management
-    "python-multipart==0.0.12",
+    # FastAPI & Server (Pyodide互換 - 範囲指定)
+    "fastapi>=0.115.0,<1.0",
+    "uvicorn[standard]>=0.30.0,<1.0",
+    "gunicorn>=23.0.0,<24.0",
+    "python-multipart>=0.0.12,<1.0",
 
-    # Database
-    "sqlalchemy==2.0.32",
-    "alembic==1.13.3",
-    "libsql-client==0.3.1",  # Pure Python client (no Rust required)
+    # Database (Pyodide互換 - 範囲指定)
+    "sqlalchemy>=2.0.29,<3.0",
+    "alembic>=1.13.0,<2.0",
+    "libsql-client>=0.3.0,<1.0",
 
-    # Cache & Queue
-    "redis==5.2.0",
-    "celery==5.4.0",
+    # Cache & Queue (Pyodide互換 - 範囲指定)
+    "redis>=5.2.0,<6.0",
+    "celery>=5.4.0,<6.0",
 
-    # AI/LLM Integration
-    "langchain==0.3.27",
+    # AI/LLM Integration (Pyodide互換 - 範囲指定)
+    "langchain>=0.3.0,<1.0",
     "langsmith>=0.3.45",
-    "langgraph==0.2.60",
-    "langfuse==2.56.2",
-    "litellm==1.77.5",
+    "langgraph>=0.2.0,<1.0",
+    "langfuse>=2.56.0,<3.0",
+    "litellm>=1.77.0,<2.0",
 
-    # Data Validation
-    "pydantic==2.10.1",
-    "pydantic-settings==2.6.1",
+    # Data Validation (Pyodide互換 - 範囲指定)
+    "pydantic>=2.10.0,<3.0",
+    "pydantic-settings>=2.6.0,<3.0",
 
     # Security
     "python-jose[cryptography]==3.3.0",
     "passlib[bcrypt]==1.7.4",
     "python-dotenv==1.0.1",
 
-    # HTTP Client
-    "httpx==0.27.2",
-    "aiohttp==3.11.10",
+    # HTTP Client (Pyodide互換 - 範囲指定)
+    "httpx>=0.27.2,<1.0",
+    "aiohttp>=3.11.10,<4.0",
 
     # System Monitoring
     "psutil==6.1.1",
