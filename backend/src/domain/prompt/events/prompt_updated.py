@@ -7,7 +7,7 @@
 from datetime import datetime
 from typing import Any
 
-from domain.shared.events.domain_event import DomainEvent
+from src.domain.shared.events.domain_event import DomainEvent
 
 
 class PromptUpdatedEvent(DomainEvent):

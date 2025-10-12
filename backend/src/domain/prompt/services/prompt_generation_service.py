@@ -7,8 +7,8 @@ OpenAI向けに最適化されたプロンプトの生成を行います。
 
 import re
 
-from domain.prompt.value_objects.prompt_content import PromptContent
-from domain.prompt.value_objects.user_input import UserInput
+from src.domain.prompt.value_objects.prompt_content import PromptContent
+from src.domain.prompt.value_objects.user_input import UserInput
 
 
 class PromptGenerationService:

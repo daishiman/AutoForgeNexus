@@ -18,7 +18,7 @@ class Base(DeclarativeBase):
     すべてのSQLAlchemyモデルの基底クラス
 
     Usage:
-        from infrastructure.shared.database.base import Base
+        from src.infrastructure.shared.database.base import Base
 
         class PromptModel(Base):
             __tablename__ = "prompts"

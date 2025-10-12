@@ -64,7 +64,7 @@ pip install -e .[dev]
 #### Turso URL検証
 
 ```python
-from core.security.validation import TursoURLValidator
+from src.core.security.validation import TursoURLValidator
 
 # URL検証
 url = "libsql://prod-db-user.turso.io"
@@ -81,7 +81,7 @@ print(f"Connecting to {safe_hostname}")  # → "prod-db-user.turso.io"
 #### Redis URL検証
 
 ```python
-from core.security.validation import RedisURLValidator
+from src.core.security.validation import RedisURLValidator
 
 url = "redis://localhost:6379/0"
 is_valid, error = RedisURLValidator.validate_redis_url(url)
@@ -93,7 +93,7 @@ if not is_valid:
 #### SQLite URL検証
 
 ```python
-from core.security.validation import SQLiteURLValidator
+from src.core.security.validation import SQLiteURLValidator
 
 url = "sqlite:///./data/app.db"
 is_valid, error = SQLiteURLValidator.validate_sqlite_url(url)
@@ -183,7 +183,7 @@ python -m src.core.security.validation.url_validator_examples
 ### Phase 4: データベース接続（Turso本番環境）
 
 ```python
-from core.security.validation import TursoURLValidator
+from src.core.security.validation import TursoURLValidator
 import os
 
 def connect_to_turso():
@@ -206,7 +206,7 @@ def connect_to_turso():
 ### Redis接続（開発・本番共通）
 
 ```python
-from core.security.validation import RedisURLValidator
+from src.core.security.validation import RedisURLValidator
 
 def connect_to_redis():
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -224,7 +224,7 @@ def connect_to_redis():
 ### SQLite接続（ローカル開発）
 
 ```python
-from core.security.validation import SQLiteURLValidator
+from src.core.security.validation import SQLiteURLValidator
 
 def connect_to_sqlite():
     sqlite_url = os.getenv("DATABASE_URL", "sqlite:///./data/autoforgenexus.db")

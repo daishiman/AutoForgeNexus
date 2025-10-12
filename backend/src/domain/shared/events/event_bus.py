@@ -11,7 +11,7 @@ from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from typing import Any
 
-from domain.shared.events.domain_event import DomainEvent
+from src.domain.shared.events.domain_event import DomainEvent
 
 logger = logging.getLogger(__name__)
 
