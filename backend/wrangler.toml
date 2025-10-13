@@ -1,0 +1,98 @@
+name = "autoforgenexus-api"
+main = "src/main.py"
+compatibility_date = "2025-10-09"
+compatibility_flags = ["python_workers", "python_dedicated_snapshot"]
+
+# ==========================================
+# Development Environment (local)
+# ==========================================
+[env.development]
+name = "autoforgenexus-api-dev"
+workers_dev = true
+
+[env.development.vars]
+ENVIRONMENT = "development"
+APP_NAME = "AutoForgeNexus-API-Development"
+DEBUG = "true"
+LOG_LEVEL = "DEBUG"
+CORS_ALLOW_ORIGINS = "http://localhost:3000"
+
+# ==========================================
+# Develop Environment (CI/CD用)
+# ==========================================
+[env.develop]
+name = "autoforgenexus-api-develop"
+workers_dev = true
+
+[env.develop.vars]
+ENVIRONMENT = "develop"
+APP_NAME = "AutoForgeNexus-API-Develop"
+DEBUG = "true"
+LOG_LEVEL = "DEBUG"
+CORS_ALLOW_ORIGINS = "*"
+
+# ==========================================
+# Staging Environment
+# ==========================================
+[env.staging]
+name = "autoforgenexus-api-staging"
+workers_dev = true
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+APP_NAME = "AutoForgeNexus-API-Staging"
+DEBUG = "false"
+LOG_LEVEL = "INFO"
+CORS_ALLOW_ORIGINS = "https://autoforgenexus-staging.pages.dev"
+
+[env.staging.observability]
+enabled = true
+head_sampling_rate = 0.5  # 50%サンプリング
+
+# ==========================================
+# Production Environment
+# ==========================================
+[env.production]
+name = "autoforgenexus-api"
+workers_dev = false
+route = { pattern = "api.autoforgenexus.com/*", zone_name = "autoforgenexus.com" }
+
+[env.production.vars]
+ENVIRONMENT = "production"
+APP_NAME = "AutoForgeNexus-API-Production"
+DEBUG = "false"
+LOG_LEVEL = "WARNING"
+CORS_ALLOW_ORIGINS = "https://autoforgenexus.com,https://www.autoforgenexus.com"
+
+[env.production.observability]
+enabled = true
+head_sampling_rate = 0.1  # 10%サンプリング（コスト最適化）
+
+# ==========================================
+# Build Configuration
+# ==========================================
+[build]
+command = ""
+
+# ==========================================
+# Secrets (GitHub Actionsで設定)
+# ==========================================
+#
+# 【バックエンド認証】
+# CLERK_SECRET_KEY
+#
+# 【LLMプロバイダー】
+# OPENAI_API_KEY
+# ANTHROPIC_API_KEY
+#
+# 【データベース】
+# TURSO_DATABASE_URL
+# TURSO_AUTH_TOKEN
+#
+# 【Redis（REST API用）】
+# REDIS_REST_URL       # 例: https://lucky-marten-17516.upstash.io
+# REDIS_REST_TOKEN     # 例: AURsAAInc...
+#
+# 【観測性（オプション）】
+# LANGFUSE_PUBLIC_KEY
+# LANGFUSE_SECRET_KEY

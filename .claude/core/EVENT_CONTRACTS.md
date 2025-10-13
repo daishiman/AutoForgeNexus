@@ -92,12 +92,9 @@ Subscribers:
 
 ```yaml
 Saga: PromptOptimizationSaga
-Steps: 1. PromptCreationRequested
-  2. PromptDraftCreated
-  3. EvaluationRequested
-  4. EvaluationCompleted
-  5. OptimizationRequested
-  6. PromptOptimized
+Steps:
+  1. PromptCreationRequested 2. PromptDraftCreated 3. EvaluationRequested 4.
+  EvaluationCompleted 5. OptimizationRequested 6. PromptOptimized
 
 Compensations:
   - PromptCreationFailed → PromptRollback
@@ -116,7 +113,8 @@ Events:
   - PromptPublished
   - PromptArchived
 
-State Reconstruction: events.reduce((state, event) => applyEvent(state, event), initialState)
+State Reconstruction:
+  events.reduce((state, event) => applyEvent(state, event), initialState)
 ```
 
 ## Error Handling

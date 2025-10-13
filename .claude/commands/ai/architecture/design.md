@@ -1,6 +1,6 @@
 ---
 name: design
-description: "システムアーキテクチャ設計と技術的意思決定"
+description: 'システムアーキテクチャ設計と技術的意思決定'
 category: architecture
 complexity: extreme
 agents:
@@ -64,7 +64,8 @@ Key behaviors:
 
 ## Key Patterns
 
-- **レイヤー分離**: プレゼンテーション/アプリケーション/ドメイン/インフラ
+- **レイヤー分離**: プレゼンテーション/アプリケーション/ドメイン/Core/インフラ
+- **機能ベース集約**: 高凝集・低結合な機能単位の整理（DDD準拠）
 - **マイクロサービス**: サービス境界と API 設計
 - **イベント駆動**: Pub/Sub、CQRS、イベントソーシング
 - **エッジ最適化**: CDN 活用とレイテンシ削減

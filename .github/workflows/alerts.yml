@@ -16,24 +16,24 @@ on:
   workflow_dispatch:
     inputs:
       alert_type:
-        description: 'Alert type to test'
+        description: "Alert type to test"
         required: true
-        default: 'test'
+        default: "test"
         type: choice
         options:
-        - test
-        - failure
-        - performance
-        - security
+          - test
+          - failure
+          - performance
+          - security
 
 permissions:
   contents: read
   actions: read
-  issues: write  # Issue作成権限を追加
+  issues: write # Issue作成権限を追加
   pull-requests: read
   security-events: read
   checks: read
-  id-token: write  # OIDC認証用
+  id-token: write # OIDC認証用
 
 jobs:
   workflow-failure-alert:
@@ -42,99 +42,99 @@ jobs:
     if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' }}
 
     steps:
-    - name: Prepare failure message
-      id: prepare_message
-      run: |
-        # エラーメッセージの作成
-        cat << EOF > alert_message.json
-        {
-          "alert_type": "workflow_failure",
-          "severity": "high",
-          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-          "details": {
-            "workflow": "${{ github.event.workflow_run.name }}",
-            "repository": "${{ github.repository }}",
-            "branch": "${{ github.event.workflow_run.head_branch }}",
-            "commit": "${{ github.event.workflow_run.head_sha }}",
-            "run_id": "${{ github.event.workflow_run.id }}",
-            "run_url": "${{ github.event.workflow_run.html_url }}",
-            "actor": "${{ github.event.workflow_run.actor.login }}"
-          },
-          "message": "🚨 Workflow Failed: ${{ github.event.workflow_run.name }}"
-        }
-        EOF
+      - name: Prepare failure message
+        id: prepare_message
+        run: |
+          # エラーメッセージの作成
+          cat << EOF > alert_message.json
+          {
+            "alert_type": "workflow_failure",
+            "severity": "high",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "details": {
+              "workflow": "${{ github.event.workflow_run.name }}",
+              "repository": "${{ github.repository }}",
+              "branch": "${{ github.event.workflow_run.head_branch }}",
+              "commit": "${{ github.event.workflow_run.head_sha }}",
+              "run_id": "${{ github.event.workflow_run.id }}",
+              "run_url": "${{ github.event.workflow_run.html_url }}",
+              "actor": "${{ github.event.workflow_run.actor.login }}"
+            },
+            "message": "🚨 Workflow Failed: ${{ github.event.workflow_run.name }}"
+          }
+          EOF
 
-        echo "message_prepared=true" >> $GITHUB_OUTPUT
+          echo "message_prepared=true" >> $GITHUB_OUTPUT
 
-    # Slack通知は削除（Discord と GitHub Issue のみ使用）
+      # Slack通知は削除（Discord と GitHub Issue のみ使用）
 
-    - name: Send Discord notification
-      if: env.DISCORD_WEBHOOK_URL != ''
-      env:
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      run: |
-        if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-          # Discord用メッセージフォーマット
-          jq '{
-            content: .message,
-            embeds: [{
-              title: "Workflow Failure",
-              color: 15158332,
-              fields: [
-                { name: "Workflow", value: .details.workflow, inline: true },
-                { name: "Branch", value: .details.branch, inline: true },
-                { name: "Actor", value: .details.actor, inline: true },
-                { name: "Repository", value: .details.repository, inline: false },
-                { name: "Commit", value: .details.commit[0:7], inline: false }
-              ],
-              timestamp: .timestamp,
-              url: .details.run_url
-            }]
-          }' alert_message.json > discord_message.json
+      - name: Send Discord notification
+        if: env.DISCORD_WEBHOOK_URL != ''
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+            # Discord用メッセージフォーマット
+            jq '{
+              content: .message,
+              embeds: [{
+                title: "Workflow Failure",
+                color: 15158332,
+                fields: [
+                  { name: "Workflow", value: .details.workflow, inline: true },
+                  { name: "Branch", value: .details.branch, inline: true },
+                  { name: "Actor", value: .details.actor, inline: true },
+                  { name: "Repository", value: .details.repository, inline: false },
+                  { name: "Commit", value: .details.commit[0:7], inline: false }
+                ],
+                timestamp: .timestamp,
+                url: .details.run_url
+              }]
+            }' alert_message.json > discord_message.json
 
-          # セキュリティ強化: タイムアウト、SSL検証、レート制限
-          curl -X POST "$DISCORD_WEBHOOK_URL" \
-            -H 'Content-type: application/json' \
-            -H 'User-Agent: AutoForgeNexus-Alerts/1.0' \
-            --data @discord_message.json \
-            --max-time 30 \
-            --cacert /etc/ssl/certs/ca-certificates.crt \
-            --fail-with-body \
-            --retry 2 \
-            --retry-delay 3 || echo "⚠️ Failed to send Discord notification"
-        fi
+            # セキュリティ強化: タイムアウト、SSL検証、レート制限
+            curl -X POST "$DISCORD_WEBHOOK_URL" \
+              -H 'Content-type: application/json' \
+              -H 'User-Agent: AutoForgeNexus-Alerts/1.0' \
+              --data @discord_message.json \
+              --max-time 30 \
+              --cacert /etc/ssl/certs/ca-certificates.crt \
+              --fail-with-body \
+              --retry 2 \
+              --retry-delay 3 || echo "⚠️ Failed to send Discord notification"
+          fi
 
-    - name: Create GitHub Issue for critical failures
-      if: contains(github.event.workflow_run.name, 'Security') || contains(github.event.workflow_run.name, 'Deploy')
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const issue = await github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: `🚨 Critical Workflow Failure: ${context.payload.workflow_run.name}`,
-            body: `## Workflow Failure Alert
+      - name: Create GitHub Issue for critical failures
+        if: contains(github.event.workflow_run.name, 'Security') || contains(github.event.workflow_run.name, 'Deploy')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Critical Workflow Failure: ${context.payload.workflow_run.name}`,
+              body: `## Workflow Failure Alert
 
-            **Workflow**: ${context.payload.workflow_run.name}
-            **Branch**: ${context.payload.workflow_run.head_branch}
-            **Commit**: ${context.payload.workflow_run.head_sha}
-            **Run URL**: ${context.payload.workflow_run.html_url}
-            **Actor**: ${context.payload.workflow_run.actor.login}
-            **Time**: ${new Date().toISOString()}
+              **Workflow**: ${context.payload.workflow_run.name}
+              **Branch**: ${context.payload.workflow_run.head_branch}
+              **Commit**: ${context.payload.workflow_run.head_sha}
+              **Run URL**: ${context.payload.workflow_run.html_url}
+              **Actor**: ${context.payload.workflow_run.actor.login}
+              **Time**: ${new Date().toISOString()}
 
-            ### Action Required
-            This is a critical workflow failure that requires immediate attention.
+              ### Action Required
+              This is a critical workflow failure that requires immediate attention.
 
-            ### Investigation Steps
-            1. Check the [workflow run](${context.payload.workflow_run.html_url})
-            2. Review the error logs
-            3. Identify the root cause
-            4. Create a fix or rollback if necessary
-            `,
-            labels: ['bug', 'critical', 'workflow-failure']
-          });
+              ### Investigation Steps
+              1. Check the [workflow run](${context.payload.workflow_run.html_url})
+              2. Review the error logs
+              3. Identify the root cause
+              4. Create a fix or rollback if necessary
+              `,
+              labels: ['bug', 'critical', 'workflow-failure']
+            });
 
-          console.log(`Created issue #${issue.data.number}`);
+            console.log(`Created issue #${issue.data.number}`);
 
   performance-alert:
     name: Performance Monitoring Alert
@@ -142,84 +142,84 @@ jobs:
     if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-    - name: Check workflow performance
-      id: check_performance
-      run: |
-        # ワークフロー実行時間の取得
-        RUN_DURATION_MS=$(curl -s \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}" \
-          | jq '.run_duration_ms // 0')
+      - name: Check workflow performance
+        id: check_performance
+        run: |
+          # ワークフロー実行時間の取得
+          RUN_DURATION_MS=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}" \
+            | jq '.run_duration_ms // 0')
 
-        # ミリ秒を分に変換
-        RUN_DURATION_MIN=$(echo "scale=2; $RUN_DURATION_MS / 60000" | bc)
+          # ミリ秒を分に変換
+          RUN_DURATION_MIN=$(echo "scale=2; $RUN_DURATION_MS / 60000" | bc)
 
-        echo "duration_ms=$RUN_DURATION_MS" >> $GITHUB_OUTPUT
-        echo "duration_min=$RUN_DURATION_MIN" >> $GITHUB_OUTPUT
+          echo "duration_ms=$RUN_DURATION_MS" >> $GITHUB_OUTPUT
+          echo "duration_min=$RUN_DURATION_MIN" >> $GITHUB_OUTPUT
 
-        # パフォーマンス閾値チェック（10分 = 600000ms）
-        if [ $RUN_DURATION_MS -gt 600000 ]; then
-          echo "performance_warning=true" >> $GITHUB_OUTPUT
-          echo "⚠️ Performance warning: Workflow took $RUN_DURATION_MIN minutes"
-        else
-          echo "performance_warning=false" >> $GITHUB_OUTPUT
-          echo "✅ Performance OK: Workflow took $RUN_DURATION_MIN minutes"
-        fi
+          # パフォーマンス閾値チェック（10分 = 600000ms）
+          if [ $RUN_DURATION_MS -gt 600000 ]; then
+            echo "performance_warning=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Performance warning: Workflow took $RUN_DURATION_MIN minutes"
+          else
+            echo "performance_warning=false" >> $GITHUB_OUTPUT
+            echo "✅ Performance OK: Workflow took $RUN_DURATION_MIN minutes"
+          fi
 
-    - name: Send performance alert to Discord
-      if: steps.check_performance.outputs.performance_warning == 'true'
-      env:
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      run: |
-        if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-          curl -X POST "$DISCORD_WEBHOOK_URL" \
-            -H 'Content-type: application/json' \
-            -H 'User-Agent: AutoForgeNexus-Alerts/1.0' \
-            --data '{
-              "content": "⚠️ **Performance Alert**",
-              "embeds": [{
-                "title": "Workflow Performance Warning",
-                "description": "Workflow execution time exceeded threshold",
-                "color": 16776960,
-                "fields": [
-                  { "name": "Workflow", "value": "${{ github.event.workflow_run.name }}", "inline": true },
-                  { "name": "Duration", "value": "${{ steps.check_performance.outputs.duration_min }} minutes", "inline": true },
-                  { "name": "Threshold", "value": "10 minutes", "inline": true }
-                ],
-                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-              }]
-            }' \
-            --max-time 30 \
-            --fail-with-body || echo "⚠️ Failed to send performance alert"
-        fi
+      - name: Send performance alert to Discord
+        if: steps.check_performance.outputs.performance_warning == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+            curl -X POST "$DISCORD_WEBHOOK_URL" \
+              -H 'Content-type: application/json' \
+              -H 'User-Agent: AutoForgeNexus-Alerts/1.0' \
+              --data '{
+                "content": "⚠️ **Performance Alert**",
+                "embeds": [{
+                  "title": "Workflow Performance Warning",
+                  "description": "Workflow execution time exceeded threshold",
+                  "color": 16776960,
+                  "fields": [
+                    { "name": "Workflow", "value": "${{ github.event.workflow_run.name }}", "inline": true },
+                    { "name": "Duration", "value": "${{ steps.check_performance.outputs.duration_min }} minutes", "inline": true },
+                    { "name": "Threshold", "value": "10 minutes", "inline": true }
+                  ],
+                  "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+                }]
+              }' \
+              --max-time 30 \
+              --fail-with-body || echo "⚠️ Failed to send performance alert"
+          fi
 
-    - name: Create performance issue if critical
-      if: steps.check_performance.outputs.duration_ms > 1200000
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const issue = await github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: `⚠️ Performance Issue: ${context.payload.workflow_run.name} exceeded 20 minutes`,
-            body: `## Performance Alert
+      - name: Create performance issue if critical
+        if: steps.check_performance.outputs.duration_ms > 1200000
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ Performance Issue: ${context.payload.workflow_run.name} exceeded 20 minutes`,
+              body: `## Performance Alert
 
-            **Workflow**: ${context.payload.workflow_run.name}
-            **Duration**: ${{ steps.check_performance.outputs.duration_min }} minutes
-            **Run URL**: ${context.payload.workflow_run.html_url}
+              **Workflow**: ${context.payload.workflow_run.name}
+              **Duration**: ${{ steps.check_performance.outputs.duration_min }} minutes
+              **Run URL**: ${context.payload.workflow_run.html_url}
 
-            ### Action Required
-            This workflow is taking too long to execute and needs optimization.
+              ### Action Required
+              This workflow is taking too long to execute and needs optimization.
 
-            ### Suggested Actions
-            1. Review the workflow for inefficiencies
-            2. Consider parallelizing steps
-            3. Optimize resource usage
-            `,
-            labels: ['performance', 'workflow-optimization']
-          });
-          console.log(`Created performance issue #${issue.data.number}`);
+              ### Suggested Actions
+              1. Review the workflow for inefficiencies
+              2. Consider parallelizing steps
+              3. Optimize resource usage
+              `,
+              labels: ['performance', 'workflow-optimization']
+            });
+            console.log(`Created performance issue #${issue.data.number}`);
 
   security-alert:
     name: Security Alert
@@ -227,151 +227,151 @@ jobs:
     if: github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'security')
 
     steps:
-    - name: Analyze security issue severity
-      id: severity_analysis
-      run: |
-        echo "🔒 Security issue detected: #${{ github.event.issue.number }}"
-        echo "Title: ${{ github.event.issue.title }}"
+      - name: Analyze security issue severity
+        id: severity_analysis
+        run: |
+          echo "🔒 Security issue detected: #${{ github.event.issue.number }}"
+          echo "Title: ${{ github.event.issue.title }}"
 
-        # セキュリティ問題の重要度分析
-        TITLE_LOWER=$(echo "${{ github.event.issue.title }}" | tr '[:upper:]' '[:lower:]')
-        BODY_LOWER=$(echo "${{ github.event.issue.body }}" | tr '[:upper:]' '[:lower:]')
+          # セキュリティ問題の重要度分析
+          TITLE_LOWER=$(echo "${{ github.event.issue.title }}" | tr '[:upper:]' '[:lower:]')
+          BODY_LOWER=$(echo "${{ github.event.issue.body }}" | tr '[:upper:]' '[:lower:]')
 
-        # 重要度判定キーワード
-        if echo "$TITLE_LOWER $BODY_LOWER" | grep -E "(critical|rce|remote code|sql injection|xss|csrf|auth bypass|privilege escalation)" > /dev/null; then
-          SEVERITY="critical"
-          PRIORITY="P0"
-        elif echo "$TITLE_LOWER $BODY_LOWER" | grep -E "(high|vulnerability|exploit|security|exposure|leak)" > /dev/null; then
-          SEVERITY="high"
-          PRIORITY="P1"
-        else
-          SEVERITY="medium"
-          PRIORITY="P2"
-        fi
+          # 重要度判定キーワード
+          if echo "$TITLE_LOWER $BODY_LOWER" | grep -E "(critical|rce|remote code|sql injection|xss|csrf|auth bypass|privilege escalation)" > /dev/null; then
+            SEVERITY="critical"
+            PRIORITY="P0"
+          elif echo "$TITLE_LOWER $BODY_LOWER" | grep -E "(high|vulnerability|exploit|security|exposure|leak)" > /dev/null; then
+            SEVERITY="high"
+            PRIORITY="P1"
+          else
+            SEVERITY="medium"
+            PRIORITY="P2"
+          fi
 
-        echo "severity=$SEVERITY" >> $GITHUB_OUTPUT
-        echo "priority=$PRIORITY" >> $GITHUB_OUTPUT
-        echo "📊 Analyzed severity: $SEVERITY ($PRIORITY)"
+          echo "severity=$SEVERITY" >> $GITHUB_OUTPUT
+          echo "priority=$PRIORITY" >> $GITHUB_OUTPUT
+          echo "📊 Analyzed severity: $SEVERITY ($PRIORITY)"
 
-    - name: Create security incident tracking
-      run: |
-        # セキュリティインシデント追跡の作成
-        cat << EOF > security_incident_tracking.json
-        {
-          "incident_id": "SEC-ISSUE-${{ github.event.issue.number }}",
-          "issue_number": ${{ github.event.issue.number }},
-          "title": "${{ github.event.issue.title }}",
-          "severity": "${{ steps.severity_analysis.outputs.severity }}",
-          "priority": "${{ steps.severity_analysis.outputs.priority }}",
-          "created_at": "${{ github.event.issue.created_at }}",
-          "reporter": "${{ github.event.issue.user.login }}",
-          "status": "open",
-          "sla": {
-            "response_time": "$(
+      - name: Create security incident tracking
+        run: |
+          # セキュリティインシデント追跡の作成
+          cat << EOF > security_incident_tracking.json
+          {
+            "incident_id": "SEC-ISSUE-${{ github.event.issue.number }}",
+            "issue_number": ${{ github.event.issue.number }},
+            "title": "${{ github.event.issue.title }}",
+            "severity": "${{ steps.severity_analysis.outputs.severity }}",
+            "priority": "${{ steps.severity_analysis.outputs.priority }}",
+            "created_at": "${{ github.event.issue.created_at }}",
+            "reporter": "${{ github.event.issue.user.login }}",
+            "status": "open",
+            "sla": {
+              "response_time": "$(
+                case '${{ steps.severity_analysis.outputs.priority }}' in
+                  P0) echo '1 hour' ;;
+                  P1) echo '4 hours' ;;
+                  *) echo '24 hours' ;;
+                esac
+              )",
+              "resolution_time": "$(
+                case '${{ steps.severity_analysis.outputs.priority }}' in
+                  P0) echo '4 hours' ;;
+                  P1) echo '24 hours' ;;
+                  *) echo '7 days' ;;
+                esac
+              )"
+            },
+            "response_required_by": "$(
               case '${{ steps.severity_analysis.outputs.priority }}' in
-                P0) echo '1 hour' ;;
-                P1) echo '4 hours' ;;
-                *) echo '24 hours' ;;
-              esac
-            )",
-            "resolution_time": "$(
-              case '${{ steps.severity_analysis.outputs.priority }}' in
-                P0) echo '4 hours' ;;
-                P1) echo '24 hours' ;;
-                *) echo '7 days' ;;
+                P0) date -d '+1 hour' -u +%Y-%m-%dT%H:%M:%SZ ;;
+                P1) date -d '+4 hours' -u +%Y-%m-%dT%H:%M:%SZ ;;
+                *) date -d '+24 hours' -u +%Y-%m-%dT%H:%M:%SZ ;;
               esac
             )"
-          },
-          "response_required_by": "$(
-            case '${{ steps.severity_analysis.outputs.priority }}' in
-              P0) date -d '+1 hour' -u +%Y-%m-%dT%H:%M:%SZ ;;
-              P1) date -d '+4 hours' -u +%Y-%m-%dT%H:%M:%SZ ;;
-              *) date -d '+24 hours' -u +%Y-%m-%dT%H:%M:%SZ ;;
-            esac
-          )"
-        }
-        EOF
+          }
+          EOF
 
-        echo "✅ Security incident tracking created"
+          echo "✅ Security incident tracking created"
 
-    - name: Send enhanced security alert
-      env:
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      run: |
-        SEVERITY_EMOJI=$(
-          case '${{ steps.severity_analysis.outputs.severity }}' in
-            critical) echo "🔴" ;;
-            high) echo "🟠" ;;
-            *) echo "🟡" ;;
-          esac
-        )
-
-        # Discord通知のみ（Slackは使用しない）
-
-        # Discord通知（クリティカル・ハイのみ）
-        if [ -n "$DISCORD_WEBHOOK_URL" ] && [ '${{ steps.severity_analysis.outputs.severity }}' != 'medium' ]; then
-          EMBED_COLOR=$(
+      - name: Send enhanced security alert
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          SEVERITY_EMOJI=$(
             case '${{ steps.severity_analysis.outputs.severity }}' in
-              critical) echo "15158332" ;;  # 赤
-              high) echo "16753920" ;;      # オレンジ
+              critical) echo "🔴" ;;
+              high) echo "🟠" ;;
+              *) echo "🟡" ;;
             esac
           )
 
-          curl -X POST "$DISCORD_WEBHOOK_URL" \
-            -H 'Content-type: application/json' \
-            -H 'User-Agent: AutoForgeNexus-Security/1.0' \
-            --max-time 30 \
-            --data "{
-              \"content\": \"$SEVERITY_EMOJI **${{ steps.severity_analysis.outputs.priority }} Security Issue**\",
-              \"embeds\": [{
-                \"title\": \"Security Issue #${{ github.event.issue.number }}\",
-                \"description\": \"${{ github.event.issue.title }}\",
-                \"color\": $EMBED_COLOR,
-                \"fields\": [
-                  { \"name\": \"Severity\", \"value\": \"${{ steps.severity_analysis.outputs.severity }}\", \"inline\": true },
-                  { \"name\": \"Priority\", \"value\": \"${{ steps.severity_analysis.outputs.priority }}\", \"inline\": true },
-                  { \"name\": \"Reporter\", \"value\": \"${{ github.event.issue.user.login }}\", \"inline\": true }
-                ],
-                \"url\": \"${{ github.event.issue.html_url }}\",
-                \"timestamp\": \"${{ github.event.issue.created_at }}\"
-              }]
-            }" \
-            --fail-with-body || echo "⚠️ Failed to send Discord notification"
-        fi
+          # Discord通知のみ（Slackは使用しない）
 
-    - name: Auto-assign security team
-      if: steps.severity_analysis.outputs.severity == 'critical' || steps.severity_analysis.outputs.severity == 'high'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          // セキュリティチームの自動アサイン
-          try {
-            await github.rest.issues.addAssignees({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              assignees: ['${{ github.repository_owner }}']  // セキュリティ担当者を追加
-            });
+          # Discord通知（クリティカル・ハイのみ）
+          if [ -n "$DISCORD_WEBHOOK_URL" ] && [ '${{ steps.severity_analysis.outputs.severity }}' != 'medium' ]; then
+            EMBED_COLOR=$(
+              case '${{ steps.severity_analysis.outputs.severity }}' in
+                critical) echo "15158332" ;;  # 赤
+                high) echo "16753920" ;;      # オレンジ
+              esac
+            )
 
-            // 緊急ラベルの追加
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: ['urgent', '${{ steps.severity_analysis.outputs.priority }}']
-            });
+            curl -X POST "$DISCORD_WEBHOOK_URL" \
+              -H 'Content-type: application/json' \
+              -H 'User-Agent: AutoForgeNexus-Security/1.0' \
+              --max-time 30 \
+              --data "{
+                \"content\": \"$SEVERITY_EMOJI **${{ steps.severity_analysis.outputs.priority }} Security Issue**\",
+                \"embeds\": [{
+                  \"title\": \"Security Issue #${{ github.event.issue.number }}\",
+                  \"description\": \"${{ github.event.issue.title }}\",
+                  \"color\": $EMBED_COLOR,
+                  \"fields\": [
+                    { \"name\": \"Severity\", \"value\": \"${{ steps.severity_analysis.outputs.severity }}\", \"inline\": true },
+                    { \"name\": \"Priority\", \"value\": \"${{ steps.severity_analysis.outputs.priority }}\", \"inline\": true },
+                    { \"name\": \"Reporter\", \"value\": \"${{ github.event.issue.user.login }}\", \"inline\": true }
+                  ],
+                  \"url\": \"${{ github.event.issue.html_url }}\",
+                  \"timestamp\": \"${{ github.event.issue.created_at }}\"
+                }]
+              }" \
+              --fail-with-body || echo "⚠️ Failed to send Discord notification"
+          fi
 
-            console.log('Security team assigned and labels added');
-          } catch (error) {
-            console.error('Failed to assign security team:', error);
-          }
+      - name: Auto-assign security team
+        if: steps.severity_analysis.outputs.severity == 'critical' || steps.severity_analysis.outputs.severity == 'high'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // セキュリティチームの自動アサイン
+            try {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                assignees: ['${{ github.repository_owner }}']  // セキュリティ担当者を追加
+              });
 
-    - name: Upload security incident data
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-incident-${{ github.event.issue.number }}
-        path: security_incident_tracking.json
-        retention-days: 365
+              // 緊急ラベルの追加
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['urgent', '${{ steps.severity_analysis.outputs.priority }}']
+              });
+
+              console.log('Security team assigned and labels added');
+            } catch (error) {
+              console.error('Failed to assign security team:', error);
+            }
+
+      - name: Upload security incident data
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-incident-${{ github.event.issue.number }}
+          path: security_incident_tracking.json
+          retention-days: 365
 
   high-priority-alert:
     name: High Priority Alert
@@ -381,42 +381,42 @@ jobs:
       (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'urgent'))
 
     steps:
-    - name: Send high priority notification
-      env:
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      run: |
-        if [ "${{ github.event_name }}" = "issues" ]; then
-          TYPE="Issue"
-          NUMBER="${{ github.event.issue.number }}"
-          TITLE="${{ github.event.issue.title }}"
-          URL="${{ github.event.issue.html_url }}"
-        else
-          TYPE="Pull Request"
-          NUMBER="${{ github.event.pull_request.number }}"
-          TITLE="${{ github.event.pull_request.title }}"
-          URL="${{ github.event.pull_request.html_url }}"
-        fi
+      - name: Send high priority notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            TYPE="Issue"
+            NUMBER="${{ github.event.issue.number }}"
+            TITLE="${{ github.event.issue.title }}"
+            URL="${{ github.event.issue.html_url }}"
+          else
+            TYPE="Pull Request"
+            NUMBER="${{ github.event.pull_request.number }}"
+            TITLE="${{ github.event.pull_request.title }}"
+            URL="${{ github.event.pull_request.html_url }}"
+          fi
 
-        MESSAGE="🚨 High Priority $TYPE #$NUMBER: $TITLE"
+          MESSAGE="🚨 High Priority $TYPE #$NUMBER: $TITLE"
 
-        # Discord通知
-        if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-          curl -X POST "$DISCORD_WEBHOOK_URL" \
-            -H 'Content-type: application/json' \
-            -H 'User-Agent: AutoForgeNexus-Alerts/1.0' \
-            --data "{
-              \"content\": \"$MESSAGE\",
-              \"embeds\": [{
-                \"title\": \"High Priority $TYPE #$NUMBER\",
-                \"description\": \"$TITLE\",
-                \"color\": 15158332,
-                \"url\": \"$URL\",
-                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-              }]
-            }" \
-            --max-time 30 \
-            --fail-with-body || echo \"⚠️ Failed to send Discord notification\"
-        fi
+          # Discord通知
+          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+            curl -X POST "$DISCORD_WEBHOOK_URL" \
+              -H 'Content-type: application/json' \
+              -H 'User-Agent: AutoForgeNexus-Alerts/1.0' \
+              --data "{
+                \"content\": \"$MESSAGE\",
+                \"embeds\": [{
+                  \"title\": \"High Priority $TYPE #$NUMBER\",
+                  \"description\": \"$TITLE\",
+                  \"color\": 15158332,
+                  \"url\": \"$URL\",
+                  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                }]
+              }" \
+              --max-time 30 \
+              --fail-with-body || echo \"⚠️ Failed to send Discord notification\"
+          fi
 
   test-alert:
     name: Test Alert System
@@ -424,41 +424,41 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.alert_type == 'test'
 
     steps:
-    - name: Send test notifications
-      run: |
-        echo "📧 Testing alert system..."
-        echo "Alert type: ${{ github.event.inputs.alert_type }}"
-        echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      - name: Send test notifications
+        run: |
+          echo "📧 Testing alert system..."
+          echo "Alert type: ${{ github.event.inputs.alert_type }}"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-        # テストメッセージの作成
-        cat << EOF > test_alert.json
-        {
-          "type": "test",
-          "message": "🧪 This is a test alert from AutoForgeNexus",
-          "repository": "${{ github.repository }}",
-          "triggered_by": "${{ github.actor }}",
-          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        }
-        EOF
+          # テストメッセージの作成
+          cat << EOF > test_alert.json
+          {
+            "type": "test",
+            "message": "🧪 This is a test alert from AutoForgeNexus",
+            "repository": "${{ github.repository }}",
+            "triggered_by": "${{ github.actor }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
 
-        echo "✅ Test alert prepared successfully"
+          echo "✅ Test alert prepared successfully"
 
-    - name: Verify webhook configuration
-      run: |
-        CONFIGURED_WEBHOOKS=""
+      - name: Verify webhook configuration
+        run: |
+          CONFIGURED_WEBHOOKS=""
 
-        if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
-          CONFIGURED_WEBHOOKS="$CONFIGURED_WEBHOOKS Discord"
-        fi
+          if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+            CONFIGURED_WEBHOOKS="$CONFIGURED_WEBHOOKS Discord"
+          fi
 
-        if [ -n "${{ secrets.METRICS_WEBHOOK_URL }}" ]; then
-          CONFIGURED_WEBHOOKS="$CONFIGURED_WEBHOOKS Metrics"
-        fi
+          if [ -n "${{ secrets.METRICS_WEBHOOK_URL }}" ]; then
+            CONFIGURED_WEBHOOKS="$CONFIGURED_WEBHOOKS Metrics"
+          fi
 
-        if [ -z "$CONFIGURED_WEBHOOKS" ]; then
-          echo "⚠️ No webhooks configured. Add webhook URLs to GitHub Secrets:"
-          echo "  - DISCORD_WEBHOOK_URL"
-          echo "  - METRICS_WEBHOOK_URL"
-        else
-          echo "✅ Configured webhooks:$CONFIGURED_WEBHOOKS"
-        fi
+          if [ -z "$CONFIGURED_WEBHOOKS" ]; then
+            echo "⚠️ No webhooks configured. Add webhook URLs to GitHub Secrets:"
+            echo "  - DISCORD_WEBHOOK_URL"
+            echo "  - METRICS_WEBHOOK_URL"
+          else
+            echo "✅ Configured webhooks:$CONFIGURED_WEBHOOKS"
+          fi

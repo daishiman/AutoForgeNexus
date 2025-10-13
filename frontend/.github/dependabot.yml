@@ -1,0 +1,181 @@
+# Dependabotセキュリティ設定
+# GitHub Dependabotによる自動依存関係更新・脆弱性監視
+
+version: 2
+
+updates:
+  # npm/pnpm依存関係監視
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'tuesday'
+      time: '02:00'
+      timezone: 'Asia/Tokyo'
+
+    # セキュリティ更新設定
+    open-pull-requests-limit: 10
+
+    # 脆弱性があるパッケージは即座に更新
+    security-updates:
+      - critical
+      - high
+      - medium
+
+    # 更新対象設定
+    allow:
+      # セキュリティ更新は常に許可
+      - dependency-type: 'all'
+        update-type: 'security'
+
+      # 本番依存関係のパッチ・マイナー更新
+      - dependency-type: 'direct:production'
+        update-type: 'version-update:semver-patch'
+      - dependency-type: 'direct:production'
+        update-type: 'version-update:semver-minor'
+
+      # 開発依存関係のパッチ・マイナー更新
+      - dependency-type: 'direct:development'
+        update-type: 'version-update:semver-patch'
+      - dependency-type: 'direct:development'
+        update-type: 'version-update:semver-minor'
+
+    # 除外パッケージ（安定性重視）
+    ignore:
+      # 手動管理が必要な重要パッケージ
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@clerk/nextjs'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'tailwindcss'
+        update-types: ['version-update:semver-major']
+
+      # 開発ツールの安定性確保
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
+
+    # コミット設定
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
+
+    # PR設定
+    pull-request-branch-name:
+      separator: '/'
+
+    # レビュアー設定
+    reviewers:
+      - 'daishiman'
+
+    # ラベル設定
+    labels:
+      - 'dependencies'
+      - 'automated'
+      - 'security'
+
+    # マイルストーン（セキュリティ更新用）
+    milestone: 'Security Updates'
+
+  # GitHub Actions更新監視
+  - package-ecosystem: 'github-actions'
+    directory: '/.github/workflows'
+    schedule:
+      interval: 'weekly'
+      day: 'wednesday'
+      time: '03:00'
+      timezone: 'Asia/Tokyo'
+
+    open-pull-requests-limit: 5
+
+    # Actionsはピン留めしたSHAを更新
+    allow:
+      - dependency-type: 'all'
+
+    commit-message:
+      prefix: 'ci(actions)'
+      include: 'scope'
+
+    labels:
+      - 'ci'
+      - 'github-actions'
+      - 'security'
+
+    reviewers:
+      - 'daishiman'
+
+  # Dockerベースイメージ更新（将来用）
+  - package-ecosystem: 'docker'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+      day: '1'
+      time: '04:00'
+      timezone: 'Asia/Tokyo'
+
+    open-pull-requests-limit: 3
+
+    # セキュリティ重視設定
+    allow:
+      - dependency-type: 'all'
+        update-type: 'security'
+      - dependency-type: 'all'
+        update-type: 'version-update:semver-patch'
+
+    commit-message:
+      prefix: 'chore(docker)'
+      include: 'scope'
+
+    labels:
+      - 'docker'
+      - 'infrastructure'
+      - 'security'
+
+    reviewers:
+      - 'daishiman'
+
+# グローバル設定
+registries:
+  # npmレジストリ設定（セキュリティ強化）
+  npm-registry:
+    type: npm-registry
+    url: https://registry.npmjs.org
+    # 必要に応じてトークン設定
+    # token: ${{ secrets.NPM_TOKEN }}
+# Dependabot設定の詳細説明
+#
+# セキュリティ重視設定:
+# 1. 脆弱性のあるパッケージは即座に更新PR作成
+# 2. Critical/High脆弱性は24時間以内の対応
+# 3. メジャーバージョンアップは手動承認必須
+# 4. GitHub Actionsは最新のSHA固定バージョンに更新
+#
+# 更新スケジュール:
+# - npm依存関係: 毎週火曜日午前2時
+# - GitHub Actions: 毎週水曜日午前3時
+# - Dockerイメージ: 毎月1日午前4時
+#
+# 自動マージ条件（.github/workflows/dependency-update.ymlで制御）:
+# - パッチバージョンアップ
+# - セキュリティ修正
+# - CI全パス
+# - レビュー承認済み
+#
+# 監視対象:
+# - 本番依存関係（dependencies）
+# - 開発依存関係（devDependencies）
+# - GitHub Actions（.github/workflows/*.yml）
+# - Dockerベースイメージ（Dockerfile）
+#
+# 除外項目:
+# - React/Next.js等のメジャーアップデート（破壊的変更リスク）
+# - TypeScript/ESLint等のツールチェーンメジャーアップデート
+#
+# セキュリティ統合:
+# - Trivy脆弱性スキャナとの連携
+# - npm audit結果との統合
+# - セキュリティアドバイザリ自動追跡

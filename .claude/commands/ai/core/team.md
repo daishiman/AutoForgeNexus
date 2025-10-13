@@ -1,6 +1,6 @@
 ---
 name: team
-description: "動的エージェントチーム編成と協調管理"
+description: '動的エージェントチーム編成と協調管理'
 category: core
 complexity: extreme
 agents:

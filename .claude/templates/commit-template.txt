@@ -1,0 +1,30 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+#
+# Types:
+#   feat:     新機能
+#   fix:      バグ修正
+#   docs:     ドキュメントのみの変更
+#   style:    フォーマット、セミコロン等の変更
+#   refactor: リファクタリング
+#   perf:     パフォーマンス改善
+#   test:     テストの追加・修正
+#   build:    ビルドシステムの変更
+#   ci:       CI設定の変更
+#   chore:    その他の変更
+#   revert:   コミットの取り消し
+#
+# Scope: frontend, backend, ci, docs, test, db, auth, etc.
+#
+# Subject: 72文字以内の簡潔な変更内容（小文字開始、句点なし）
+#
+# Body: 詳細な変更内容（オプション）
+#
+# Footer: Breaking Changes, Issue参照（オプション）
+#   例: Closes #123, BREAKING CHANGE: xxx
+#
+# 🤖 Generated with Claude Code
+# Co-Authored-By: Claude <noreply@anthropic.com>

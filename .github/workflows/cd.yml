@@ -2,24 +2,31 @@ name: CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deployment environment'
+        description: "Deployment environment"
         required: true
-        default: 'staging'
+        default: "staging"
         type: choice
         options:
           - staging
           - production
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: read
+  checks: write
+  deployments: write
+  id-token: write
+
 env:
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-  TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
 jobs:
   # Check project structure
@@ -62,6 +69,9 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
             echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "environment=develop" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "environment=staging" >> $GITHUB_OUTPUT
             echo "should_deploy=true" >> $GITHUB_OUTPUT
@@ -86,39 +96,65 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Cloudflare Wrangler
-        uses: cloudflare/wrangler-action@v3
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          version: 9
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
-      - name: 📦 Install dependencies
+      - name: 📦 Install uv (Python package manager)
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: 📦 Install pywrangler
         working-directory: ./backend
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install workers-py
 
-      - name: 🚀 Deploy to Cloudflare Workers
+      - name: 🚀 Deploy to Cloudflare Workers (pywrangler)
         id: deploy
         working-directory: ./backend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # 環境別Secretsを動的に選択（develop/staging/production）
+          CLERK_SECRET_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_CLERK_SECRET_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_CLERK_SECRET_KEY || secrets.STAGING_CLERK_SECRET_KEY) }}
+          OPENAI_API_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_OPENAI_API_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_OPENAI_API_KEY || secrets.STAGING_OPENAI_API_KEY) }}
+          ANTHROPIC_API_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_ANTHROPIC_API_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_ANTHROPIC_API_KEY || secrets.STAGING_ANTHROPIC_API_KEY) }}
+          LANGFUSE_PUBLIC_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_LANGFUSE_PUBLIC_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_LANGFUSE_PUBLIC_KEY || secrets.STAGING_LANGFUSE_PUBLIC_KEY) }}
+          LANGFUSE_SECRET_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_LANGFUSE_SECRET_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_LANGFUSE_SECRET_KEY || secrets.STAGING_LANGFUSE_SECRET_KEY) }}
+          REDIS_HOST: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_REDIS_HOST || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_REDIS_HOST || secrets.STAGING_REDIS_HOST) }}
+          REDIS_PASSWORD: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_REDIS_PASSWORD || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_REDIS_PASSWORD || secrets.STAGING_REDIS_PASSWORD) }}
         run: |
           if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
-            wrangler deploy --env production
+            uv run pywrangler deploy --env production
             echo "url=https://api.autoforgenexus.com" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.deployment-decision.outputs.environment }}" == "develop" ]]; then
+            uv run pywrangler deploy --env develop
+            echo "url=https://api-dev.autoforgenexus.com" >> $GITHUB_OUTPUT
           else
-            wrangler deploy --env staging
+            uv run pywrangler deploy --env staging
             echo "url=https://api-staging.autoforgenexus.com" >> $GITHUB_OUTPUT
           fi
 
       - name: 🗄️ Run database migrations
         working-directory: ./backend
+        env:
+          # 環境別Secretsを動的に選択（develop/staging/production）
+          TURSO_DATABASE_URL: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_TURSO_DATABASE_URL || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_TURSO_DATABASE_URL || secrets.STAGING_TURSO_DATABASE_URL) }}
+          TURSO_AUTH_TOKEN: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_TURSO_AUTH_TOKEN || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_TURSO_AUTH_TOKEN || secrets.STAGING_TURSO_AUTH_TOKEN) }}
         run: |
-          export DATABASE_URL="${{ env.TURSO_DATABASE_URL }}"
-          export DATABASE_AUTH_TOKEN="${{ env.TURSO_AUTH_TOKEN }}"
           alembic upgrade head
 
       - name: 🧪 Smoke tests
@@ -147,8 +183,8 @@ jobs:
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "22"
+          cache: "pnpm"
           cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: 📦 Install dependencies
@@ -157,10 +193,20 @@ jobs:
 
       - name: 🔧 Set environment variables
         working-directory: ./frontend
+        env:
+          # 環境別Secretsを動的に選択（develop/staging/production）
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_CLERK_PUBLIC_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_CLERK_PUBLIC_KEY || secrets.STAGING_CLERK_PUBLIC_KEY) }}
+          CLERK_SECRET_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_CLERK_SECRET_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_CLERK_SECRET_KEY || secrets.STAGING_CLERK_SECRET_KEY) }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_SENTRY_DSN || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_SENTRY_DSN || secrets.STAGING_SENTRY_DSN) }}
+          NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_GA_MEASUREMENT_ID || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_GA_MEASUREMENT_ID || secrets.STAGING_GA_MEASUREMENT_ID) }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ needs.deployment-decision.outputs.environment == 'production' && secrets.PROD_POSTHOG_KEY || (needs.deployment-decision.outputs.environment == 'develop' && secrets.DEV_POSTHOG_KEY || secrets.STAGING_POSTHOG_KEY) }}
         run: |
           if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
             echo "NEXT_PUBLIC_API_URL=https://api.autoforgenexus.com" >> .env.production
             echo "NEXT_PUBLIC_ENVIRONMENT=production" >> .env.production
+          elif [[ "${{ needs.deployment-decision.outputs.environment }}" == "develop" ]]; then
+            echo "NEXT_PUBLIC_API_URL=https://api-dev.autoforgenexus.com" >> .env.develop
+            echo "NEXT_PUBLIC_ENVIRONMENT=develop" >> .env.develop
           else
             echo "NEXT_PUBLIC_API_URL=https://api-staging.autoforgenexus.com" >> .env.staging
             echo "NEXT_PUBLIC_ENVIRONMENT=staging" >> .env.staging
@@ -171,8 +217,10 @@ jobs:
         run: |
           if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
             pnpm build:production
+          elif [[ "${{ needs.deployment-decision.outputs.environment }}" == "develop" ]]; then
+            pnpm build:develop || pnpm build
           else
-            pnpm build:staging
+            pnpm build:staging || pnpm build
           fi
 
       - name: 🚀 Deploy to Cloudflare Pages
@@ -191,6 +239,9 @@ jobs:
           if [[ "${{ needs.deployment-decision.outputs.environment }}" == "production" ]]; then
             curl -f https://autoforgenexus.com || exit 1
             echo "url=https://autoforgenexus.com" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.deployment-decision.outputs.environment }}" == "develop" ]]; then
+            curl -f https://dev.autoforgenexus.com || exit 1
+            echo "url=https://dev.autoforgenexus.com" >> $GITHUB_OUTPUT
           else
             curl -f https://staging.autoforgenexus.com || exit 1
             echo "url=https://staging.autoforgenexus.com" >> $GITHUB_OUTPUT

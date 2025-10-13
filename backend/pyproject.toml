@@ -1,0 +1,187 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autoforge-nexus-backend"
+version = "0.1.0"
+description = "AutoForgeNexus Backend API - AI Prompt Optimization Platform"
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "AutoForgeNexus Team"},
+]
+
+dependencies = [
+    # 絶対最小構成（Cloudflare Workers デプロイ専念）
+    "fastapi>=0.115.0,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Cloudflare Workers Python
+    "workers-py",
+
+    # Testing
+    "pytest==8.3.3",
+    "pytest-asyncio==0.24.0",
+    "pytest-cov==6.0.0",
+    "pytest-mock==3.14.0",
+    "pytest-env==1.1.5",
+    "factory-boy==3.3.1",
+    "faker==33.1.0",
+
+    # Code Quality
+    "ruff==0.7.4",
+    "black==24.10.0",
+    "mypy==1.13.0",
+    "pre-commit==4.0.1",
+
+    # Security (CI/CD用)
+    "bandit[toml]>=1.7.9",
+    "safety>=3.2.0",
+
+    # Type Stubs
+    "types-redis==4.6.0.20241004",
+    "types-passlib==1.7.7.20240819",
+    "sqlalchemy[mypy]>=2.0.0",  # SQLAlchemy型プラグイン
+    "types-requests>=2.31.0",   # requests型スタブ
+
+    # Development Tools
+    "ipython==8.31.0",
+    "watchfiles==1.0.3",
+    "pip-tools>=7.5.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+indent-width = 4
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "B905",  # zip() without explicit strict=
+    "N802",  # function name should be lowercase (allow Japanese test names)
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_unimported = false
+no_implicit_optional = true
+check_untyped_defs = true
+warn_no_return = true
+show_error_codes = true
+ignore_missing_imports = true
+warn_unused_ignores = false
+# Note: plugins are loaded automatically when packages are installed
+# Explicit plugin configuration removed to avoid import errors during CI/CD
+
+[[tool.mypy.overrides]]
+module = [
+    "celery.*",
+    "redis.*",
+    "langchain.*",
+    "litellm.*",
+]
+ignore_missing_imports = true
+
+# FastAPI decorators compatibility
+[[tool.mypy.overrides]]
+module = ["src.presentation.*", "src.main"]
+disallow_untyped_decorators = false
+
+# Starlette/FastAPI middleware compatibility
+[[tool.mypy.overrides]]
+module = "src.middleware.*"
+disallow_subclassing_any = false
+warn_return_any = false
+
+# SQLAlchemy ORM compatibility
+[[tool.mypy.overrides]]
+module = "src.infrastructure.shared.database.*"
+disallow_subclassing_any = false
+
+# Pydantic Settings compatibility
+[[tool.mypy.overrides]]
+module = "src.core.config.*"
+disallow_subclassing_any = false
+
+[tool.pytest.ini_options]
+minversion = "8.3"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow tests",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

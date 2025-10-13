@@ -1,0 +1,21 @@
+# Volta環境変数を確実に設定
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
+
+# Node.js 22.20.0が使用されることを確認
+echo "🔍 Node.js version: $(node --version)"
+echo "🔍 pnpm version: $(pnpm --version)"
+
+# frontendディレクトリでテスト実行
+cd frontend || exit 1
+
+echo "🧪 Running frontend tests..."
+pnpm test:ci || exit 1
+
+echo "🔍 Running TypeScript type check..."
+pnpm type-check || exit 1
+
+echo "✨ Running ESLint..."
+pnpm lint || exit 1
+
+echo "✅ All pre-push checks passed!"
